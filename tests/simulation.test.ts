@@ -24,6 +24,8 @@ import {
 } from '../src/engine/recovery';
 import { rungDepth, buildLadderIndex } from '../src/engine/ladders';
 import type { SelectionContext } from '../src/engine/selector';
+import { achievableLoads } from '../src/engine/loading';
+import { TEST_GYM } from './support/profile';
 import type {
   ConditioningLog,
   Exercise,
@@ -40,19 +42,8 @@ const DAY_OFFSETS = [0, 1, 3, 4];
 const PROFILE: UserProfile = {
   bodyweight: 292,
   level: 'novice',
-  availableEquipment: [
-    'bodyweight',
-    'dumbbell',
-    'kettlebell',
-    'band',
-    'suspension',
-    'pullupBar',
-    'bench',
-    'mat',
-    'wall',
-    'chair',
-  ],
-  dumbbellIncrement: 5,
+  gyms: [TEST_GYM],
+  activeGymId: 'home',
   flaggedJoints: [],
   impactCeiling: 'high',
   daysPerWeek: 4,
@@ -73,6 +64,8 @@ interface SimResult {
     minPrimaryRecovery: number;
   }[];
   fatigue: FatigueState;
+  /** Any prescribed weight that this gym cannot physically produce. */
+  unloadable: { exerciseId: string; weight: number }[];
 }
 
 function buildContext(
@@ -124,6 +117,7 @@ function simulate(options: { conditioning?: ConditioningLog[] } = {}): SimResult
   const history: SetLog[] = [];
   const sessions: SimResult['sessions'] = [];
   const completed: { dayId: string }[] = [];
+  const unloadable: { exerciseId: string; weight: number }[] = [];
 
   let seed = 1;
   let block = createBlock(
@@ -199,6 +193,18 @@ function simulate(options: { conditioning?: ConditioningLog[] } = {}): SimResult
       }
     }
 
+    // Invariant: every weight the engine hands back must be one this gym can
+    // physically produce. A prescription you cannot load is worse than a
+    // wrong one — it stops the session dead.
+    for (const pe of session.exercises) {
+      const achievable = achievableLoads(pe.exercise, TEST_GYM);
+      for (const ps of pe.sets) {
+        if (ps.weight > 0 && !achievable.includes(ps.weight)) {
+          unloadable.push({ exerciseId: pe.exercise.id, weight: ps.weight });
+        }
+      }
+    }
+
     let totalSets = 0;
     for (const pe of session.exercises) {
       for (const ps of pe.sets) {
@@ -237,7 +243,7 @@ function simulate(options: { conditioning?: ConditioningLog[] } = {}): SimResult
     void blockStart;
   }
 
-  return { history, sessions, fatigue };
+  return { history, sessions, fatigue, unloadable };
 }
 
 /* ------------------------------------------------------------------ */
@@ -248,6 +254,13 @@ describe('12-week simulation', () => {
   it('runs a full two blocks without throwing', () => {
     expect(result.sessions.length).toBe(48);
     expect(result.history.length).toBeGreaterThan(500);
+  });
+
+  it('never prescribes a weight the gym cannot physically produce', () => {
+    // Across ~500 sets and two full blocks, including deloads, back-offs, and
+    // ladder moves, not one prescription may land on a weight that does not
+    // exist. This is the invariant the whole loading module exists to hold.
+    expect(result.unloadable).toEqual([]);
   });
 
   it('never prescribes a primary lift on a muscle below 50% recovered', () => {

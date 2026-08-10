@@ -9,6 +9,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { logSet, resumePosition, skipSet } from '../state/sessionController';
 import { getActiveSession } from '../storage/repository';
+import { achievableLoads, nextLoadStep, previousLoadStep } from '../engine/loading';
+import { activeGym } from '../engine/types';
 import { RestTimer } from './RestTimer';
 import { primeAudio, playSetComplete } from './audio';
 import { haptics } from './haptics';
@@ -83,6 +85,14 @@ export function SessionPlayer({
 
   const isLoadable = exercise?.exercise.loadType === 'external';
 
+  // Every weight this exercise can actually be loaded to in today's gym. The
+  // stepper walks this list rather than adding a fixed increment, so it can
+  // never land on a weight that doesn't physically exist.
+  const achievable = useMemo(
+    () => (exercise ? achievableLoads(exercise.exercise, activeGym(profile)) : []),
+    [exercise, profile],
+  );
+
   // Re-fill the steppers whenever the target set changes.
   useEffect(() => {
     if (!targetSet || !exercise) return;
@@ -90,10 +100,10 @@ export function SessionPlayer({
     // engine — deliberately, per `overload.ts`'s "first time, find a working
     // load" — but the stepper still needs a starting point to climb from
     // rather than sitting at a literal, easy-to-miss zero.
-    setWeight(targetSet.weight > 0 ? targetSet.weight : isLoadable ? profile.dumbbellIncrement : 0);
+    setWeight(targetSet.weight > 0 ? targetSet.weight : isLoadable ? (achievable[0] ?? 0) : 0);
     setReps(targetSet.repTarget);
     setRpe(targetSet.targetRpe);
-  }, [targetSet, exercise, isLoadable, profile.dumbbellIncrement]);
+  }, [targetSet, exercise, isLoadable, achievable]);
 
   if (phase === 'loading' || !exercise || !targetSet || !slot) {
     return <div className="session-player session-player--loading">Loading session…</div>;
@@ -200,9 +210,7 @@ export function SessionPlayer({
       {message && <div className="session-player__toast">{message}</div>}
 
       <div className="steppers">
-        {isLoadable && (
-          <Stepper label="lb" value={weight} step={profile.dumbbellIncrement} onChange={setWeight} />
-        )}
+        {isLoadable && <WeightStepper value={weight} achievable={achievable} onChange={setWeight} />}
         <Stepper label="reps" value={reps} step={1} min={0} onChange={setReps} />
         <RpeSelector value={rpe} onChange={setRpe} />
       </div>
@@ -250,6 +258,52 @@ function Stepper({ label, value, step, min = 0, onChange }: StepperProps) {
         <span className="stepper__label">{label}</span>
       </div>
       <button className="stepper__btn" onClick={() => onChange(value + step)} aria-label={`Increase ${label}`}>
+        +
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Weight stepper that walks the real rack.
+ *
+ * A generic +/- stepper is wrong for load: on a home rack of [10, 20, 30]
+ * there is nothing at 15, so an increment-based stepper would happily show a
+ * weight that cannot be picked up. This one moves between weights that exist,
+ * and shows the gap when the jump is a big one so the number isn't a surprise.
+ */
+function WeightStepper({
+  value,
+  achievable,
+  onChange,
+}: {
+  value: number;
+  achievable: number[];
+  onChange: (v: number) => void;
+}) {
+  const down = previousLoadStep(value, achievable);
+  const up = nextLoadStep(value, achievable);
+
+  return (
+    <div className="stepper">
+      <button
+        className="stepper__btn"
+        disabled={down === undefined}
+        onClick={() => down !== undefined && onChange(down)}
+        aria-label="Decrease weight"
+      >
+        −
+      </button>
+      <div className="stepper__value" data-numeric>
+        {value}
+        <span className="stepper__label">lb</span>
+      </div>
+      <button
+        className="stepper__btn"
+        disabled={up === undefined}
+        onClick={() => up !== undefined && onChange(up)}
+        aria-label="Increase weight"
+      >
         +
       </button>
     </div>

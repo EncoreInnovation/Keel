@@ -18,11 +18,19 @@ import type { Equipment, ExperienceLevel, ImpactLevel, Joint, UserProfile } from
 const EQUIPMENT_LABEL: Record<Equipment, string> = {
   bodyweight: 'Bodyweight / floor',
   dumbbell: 'Dumbbells',
+  barbell: 'Barbell',
+  ezBar: 'EZ curl bar',
   kettlebell: 'Kettlebell',
   band: 'Resistance bands',
   suspension: 'Suspension trainer',
   pullupBar: 'Pull-up bar',
   bench: 'Bench',
+  cable: 'Cable machine',
+  legPress: 'Leg press',
+  medicineBall: 'Medicine ball',
+  battleRopes: 'Battle ropes',
+  abRoller: 'Ab roller',
+  punchingBag: 'Punching bag',
   mat: 'Mat',
   wall: 'Wall space',
   chair: 'Chair',
@@ -49,6 +57,14 @@ export interface SettingsProps {
 
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+}
+
+/** "10, 20, 30" -> [10, 20, 30]. Tolerates trailing commas and stray spaces. */
+function parseWeightList(raw: string): number[] {
+  return raw
+    .split(',')
+    .map((part) => Number(part.trim()))
+    .filter((n) => Number.isFinite(n) && n > 0);
 }
 
 export function Settings({ profile, onSaved, onBack }: SettingsProps) {
@@ -80,31 +96,86 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
         </div>
       </section>
 
-      <section className="settings-section">
-        <h2 className="settings-section__title">Equipment</h2>
-        <div className="settings-options">
-          {EQUIPMENT.map((eq) => (
-            <button
-              key={eq}
-              className={`chip${draft.availableEquipment.includes(eq) ? ' chip--active' : ''}`}
-              onClick={() => setDraft({ ...draft, availableEquipment: toggle(draft.availableEquipment, eq) })}
-            >
-              {EQUIPMENT_LABEL[eq]}
-            </button>
-          ))}
-        </div>
-      </section>
+      {draft.gyms.map((gym, gymIndex) => {
+        const updateGym = (patch: Partial<typeof gym>) =>
+          setDraft({
+            ...draft,
+            gyms: draft.gyms.map((g, i) => (i === gymIndex ? { ...g, ...patch } : g)),
+          });
 
-      <section className="settings-section">
-        <h2 className="settings-section__title">Dumbbell jump size (lb)</h2>
-        <input
-          type="number"
-          inputMode="numeric"
-          className="settings-input"
-          value={draft.dumbbellIncrement}
-          onChange={(e) => setDraft({ ...draft, dumbbellIncrement: Number(e.target.value) || 5 })}
-        />
-      </section>
+        return (
+          <section key={gym.id} className="settings-section">
+            <h2 className="settings-section__title">{gym.name} — equipment</h2>
+            <div className="settings-options">
+              {EQUIPMENT.map((eq) => (
+                <button
+                  key={eq}
+                  className={`chip${gym.equipment.includes(eq) ? ' chip--active' : ''}`}
+                  onClick={() => updateGym({ equipment: toggle(gym.equipment, eq) })}
+                >
+                  {EQUIPMENT_LABEL[eq]}
+                </button>
+              ))}
+            </div>
+
+            <h3 className="settings-section__title">Dumbbells you own (lb)</h3>
+            <p className="settings-section__hint">
+              The actual weights, comma separated — not a jump size. Fixed dumbbells don't
+              increment, so the engine needs the real list to avoid prescribing a weight you
+              can't pick up.
+            </p>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="settings-input"
+              value={gym.dumbbells.join(', ')}
+              onChange={(e) => updateGym({ dumbbells: parseWeightList(e.target.value) })}
+            />
+
+            <h3 className="settings-section__title">Kettlebells (lb)</h3>
+            <input
+              type="text"
+              inputMode="numeric"
+              className="settings-input"
+              value={gym.kettlebells.join(', ')}
+              onChange={(e) => updateGym({ kettlebells: parseWeightList(e.target.value) })}
+            />
+
+            {gym.barbell && (
+              <>
+                <h3 className="settings-section__title">Barbell plates</h3>
+                <p className="settings-section__hint">
+                  Pairs of each plate — 2×25 lb plates is one pair. Bar is {gym.barbell.barWeight} lb.
+                </p>
+                <div className="settings-plates">
+                  {gym.barbell.plates.map((denom, i) => (
+                    <label key={denom} className="settings-plate">
+                      <span>{denom} lb</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        className="settings-input"
+                        value={gym.barbell!.pairsPerPlate[i] ?? 0}
+                        onChange={(e) =>
+                          updateGym({
+                            barbell: {
+                              ...gym.barbell!,
+                              pairsPerPlate: gym.barbell!.pairsPerPlate.map((p, j) =>
+                                j === i ? Math.max(0, Number(e.target.value) || 0) : p,
+                              ),
+                            },
+                          })
+                        }
+                      />
+                      <span className="settings-plate__unit">pairs</span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </section>
+        );
+      })}
 
       <section className="settings-section">
         <h2 className="settings-section__title">Flagged joints</h2>

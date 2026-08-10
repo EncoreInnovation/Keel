@@ -12,6 +12,7 @@
  * up; that is the whole point of logging honestly.
  */
 
+import { canStepUp, nextLoadStep, previousLoadStep, resolveLoad } from './loading';
 import type { PrescribedSet, SetLog, Slot, UserProfile } from './types';
 
 /* ------------------------------------------------------------------ *
@@ -54,36 +55,36 @@ export function bestE1RM(sets: SetLog[]): number {
  * ------------------------------------------------------------------ */
 
 /**
- * Snap to the increments the user's dumbbells actually have. A prescription of
- * "42.5 lb" to someone with 5 lb jumps isn't precision, it's noise — and it
- * quietly teaches you to ignore the numbers.
+ * Reduce a load by a percentage, guaranteeing the result actually moves.
+ *
+ * Naive snapping breaks here: 20 lb backed off 5% is 19, which snaps straight
+ * back to 20 on a rack of [10, 20, 30]. The back-off silently becomes a no-op
+ * precisely when it matters — after a grinder — so we force the result down to
+ * a genuinely lighter weight that exists.
  */
-export function roundToIncrement(weight: number, increment: number): number {
-  if (increment <= 0) return Math.round(weight);
-  return Math.round(weight / increment) * increment;
+export function decreaseWeight(weight: number, factor: number, achievable: number[]): number {
+  if (weight <= 0) return 0;
+  if (achievable.length === 0) return 0;
+  const snapped = resolveLoad(weight * factor, achievable);
+  if (snapped < weight) return snapped;
+  return previousLoadStep(weight, achievable) ?? achievable[0]!;
+}
+
+/** Mirror of `decreaseWeight`: always land on a genuinely heavier real weight. */
+export function increaseWeight(weight: number, factor: number, achievable: number[]): number {
+  if (achievable.length === 0) return 0;
+  const snapped = resolveLoad(weight * factor, achievable);
+  if (snapped > weight) return snapped;
+  return nextLoadStep(weight, achievable) ?? achievable.at(-1)!;
 }
 
 /**
- * Reduce a load by a percentage, guaranteeing the result actually moves.
- *
- * Naive rounding breaks here: 50 lb backed off 5% is 47.5, which rounds
- * straight back to 50 on a 5 lb increment. The back-off silently becomes a
- * no-op precisely when it matters — after a grinder — so we force at least
- * one real increment of movement.
+ * How far past the nominal rep cap we'll let a lifter climb when adding weight
+ * isn't possible. On a sparse home rack this is the main progression axis, so
+ * it has to have real room — but not unlimited room, or a "strength" slot
+ * quietly turns into an endurance set.
  */
-export function decreaseWeight(weight: number, factor: number, increment: number): number {
-  if (weight <= 0) return 0;
-  const rounded = roundToIncrement(weight * factor, increment);
-  if (rounded < weight) return rounded;
-  return Math.max(0, weight - Math.max(increment, 1));
-}
-
-/** Mirror of `decreaseWeight`: always add at least one usable increment. */
-export function increaseWeight(weight: number, factor: number, increment: number): number {
-  const rounded = roundToIncrement(weight * factor, increment);
-  if (rounded > weight) return rounded;
-  return weight + Math.max(increment, 1);
-}
+export const EXTENDED_REP_HEADROOM = 6;
 
 /* ------------------------------------------------------------------ *
  * Between sessions — double progression
@@ -96,6 +97,8 @@ export interface ProgressionInput {
   profile: UserProfile;
   /** Whether the exercise's difficulty comes from load or from the variant. */
   loadable: boolean;
+  /** Every weight physically available for this movement in today's gym. */
+  achievable: number[];
 }
 
 export interface ProgressionResult {
@@ -110,7 +113,7 @@ export interface ProgressionResult {
  * drop back to the bottom of the range.
  */
 export function nextPrescription(input: ProgressionInput): ProgressionResult {
-  const { slot, lastAttempt, profile, loadable } = input;
+  const { slot, lastAttempt, loadable, achievable } = input;
 
   const working = lastAttempt.filter((s) => !s.skipped);
   if (working.length === 0) {
@@ -147,16 +150,42 @@ export function nextPrescription(input: ProgressionInput): ProgressionResult {
   }
 
   if (clearedTop) {
+    // The heart of training on a sparse rack. Adding weight is only correct
+    // when the next real weight is a reasonable step. On [10, 20, 30] the jump
+    // from 10 is +100% — taking it would wreck technique and tank the rep
+    // range, so the honest progression is to keep climbing reps instead.
+    if (canStepUp(lastWeight, achievable)) {
+      return {
+        weight: increaseWeight(lastWeight, 1.05, achievable),
+        repTarget: slot.repMin,
+        rationale: 'Cleared the range — load up.',
+      };
+    }
+
+    const extendedCap = slot.repMax + EXTENDED_REP_HEADROOM;
+    if (weakest.reps < extendedCap) {
+      const atTopOfRack = nextLoadStep(lastWeight, achievable) === undefined;
+      return {
+        weight: lastWeight,
+        repTarget: Math.min(extendedCap, weakest.reps + 1),
+        rationale: atTopOfRack
+          ? 'Heaviest you own — adding reps instead.'
+          : 'Next weight is too big a jump — adding reps instead.',
+      };
+    }
+
+    // Reps are maxed out and the weight cliff is still too tall. The ladder is
+    // the only honest way up from here; `nextRung` handles it downstream.
     return {
-      weight: increaseWeight(lastWeight, 1.05, profile.dumbbellIncrement),
-      repTarget: slot.repMin,
-      rationale: 'Cleared the range — load up.',
+      weight: lastWeight,
+      repTarget: extendedCap,
+      rationale: 'Maxed this variation — time for a harder one.',
     };
   }
 
   if (missedBottom || overshotRpe) {
     return {
-      weight: decreaseWeight(lastWeight, 0.95, profile.dumbbellIncrement),
+      weight: decreaseWeight(lastWeight, 0.95, achievable),
       repTarget: slot.repMin,
       rationale: overshotRpe
         ? 'Ran hotter than target — backing off.'
@@ -194,7 +223,7 @@ export function adjustRemainingSets(
   justCompleted: SetLog,
   remaining: PrescribedSet[],
   slot: Slot,
-  profile: UserProfile,
+  achievable: number[],
   consecutiveMisses: number,
 ): InSessionAdjustment {
   if (remaining.length === 0) return { action: 'hold', remaining };
@@ -211,14 +240,20 @@ export function adjustRemainingSets(
   }
 
   if (overshot) {
+    // Mid-session is the worst time to take a huge load jump, so when the next
+    // real weight is a cliff the remaining sets gain reps rather than pounds.
+    const canLoad = canStepUp(justCompleted.weight, achievable);
     return {
       action: 'increase',
       remaining: remaining.map((s) => ({
         ...s,
-        weight: s.weight > 0 ? s.weight + profile.dumbbellIncrement : 0,
-        repTarget: s.weight > 0 ? s.repTarget : Math.min(slot.repMax + 4, s.repTarget + 2),
+        weight: s.weight > 0 && canLoad ? (nextLoadStep(s.weight, achievable) ?? s.weight) : s.weight,
+        repTarget:
+          s.weight > 0 && canLoad
+            ? s.repTarget
+            : Math.min(slot.repMax + EXTENDED_REP_HEADROOM, s.repTarget + 2),
       })),
-      message: 'That was light — nudging the rest up.',
+      message: canLoad ? 'That was light — nudging the rest up.' : 'That was light — adding reps.',
     };
   }
 
@@ -227,7 +262,7 @@ export function adjustRemainingSets(
       action: 'decrease',
       remaining: remaining.map((s) => ({
         ...s,
-        weight: s.weight > 0 ? decreaseWeight(s.weight, 0.9, profile.dumbbellIncrement) : 0,
+        weight: s.weight > 0 ? decreaseWeight(s.weight, 0.9, achievable) : 0,
         repTarget: s.weight > 0 ? s.repTarget : Math.max(1, s.repTarget - 2),
       })),
       message: 'Backing the rest off so you finish the session.',
@@ -253,11 +288,11 @@ export function isDeloadWeek(weekNumber: number, deloadWeek: number): boolean {
  * deloads" is the reliable route to week nine with a hurt back — which costs
  * far more training time than the light week ever would.
  */
-export function applyDeload(sets: PrescribedSet[], increment: number): PrescribedSet[] {
+export function applyDeload(sets: PrescribedSet[], achievable: number[]): PrescribedSet[] {
   const keep = Math.max(1, Math.round(sets.length * DELOAD_VOLUME_FACTOR));
   return sets.slice(0, keep).map((s) => ({
     ...s,
-    weight: decreaseWeight(s.weight, DELOAD_INTENSITY_FACTOR, increment),
+    weight: decreaseWeight(s.weight, DELOAD_INTENSITY_FACTOR, achievable),
     targetRpe: Math.min(s.targetRpe, 7),
   }));
 }

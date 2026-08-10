@@ -1,27 +1,18 @@
 /**
- * First-run setup — deliberately short. The only two numbers that actually
- * change what the engine computes are bodyweight (RPE/exertion context) and
- * the dumbbell increment (every load prescription rounds to it). Equipment
- * and joint flags default to the full Cruise Block kit and get a proper
- * editor in the Settings screen (Milestone 3) rather than gating day one on
- * a long form.
+ * First-run setup.
+ *
+ * Kept to the numbers that actually change what the engine computes:
+ * bodyweight, and where you're training today. Equipment inventory is seeded
+ * from the real known kit (see `config/gyms.ts`) and edited properly in
+ * Settings rather than gating day one on a long form.
+ *
+ * Starting weights are deliberately NOT asked for here — they come from the
+ * baseline test, which measures rather than guesses.
  */
 
 import { useState } from 'react';
-import type { Equipment, UserProfile } from '../engine/types';
-
-const DEFAULT_EQUIPMENT: Equipment[] = [
-  'bodyweight',
-  'dumbbell',
-  'kettlebell',
-  'band',
-  'suspension',
-  'pullupBar',
-  'bench',
-  'mat',
-  'wall',
-  'chair',
-];
+import { DEFAULT_GYMS } from '../config/gyms';
+import type { GymId, UserProfile } from '../engine/types';
 
 export interface SetupProps {
   onComplete: (profile: UserProfile) => void;
@@ -29,26 +20,25 @@ export interface SetupProps {
 
 export function Setup({ onComplete }: SetupProps) {
   const [bodyweight, setBodyweight] = useState(292);
-  const [dumbbellIncrement, setDumbbellIncrement] = useState(5);
+  const [activeGymId, setActiveGymId] = useState<GymId>('home');
 
   const submit = () => {
-    const profile: UserProfile = {
+    onComplete({
       bodyweight,
       level: 'novice',
-      availableEquipment: DEFAULT_EQUIPMENT,
-      dumbbellIncrement,
+      gyms: DEFAULT_GYMS,
+      activeGymId,
       flaggedJoints: [],
       impactCeiling: 'low',
-      daysPerWeek: 4,
-      sessionMinutes: 40,
-    };
-    onComplete(profile);
+      daysPerWeek: 5,
+      sessionMinutes: 45,
+    });
   };
 
   return (
     <div className="setup">
       <h1 className="setup__title">KEEL</h1>
-      <p className="setup__lede">Two numbers, then you're training.</p>
+      <p className="setup__lede">Two answers, then we find your working weights.</p>
 
       <label className="setup__field">
         <span>Bodyweight (lb)</span>
@@ -60,15 +50,20 @@ export function Setup({ onComplete }: SetupProps) {
         />
       </label>
 
-      <label className="setup__field">
-        <span>Dumbbell jump size (lb)</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          value={dumbbellIncrement}
-          onChange={(e) => setDumbbellIncrement(Number(e.target.value) || 5)}
-        />
-      </label>
+      <div className="setup__field">
+        <span>Training today at</span>
+        <div className="settings-options">
+          {DEFAULT_GYMS.map((gym) => (
+            <button
+              key={gym.id}
+              className={`chip${activeGymId === gym.id ? ' chip--active' : ''}`}
+              onClick={() => setActiveGymId(gym.id)}
+            >
+              {gym.name}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <button className="btn btn--hero" onClick={submit}>
         Start

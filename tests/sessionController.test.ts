@@ -21,6 +21,7 @@ import {
 } from '../src/state/sessionController';
 import { getActivePrescription, getActiveSessionRecord, getAllSets } from '../src/storage/repository';
 import type { Exercise, SetLog, UserProfile } from '../src/engine/types';
+import { TEST_GYM } from './support/profile';
 
 beforeEach(async () => {
   await clear(keelStore);
@@ -33,19 +34,8 @@ const DAY = 86_400_000;
 const PROFILE: UserProfile = {
   bodyweight: 292,
   level: 'novice',
-  availableEquipment: [
-    'bodyweight',
-    'dumbbell',
-    'kettlebell',
-    'band',
-    'suspension',
-    'pullupBar',
-    'bench',
-    'mat',
-    'wall',
-    'chair',
-  ],
-  dumbbellIncrement: 5,
+  gyms: [TEST_GYM],
+  activeGymId: 'home',
   flaggedJoints: [],
   impactCeiling: 'low',
   daysPerWeek: 4,

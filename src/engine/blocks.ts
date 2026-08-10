@@ -7,11 +7,13 @@
  * can never offer.
  */
 
-import { applyDeload, isDeloadWeek, nextPrescription, roundToIncrement } from './overload';
+import { achievableLoads, resolveLoad } from './loading';
+import { applyDeload, isDeloadWeek, nextPrescription } from './overload';
 import { primaryRecovery } from './recovery';
 import { attemptsFor, buildLadderIndex, evaluateLadder, nextRung, type LadderIndex } from './ladders';
 import { asymmetryFor, sideOrder } from './asymmetry';
 import { selectForSlot, unilateralPreference, rankCandidates, type SelectionContext } from './selector';
+import { activeGym } from './types';
 import type {
   Block,
   DayTemplate,
@@ -238,7 +240,8 @@ export function generateSession(input: GenerationInput): PrescribedSession {
 
   const catalogById = new Map(catalog.map((e) => [e.id, e]));
   const ladderIndex: LadderIndex = buildLadderIndex(catalog);
-  const availableEquipment = new Set<string>(profile.availableEquipment);
+  const gym = activeGym(profile);
+  const availableEquipment = new Set<string>(gym.equipment);
   const deload = isDeloadWeek(weekNumber, block.deloadWeek);
 
   const chosenThisSession = new Set<string>();
@@ -270,19 +273,22 @@ export function generateSession(input: GenerationInput): PrescribedSession {
 
     const loadable = exercise.loadType === 'external';
     const lastAttempt = attemptsFor(history, exercise.id)[0]?.sets ?? [];
-    const progression = nextPrescription({ slot: slotDef, lastAttempt, profile, loadable });
+    // The single gate that keeps prescriptions physically loadable: every
+    // weight downstream of here is snapped to something this gym actually has.
+    const achievable = achievableLoads(exercise, gym);
+    const progression = nextPrescription({ slot: slotDef, lastAttempt, profile, loadable, achievable });
 
     const reading = exercise.unilateral ? asymmetryFor(history, exercise.id) : undefined;
     const sides: PrescribedSet['side'][] = exercise.unilateral ? sideOrder(reading) : ['both'];
 
     let sets = buildSets(
       slotDef,
-      roundToIncrement(progression.weight, profile.dumbbellIncrement),
+      resolveLoad(progression.weight, achievable),
       progression.repTarget,
       sides,
       deload ? 1 : volumeMultiplier,
     );
-    if (deload) sets = applyDeload(sets, profile.dumbbellIncrement);
+    if (deload) sets = applyDeload(sets, achievable);
 
     // Recovery guard.
     //

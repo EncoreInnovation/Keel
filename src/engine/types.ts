@@ -75,11 +75,19 @@ export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
 export const EQUIPMENT = [
   'bodyweight',
   'dumbbell',
+  'barbell',
+  'ezBar',
   'kettlebell',
   'band',
   'suspension',
   'pullupBar',
   'bench',
+  'cable',
+  'legPress',
+  'medicineBall',
+  'battleRopes',
+  'abRoller',
+  'punchingBag',
   'mat',
   'wall',
   'chair',
@@ -364,15 +372,59 @@ export interface PrescribedSession {
  * User profile
  * ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ *
+ * Gyms
+ * ------------------------------------------------------------------ */
+
+export type GymId = 'home' | 'apartment';
+
+/**
+ * A loadable bar: its own weight plus the plate pairs available for it.
+ * Plates are per-side counts of each denomination, because that's how you
+ * actually load a bar — two 25s means one pair, adding 50 lb total.
+ */
+export interface BarInventory {
+  barWeight: number;
+  /** Plate denominations owned, e.g. [45, 25, 10, 5, 2.5]. */
+  plates: number[];
+  /** How many PAIRS of each denomination, index-aligned with `plates`. */
+  pairsPerPlate: number[];
+}
+
+/**
+ * Where training happens, and what is physically there.
+ *
+ * This exists because "increment" is the wrong abstraction for a home gym.
+ * Fixed dumbbells don't increment — they jump. A 10 lb pair to a 20 lb pair
+ * is a 100% load increase with nothing in between, so the engine has to know
+ * the actual discrete set of weights it can ask for rather than assuming it
+ * can add a little more.
+ */
+export interface Gym {
+  id: GymId;
+  name: string;
+  /** Dumbbell weights physically present, e.g. [10, 20, 30]. */
+  dumbbells: number[];
+  /** False when only single dumbbells are owned — forces unilateral loading. */
+  dumbbellsPaired: boolean;
+  barbell?: BarInventory;
+  ezBar?: BarInventory;
+  /** Kettlebell weights physically present. */
+  kettlebells: number[];
+  equipment: Equipment[];
+}
+
+/* ------------------------------------------------------------------ *
+ * User profile
+ * ------------------------------------------------------------------ */
+
 export interface UserProfile {
   bodyweight: number;
   level: ExperienceLevel;
-  availableEquipment: Equipment[];
-  /**
-   * Real increments of the user's adjustable dumbbells. A program that says
-   * "add 2.5 lb" to someone whose dumbbells jump in 5s is simply broken.
-   */
-  dumbbellIncrement: number;
+  /** Every gym the user trains in. The active one is chosen per session. */
+  gyms: Gym[];
+  /** Which gym today's session is being built for. */
+  activeGymId: GymId;
   flaggedJoints: Joint[];
   /** Highest impact level currently unlocked. Earned, not chosen. */
   impactCeiling: ImpactLevel;
@@ -380,4 +432,9 @@ export interface UserProfile {
   sessionMinutes: number;
   /** Drives the countdown and Block 1's tuning. */
   goalDate?: number;
+}
+
+/** The gym the profile currently points at, with a safe fallback. */
+export function activeGym(profile: UserProfile): Gym {
+  return profile.gyms.find((g) => g.id === profile.activeGymId) ?? profile.gyms[0]!;
 }

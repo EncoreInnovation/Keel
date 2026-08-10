@@ -13,10 +13,10 @@ import {
   applyDeload,
   epley1RM,
   nextPrescription,
-  roundToIncrement,
   updateE1RM,
 } from '../src/engine/overload';
 import { asymmetryFor, overallGap, sideOrder } from '../src/engine/asymmetry';
+import { DENSE_LOADS, SPARSE_LOADS, testProfile } from './support/profile';
 import type { Exercise, PrescribedSet, SetLog, Slot, UserProfile } from '../src/engine/types';
 
 const T0 = 1_700_000_000_000;
@@ -33,16 +33,7 @@ const slot: Slot = {
   locked: false,
 };
 
-const profile: UserProfile = {
-  bodyweight: 292,
-  level: 'novice',
-  availableEquipment: ['bodyweight', 'dumbbell', 'band', 'mat', 'bench', 'pullupBar', 'wall', 'chair', 'suspension'],
-  dumbbellIncrement: 5,
-  flaggedJoints: [],
-  impactCeiling: 'low',
-  daysPerWeek: 4,
-  sessionMinutes: 40,
-};
+const profile: UserProfile = testProfile();
 
 function set(over: Partial<SetLog> = {}): SetLog {
   return {
@@ -92,10 +83,73 @@ describe('updateE1RM', () => {
   });
 });
 
-describe('roundToIncrement', () => {
-  it('snaps to the increments the user actually owns', () => {
-    expect(roundToIncrement(42.5, 5)).toBe(45);
-    expect(roundToIncrement(41, 5)).toBe(40);
+describe('nextPrescription on a sparse rack — the fixed-dumbbell problem', () => {
+  // The home rack is [10, 20, 30]. Every jump is enormous, so "cleared the
+  // range" must NOT mean "add weight" the way it would in a commercial gym.
+  const sparseAttempt = (reps: number, rpe: number, weight: number) =>
+    attempt('s1', T0, reps, rpe).map((s) => ({ ...s, weight }));
+
+  it('refuses a 100% load jump and adds reps instead', () => {
+    const result = nextPrescription({
+      slot,
+      lastAttempt: sparseAttempt(12, 7.5, 10),
+      profile,
+      loadable: true,
+      achievable: SPARSE_LOADS,
+    });
+    expect(result.weight).toBe(10);
+    expect(result.repTarget).toBeGreaterThan(slot.repMax);
+    expect(result.rationale).toMatch(/jump|reps/i);
+  });
+
+  it('does take the jump when the next weight is a sane step', () => {
+    const result = nextPrescription({
+      slot,
+      lastAttempt: attempt('s1', T0, 12, 7.5),
+      profile,
+      loadable: true,
+      achievable: DENSE_LOADS,
+    });
+    expect(result.weight).toBeGreaterThan(50);
+    expect(result.repTarget).toBe(slot.repMin);
+  });
+
+  it('adds reps at the top of the rack rather than inventing a heavier weight', () => {
+    const result = nextPrescription({
+      slot,
+      lastAttempt: sparseAttempt(12, 7.5, 30),
+      profile,
+      loadable: true,
+      achievable: SPARSE_LOADS,
+    });
+    expect(result.weight).toBe(30);
+    expect(SPARSE_LOADS).toContain(result.weight);
+    expect(result.rationale).toMatch(/heaviest/i);
+  });
+
+  it('caps the rep climb and calls for a harder variation instead of endless reps', () => {
+    const maxed = slot.repMax + 6;
+    const result = nextPrescription({
+      slot,
+      lastAttempt: sparseAttempt(maxed, 7.5, 30),
+      profile,
+      loadable: true,
+      achievable: SPARSE_LOADS,
+    });
+    expect(result.repTarget).toBeLessThanOrEqual(maxed);
+    expect(result.rationale).toMatch(/harder/i);
+  });
+
+  it('still backs off to a real weight after a grinder', () => {
+    const result = nextPrescription({
+      slot,
+      lastAttempt: sparseAttempt(6, 9.5, 20),
+      profile,
+      loadable: true,
+      achievable: SPARSE_LOADS,
+    });
+    expect(result.weight).toBe(10);
+    expect(SPARSE_LOADS).toContain(result.weight);
   });
 });
 
@@ -106,6 +160,7 @@ describe('nextPrescription — double progression', () => {
       lastAttempt: attempt('s1', T0, 12, 7.5),
       profile,
       loadable: true,
+      achievable: DENSE_LOADS,
     });
     expect(result.weight).toBeGreaterThan(50);
     expect(result.repTarget).toBe(slot.repMin);
@@ -117,6 +172,7 @@ describe('nextPrescription — double progression', () => {
       lastAttempt: attempt('s1', T0, 10, 8),
       profile,
       loadable: true,
+      achievable: DENSE_LOADS,
     });
     expect(result.weight).toBe(50);
     expect(result.repTarget).toBe(11);
@@ -128,6 +184,7 @@ describe('nextPrescription — double progression', () => {
       lastAttempt: attempt('s1', T0, 6, 9),
       profile,
       loadable: true,
+      achievable: DENSE_LOADS,
     });
     expect(result.weight).toBeLessThan(50);
   });
@@ -138,6 +195,7 @@ describe('nextPrescription — double progression', () => {
       lastAttempt: attempt('s1', T0, 10, 9.5),
       profile,
       loadable: true,
+      achievable: DENSE_LOADS,
     });
     expect(result.weight).toBeLessThan(50);
   });
@@ -148,6 +206,7 @@ describe('nextPrescription — double progression', () => {
       lastAttempt: attempt('s1', T0, 12, 9.5),
       profile,
       loadable: true,
+      achievable: DENSE_LOADS,
     });
     expect(result.weight).toBeLessThanOrEqual(50);
   });
@@ -158,6 +217,7 @@ describe('nextPrescription — double progression', () => {
       lastAttempt: attempt('s1', T0, 10, 8).map((s) => ({ ...s, weight: 0 })),
       profile,
       loadable: false,
+      achievable: [],
     });
     expect(result.weight).toBe(0);
     expect(result.repTarget).toBe(11);
@@ -171,40 +231,40 @@ describe('adjustRemainingSets — in-session autoregulation', () => {
   ];
 
   it('nudges up after a clear overshoot at low RPE', () => {
-    const out = adjustRemainingSets(set({ reps: 14, rpe: 7 }), remaining, slot, profile, 0);
+    const out = adjustRemainingSets(set({ reps: 14, rpe: 7 }), remaining, slot, DENSE_LOADS, 0);
     expect(out.action).toBe('increase');
     expect(out.remaining[0]!.weight).toBe(55);
   });
 
   it('holds when the set landed on target', () => {
-    expect(adjustRemainingSets(set({ reps: 10, rpe: 8 }), remaining, slot, profile, 0).action).toBe(
+    expect(adjustRemainingSets(set({ reps: 10, rpe: 8 }), remaining, slot, DENSE_LOADS, 0).action).toBe(
       'hold',
     );
   });
 
   it('backs off after a grinder', () => {
-    const out = adjustRemainingSets(set({ reps: 10, rpe: 9.5 }), remaining, slot, profile, 0);
+    const out = adjustRemainingSets(set({ reps: 10, rpe: 9.5 }), remaining, slot, DENSE_LOADS, 0);
     expect(out.action).toBe('decrease');
     expect(out.remaining[0]!.weight).toBeLessThan(50);
   });
 
   it('backs off when reps fall well short', () => {
-    expect(adjustRemainingSets(set({ reps: 5, rpe: 8 }), remaining, slot, profile, 0).action).toBe(
+    expect(adjustRemainingSets(set({ reps: 5, rpe: 8 }), remaining, slot, DENSE_LOADS, 0).action).toBe(
       'decrease',
     );
   });
 
   it('offers a regression after two consecutive misses instead of grinding on', () => {
-    const out = adjustRemainingSets(set({ reps: 4, rpe: 10 }), remaining, slot, profile, 2);
+    const out = adjustRemainingSets(set({ reps: 4, rpe: 10 }), remaining, slot, DENSE_LOADS, 2);
     expect(out.action).toBe('offerRegression');
   });
 
   it('never adjusts past the last set', () => {
-    expect(adjustRemainingSets(set({ reps: 14, rpe: 6 }), [], slot, profile, 0).action).toBe('hold');
+    expect(adjustRemainingSets(set({ reps: 14, rpe: 6 }), [], slot, DENSE_LOADS, 0).action).toBe('hold');
   });
 
   it('adjusts by a bounded amount — it nudges, it does not rewrite', () => {
-    const out = adjustRemainingSets(set({ reps: 20, rpe: 6 }), remaining, slot, profile, 0);
+    const out = adjustRemainingSets(set({ reps: 20, rpe: 6 }), remaining, slot, DENSE_LOADS, 0);
     expect(out.remaining[0]!.weight).toBeLessThanOrEqual(55);
   });
 });
@@ -219,14 +279,14 @@ describe('applyDeload', () => {
   }));
 
   it('cuts volume and intensity together', () => {
-    const out = applyDeload(sets, 5);
+    const out = applyDeload(sets, DENSE_LOADS);
     expect(out.length).toBeLessThan(sets.length);
     expect(out[0]!.weight).toBeLessThan(100);
     expect(out[0]!.targetRpe).toBeLessThanOrEqual(7);
   });
 
   it('always leaves at least one set — a deload is not a rest day', () => {
-    expect(applyDeload([sets[0]!], 5).length).toBe(1);
+    expect(applyDeload([sets[0]!], DENSE_LOADS).length).toBe(1);
   });
 });
 

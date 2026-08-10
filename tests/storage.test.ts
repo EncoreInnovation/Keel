@@ -39,6 +39,7 @@ import {
   type SessionRecord,
 } from '../src/storage/repository';
 import type { Block, ConditioningLog, PillarLog, PostureLog, SetLog, UserProfile } from '../src/engine/types';
+import { TEST_GYM } from './support/profile';
 
 beforeEach(async () => {
   await clear(keelStore);
@@ -77,8 +78,8 @@ function makeBlock(over: Partial<Block> = {}): Block {
 const PROFILE: UserProfile = {
   bodyweight: 292,
   level: 'novice',
-  availableEquipment: ['bodyweight', 'dumbbell'],
-  dumbbellIncrement: 5,
+  gyms: [TEST_GYM],
+  activeGymId: 'home',
   flaggedJoints: [],
   impactCeiling: 'low',
   daysPerWeek: 4,

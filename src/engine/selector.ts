@@ -12,6 +12,7 @@
  */
 
 import { impactAtOrBelow, primaryRecovery } from './recovery';
+import { activeGym } from './types';
 import type {
   Equipment,
   Exercise,
@@ -70,7 +71,10 @@ export function passesHardFilters(
   ctx: SelectionContext,
   rejected?: FilterReason[],
 ): boolean {
-  const available = new Set<Equipment>(ctx.profile.availableEquipment);
+  // Equipment comes from the gym being trained in today, not the user — this
+  // is what lets the same profile produce a band press at home and a cable
+  // fly in the apartment gym without any other code knowing about locations.
+  const available = new Set<Equipment>(activeGym(ctx.profile).equipment);
   if (!exercise.equipment.every((e) => available.has(e))) {
     rejected?.push({ exerciseId: exercise.id, reason: 'equipment' });
     return false;

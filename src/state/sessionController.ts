@@ -21,8 +21,10 @@ import {
   type FatigueState,
 } from '../engine/recovery';
 import { createBlock, CRUISE_BLOCK_DAYS, generateSession, nextDay } from '../engine/blocks';
+import { achievableLoads } from '../engine/loading';
 import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
 import type { SelectionContext } from '../engine/selector';
+import { activeGym } from '../engine/types';
 import type {
   Block,
   ConditioningLog,
@@ -266,7 +268,8 @@ export async function logSet(sessionId: string, input: LogSetInput): Promise<Log
   );
   const consecutiveMisses = countConsecutiveMisses(priorSets, slot);
 
-  const adjustment = adjustRemainingSets(entry, remaining, slot, profile, consecutiveMisses);
+  const achievable = achievableLoads(exercise.exercise, activeGym(profile));
+  const adjustment = adjustRemainingSets(entry, remaining, slot, achievable, consecutiveMisses);
 
   const updatedSets = [
     ...exercise.sets.filter((s) => s.setIndex <= setIndex),

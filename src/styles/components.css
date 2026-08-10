@@ -828,6 +828,28 @@
   padding: 0 var(--s4);
 }
 
+.settings-plates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+}
+
+.settings-plate {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--fs-body);
+  color: var(--text-dim);
+}
+
+.settings-plate .settings-input {
+  max-width: 4.5rem;
+}
+
+.settings-plate__unit {
+  font-size: var(--fs-small, 0.8125rem);
+}
+
 .coach-note {
   width: 100%;
   border-radius: var(--radius);
