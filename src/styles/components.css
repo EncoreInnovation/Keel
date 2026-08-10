@@ -764,3 +764,66 @@
   border: 1px solid var(--line);
   font-size: var(--fs-sm);
 }
+
+/* ---------------- Settings / Conditioning log ---------------- */
+
+.settings,
+.conditioning-log {
+  justify-content: flex-start;
+}
+
+.settings-section {
+  width: 100%;
+  max-width: 22rem;
+  margin-bottom: var(--s5);
+  text-align: left;
+}
+
+.settings-section--locked {
+  opacity: 0.7;
+}
+
+.settings-section__title {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin: 0 0 var(--s3);
+  font-weight: 500;
+}
+
+.settings-section__hint {
+  font-size: var(--fs-sm);
+  color: var(--text-faint);
+  margin: 0 0 var(--s3);
+}
+
+.settings-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.chip--active {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.chip--warn.chip--active {
+  background: var(--warn);
+  border-color: var(--warn);
+  color: var(--text);
+}
+
+.settings-input {
+  min-height: var(--tap);
+  width: 100%;
+  max-width: 10rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-title);
+  padding: 0 var(--s4);
+}

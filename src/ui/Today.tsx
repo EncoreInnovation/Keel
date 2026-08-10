@@ -26,6 +26,8 @@ export interface TodayProps {
   onOpenRecovery: () => void;
   onOpenProgress: () => void;
   onOpenPosture: () => void;
+  onOpenConditioning: () => void;
+  onOpenSettings: () => void;
 }
 
 export function Today({
@@ -38,6 +40,8 @@ export function Today({
   onOpenRecovery,
   onOpenProgress,
   onOpenPosture,
+  onOpenConditioning,
+  onOpenSettings,
 }: TodayProps) {
   const label = DAY_LABEL[prescription.dayId] ?? prescription.dayName;
 
@@ -76,6 +80,12 @@ export function Today({
         </button>
         <button className="btn btn--text" onClick={onOpenPosture}>
           Posture
+        </button>
+        <button className="btn btn--text" onClick={onOpenConditioning}>
+          Log activity
+        </button>
+        <button className="btn btn--text" onClick={onOpenSettings}>
+          Settings
         </button>
       </div>
     </div>

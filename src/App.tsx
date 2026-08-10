@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { CATALOG } from '../catalog/exercises';
 import { Asymmetry } from './ui/Asymmetry';
 import { ArrivePhase } from './ui/ArrivePhase';
+import { ConditioningLogForm } from './ui/ConditioningLogForm';
 import { DownshiftPhase } from './ui/DownshiftPhase';
 import { PillarPlayer } from './ui/PillarPlayer';
 import { PostureHistory } from './ui/PostureHistory';
@@ -16,6 +17,7 @@ import { PostureScan } from './ui/PostureScan';
 import { Progress } from './ui/Progress';
 import { RecoveryMap } from './ui/RecoveryMap';
 import { SessionPlayer } from './ui/SessionPlayer';
+import { Settings } from './ui/Settings';
 import { Setup } from './ui/Setup';
 import { Today } from './ui/Today';
 import { primeAudio } from './ui/audio';
@@ -39,7 +41,9 @@ type Screen =
   | 'recovery'
   | 'progress'
   | 'postureHistory'
-  | 'postureScan';
+  | 'postureScan'
+  | 'conditioning'
+  | 'settings';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -128,6 +132,8 @@ export default function App() {
         onOpenRecovery={() => setScreen('recovery')}
         onOpenProgress={() => setScreen('progress')}
         onOpenPosture={() => setScreen('postureHistory')}
+        onOpenConditioning={() => setScreen('conditioning')}
+        onOpenSettings={() => setScreen('settings')}
       />
     );
   }
@@ -159,6 +165,22 @@ export default function App() {
       <PostureScan
         onDone={() => setScreen('postureHistory')}
         onCancel={() => setScreen('postureHistory')}
+      />
+    );
+  }
+
+  if (screen === 'conditioning') {
+    return (
+      <ConditioningLogForm onSaved={() => setScreen('today')} onCancel={() => setScreen('today')} />
+    );
+  }
+
+  if (screen === 'settings') {
+    return (
+      <Settings
+        profile={profile}
+        onSaved={(updated) => setProfile(updated)}
+        onBack={() => setScreen('today')}
       />
     );
   }
