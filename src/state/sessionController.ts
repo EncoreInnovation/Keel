@@ -141,8 +141,20 @@ export async function ensureActiveBlock(catalog: Exercise[], profile: UserProfil
  * it fresh from current recovery state and persist it immediately, so a kill
  * one second later resumes the exact same prescription rather than
  * regenerating (and potentially drifting, since recovery keeps decaying).
+ *
+ * `readiness` (1-5, self-reported) only matters for a session being
+ * generated for the first time — it scales `volumeMultiplier` before the
+ * prescription is built, so it has to be collected *before* this call, not
+ * after. `hasSessionStartedToday` tells the caller whether that ship has
+ * already sailed (a resumed session's readiness was fixed when it was first
+ * generated) so the UI knows whether to ask.
  */
-export async function loadToday(catalog: Exercise[], profile: UserProfile, at: number): Promise<TodayState> {
+export async function loadToday(
+  catalog: Exercise[],
+  profile: UserProfile,
+  at: number,
+  readiness?: number,
+): Promise<TodayState> {
   const block = await ensureActiveBlock(catalog, profile, at);
 
   const [existingRecord, existingPrescription] = await Promise.all([
@@ -178,16 +190,22 @@ export async function loadToday(catalog: Exercise[], profile: UserProfile, at: n
     ctx,
     profile,
     history: sets,
-    volumeMultiplier: volumeMultiplier(load, undefined),
+    volumeMultiplier: volumeMultiplier(load, readiness),
   });
 
   const sessionId = `sess-${block.id}-${weekNumber}-${dayId}-${at}`;
   await repo.startSession(
-    { id: sessionId, blockId: block.id, weekNumber, dayId, startedAt: at },
+    { id: sessionId, blockId: block.id, weekNumber, dayId, startedAt: at, readiness },
     prescription,
   );
 
   return { block, prescription, sessionId, resumed: false };
+}
+
+/** Whether a session already exists for "today" — tells the UI whether it's too late to ask readiness. */
+export async function hasStartedTodaySession(): Promise<boolean> {
+  const [record, prescription] = await Promise.all([repo.getActiveSessionRecord(), repo.getActivePrescription()]);
+  return Boolean(record && prescription);
 }
 
 /* ------------------------------------------------------------------ *

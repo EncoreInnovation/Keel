@@ -1,22 +1,38 @@
 /**
- * 1-5 self-rated activation, captured before and after every pillar session
- * so the delta can be charted over time (Progress screen, Milestone 3). A
- * single tap, no scale to read — five buttons, low effort by design.
+ * A 1-5 self-rated scale — one tap, no slider to fuss with. Used for pillar
+ * activation ratings (before/after) and for the daily readiness check-in;
+ * both are "how are you feeling," just with different labels and different
+ * downstream consumers.
  */
 
 export interface ActivationRatingProps {
   prompt: string;
   onSelect: (value: number) => void;
+  labels?: [string, string, string, string, string];
 }
 
-const LABELS = ['Calm', 'Settled', 'Neutral', 'Wound up', 'Wired'];
+const ACTIVATION_LABELS: [string, string, string, string, string] = [
+  'Calm',
+  'Settled',
+  'Neutral',
+  'Wound up',
+  'Wired',
+];
 
-export function ActivationRating({ prompt, onSelect }: ActivationRatingProps) {
+export const READINESS_LABELS: [string, string, string, string, string] = [
+  'Wiped out',
+  'Low',
+  'Okay',
+  'Good',
+  'Fully charged',
+];
+
+export function ActivationRating({ prompt, onSelect, labels = ACTIVATION_LABELS }: ActivationRatingProps) {
   return (
     <div className="phase-screen">
       <div className="phase-screen__eyebrow">{prompt}</div>
       <div className="activation-rating">
-        {LABELS.map((label, i) => (
+        {labels.map((label, i) => (
           <button key={label} className="activation-rating__opt" onClick={() => onSelect(i + 1)}>
             <span className="activation-rating__num" data-numeric>
               {i + 1}

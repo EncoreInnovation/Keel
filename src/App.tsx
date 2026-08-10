@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { CATALOG } from '../catalog/exercises';
+import { ActivationRating, READINESS_LABELS } from './ui/ActivationRating';
 import { Asymmetry } from './ui/Asymmetry';
 import { ArrivePhase } from './ui/ArrivePhase';
 import { ConditioningLogForm } from './ui/ConditioningLogForm';
@@ -23,7 +24,12 @@ import { Today } from './ui/Today';
 import { primeAudio } from './ui/audio';
 import { acquireWakeLock, type WakeLockHandle } from './ui/wakeLock';
 import { PILLAR_SESSIONS } from './pillars/library';
-import { completeSession, loadToday, type TodayState } from './state/sessionController';
+import {
+  completeSession,
+  hasStartedTodaySession,
+  loadToday,
+  type TodayState,
+} from './state/sessionController';
 import { getProfile, saveProfile } from './storage/repository';
 import type { Exercise, PillarKind, UserProfile } from './engine/types';
 
@@ -32,6 +38,7 @@ const catalog = CATALOG as Exercise[];
 type Screen =
   | 'loading'
   | 'setup'
+  | 'readiness'
   | 'today'
   | 'arrive'
   | 'session'
@@ -60,14 +67,14 @@ export default function App() {
         return;
       }
       setProfile(stored);
-      await refreshToday(stored);
+      await goToTodayOrReadiness(stored);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function refreshToday(p: UserProfile) {
+  async function refreshToday(p: UserProfile, readiness?: number) {
     try {
-      const state = await loadToday(catalog, p, Date.now());
+      const state = await loadToday(catalog, p, Date.now(), readiness);
       setToday(state);
       setScreen('today');
     } catch (err) {
@@ -75,10 +82,30 @@ export default function App() {
     }
   }
 
+  /**
+   * A resumed session already had its readiness collected when it was first
+   * generated — no need to ask again. A brand-new one hasn't, so the
+   * readiness gate goes first: `volumeMultiplier` only sees readiness if
+   * it's known *before* the prescription is built, not after.
+   */
+  async function goToTodayOrReadiness(p: UserProfile) {
+    const started = await hasStartedTodaySession();
+    if (started) {
+      await refreshToday(p);
+    } else {
+      setScreen('readiness');
+    }
+  }
+
   async function handleSetupComplete(p: UserProfile) {
     await saveProfile(p);
     setProfile(p);
-    await refreshToday(p);
+    await goToTodayOrReadiness(p);
+  }
+
+  async function handleReadinessSelected(value: number) {
+    if (!profile) return;
+    await refreshToday(profile, value);
   }
 
   function handleStart() {
@@ -111,6 +138,16 @@ export default function App() {
 
   if (screen === 'setup') {
     return <Setup onComplete={handleSetupComplete} />;
+  }
+
+  if (screen === 'readiness') {
+    return (
+      <ActivationRating
+        prompt="How ready do you feel to train?"
+        labels={READINESS_LABELS}
+        onSelect={(v) => void handleReadinessSelected(v)}
+      />
+    );
   }
 
   if (!profile || !today) {
@@ -207,7 +244,7 @@ export default function App() {
         dayId={today.prescription.dayId}
         onComplete={async () => {
           await completeSession(Date.now());
-          await refreshToday(profile);
+          await goToTodayOrReadiness(profile);
         }}
       />
     );

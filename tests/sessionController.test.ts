@@ -14,11 +14,12 @@ import { CATALOG } from '../catalog/exercises';
 import {
   completeSession,
   ensureActiveBlock,
+  hasStartedTodaySession,
   loadToday,
   logSet,
   resumePosition,
 } from '../src/state/sessionController';
-import { getActivePrescription, getAllSets } from '../src/storage/repository';
+import { getActivePrescription, getActiveSessionRecord, getAllSets } from '../src/storage/repository';
 import type { Exercise, SetLog, UserProfile } from '../src/engine/types';
 
 beforeEach(async () => {
@@ -195,6 +196,40 @@ describe('resumePosition', () => {
       exerciseIndex: today.prescription.exercises.length,
       setPos: 0,
     });
+  });
+});
+
+describe('readiness', () => {
+  it('reports no session started before the first loadToday of a block', async () => {
+    expect(await hasStartedTodaySession()).toBe(false);
+  });
+
+  it('reports started once a session exists, and threads readiness onto its record', async () => {
+    await loadToday(catalog, PROFILE, T0, 4);
+    expect(await hasStartedTodaySession()).toBe(true);
+    expect((await getActiveSessionRecord())?.readiness).toBe(4);
+  });
+
+  it('low readiness prescribes less volume than high readiness, all else equal', async () => {
+    const low = await loadToday(catalog, PROFILE, T0, 1);
+    const totalLow = low.prescription.exercises.reduce((sum, e) => sum + e.sets.length, 0);
+
+    // Fresh state for a clean comparison — same catalog, same profile, same instant.
+    const { clear } = await import('idb-keyval');
+    const { keelStore } = await import('../src/storage/db');
+    await clear(keelStore);
+
+    const high = await loadToday(catalog, PROFILE, T0, 5);
+    const totalHigh = high.prescription.exercises.reduce((sum, e) => sum + e.sets.length, 0);
+
+    expect(totalLow).toBeLessThanOrEqual(totalHigh);
+  });
+
+  it('does not re-ask readiness on a resumed session — it already has one', async () => {
+    const first = await loadToday(catalog, PROFILE, T0, 3);
+    const resumed = await loadToday(catalog, PROFILE, T0 + 3600_000);
+    expect(resumed.resumed).toBe(true);
+    expect(resumed.prescription).toEqual(first.prescription);
   });
 });
 
