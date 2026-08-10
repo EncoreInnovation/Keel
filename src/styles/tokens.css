@@ -1,0 +1,142 @@
+/*
+ * KEEL design tokens.
+ *
+ * Governing rule: the interface chrome is monochrome. Colour is reserved
+ * exclusively for data — recovery state, progress, asymmetry. The moment
+ * colour leaks into buttons and headers, the whole thing reads as a sports
+ * app instead of an instrument.
+ */
+
+:root {
+  /* Ground and surfaces — near-black, separated by luminance not by borders. */
+  --bg: #08080a;
+  --surface: #101014;
+  --surface-2: #16161c;
+  --surface-3: #1d1d25;
+  --line: #22222a;
+  --line-strong: #32323d;
+
+  /* Text */
+  --text: #f2f2f5;
+  --text-dim: #8a8a96;
+  --text-faint: #56565f;
+
+  /* Platinum accent — primary actions only. Never decorative. */
+  --accent: #d6dce5;
+  --accent-press: #aeb6c2;
+  --on-accent: #08080a;
+
+  /* Data ramp. Cool = recovered/good, warm = fatigued/attention.
+     Used by the body map, recovery bars, and asymmetry charts. Nowhere else. */
+  --data-0: #4ad9c0; /* fully recovered */
+  --data-1: #6fd08c;
+  --data-2: #b8cc5e;
+  --data-3: #e8b04b;
+  --data-4: #e07a4a; /* heavily fatigued */
+  --data-muted: #3a4a52;
+
+  /* Signal — reserved for genuine warnings (pain flags, impact gate). */
+  --warn: #e0603f;
+
+  /* Typography */
+  --font-ui: 'Inter Tight', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui,
+    sans-serif;
+  --font-num: 'Inter Tight', 'Inter', system-ui, sans-serif;
+
+  --fs-micro: 0.6875rem;
+  --fs-sm: 0.8125rem;
+  --fs-body: 0.9375rem;
+  --fs-lg: 1.125rem;
+  --fs-title: 1.5rem;
+  --fs-display: 2.5rem;
+  --fs-numeral: 3.75rem;
+
+  --lh-tight: 1.1;
+  --lh-body: 1.5;
+
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.08em;
+
+  /* Space — 4px base */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.5rem;
+  --s6: 2rem;
+  --s7: 3rem;
+  --s8: 4rem;
+
+  --radius: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Touch target floor. Sessions happen with sweaty hands and no patience. */
+  --tap: 56px;
+
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* KEEL is a dark-only product by intent, not by omission. A light theme would
+   fight the nervous-system-downshift framing of the pillar work. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* Every numeral in this app sits in a column that updates live. Proportional
+   figures make those columns jitter, which reads as cheap. */
+input,
+button,
+.num,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
