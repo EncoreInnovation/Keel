@@ -18,6 +18,7 @@ export const STORAGE_KEYS = {
   blockHistory: 'block:history',
   sets: 'sets',
   activeSession: 'session:active',
+  activePrescription: 'session:active:prescription',
   completedSessions: 'sessions:completed',
   conditioning: 'conditioning',
 } as const;

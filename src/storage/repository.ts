@@ -15,7 +15,14 @@
 
 import { deleteKey, readKey, writeKey, STORAGE_KEYS } from './db';
 import { runExclusive } from './mutex';
-import type { Block, ConditioningLog, SessionLog, SetLog, UserProfile } from '../engine/types';
+import type {
+  Block,
+  ConditioningLog,
+  PrescribedSession,
+  SessionLog,
+  SetLog,
+  UserProfile,
+} from '../engine/types';
 
 export const SCHEMA_VERSION = 1;
 
@@ -120,6 +127,21 @@ export function getActiveSessionRecord(): Promise<SessionRecord | undefined> {
 }
 
 /**
+ * The player's live view of today's session: which exercise, which sets, at
+ * what targets. Persisted separately from the lean `SessionRecord` so that
+ * resuming after a kill shows the *current* (possibly autoregulated) targets
+ * rather than re-deriving a session from scratch — regeneration is only ever
+ * for starting a session that doesn't exist yet.
+ */
+export function getActivePrescription(): Promise<PrescribedSession | undefined> {
+  return readKey<PrescribedSession>(STORAGE_KEYS.activePrescription);
+}
+
+export function saveActivePrescription(prescription: PrescribedSession): Promise<void> {
+  return runExclusive('session', () => writeKey(STORAGE_KEYS.activePrescription, prescription));
+}
+
+/**
  * Reconstruct the in-progress session, joining its record with every set
  * logged under its id. This is the exact call the player makes on load to
  * decide whether it's resuming something or starting fresh.
@@ -136,8 +158,11 @@ export async function getActiveSession(): Promise<SessionLog | undefined> {
  * caller is responsible for having resolved or abandoned a prior one first,
  * since KEEL only ever runs one session at a time by design.
  */
-export function startSession(record: SessionRecord): Promise<void> {
-  return runExclusive('session', () => writeKey(STORAGE_KEYS.activeSession, record));
+export function startSession(record: SessionRecord, prescription: PrescribedSession): Promise<void> {
+  return runExclusive('session', async () => {
+    await writeKey(STORAGE_KEYS.activeSession, record);
+    await writeKey(STORAGE_KEYS.activePrescription, prescription);
+  });
 }
 
 export async function updateActiveSessionMeta(
@@ -165,6 +190,7 @@ export async function completeActiveSession(completedAt: number): Promise<Sessio
     const completed = (await readKey<SessionRecord[]>(STORAGE_KEYS.completedSessions)) ?? [];
     await writeKey(STORAGE_KEYS.completedSessions, [...completed, finished]);
     await deleteKey(STORAGE_KEYS.activeSession);
+    await deleteKey(STORAGE_KEYS.activePrescription);
 
     const allSets = await readKey<SetLog[]>(STORAGE_KEYS.sets);
     return { ...finished, sets: (allSets ?? []).filter((s) => s.sessionId === finished.id) };
@@ -200,21 +226,31 @@ export interface KeelExport {
   blockHistory: Block[];
   sets: SetLog[];
   activeSession?: SessionRecord;
+  activePrescription?: PrescribedSession;
   completedSessions: SessionRecord[];
   conditioning: ConditioningLog[];
 }
 
 export async function exportAll(now: number): Promise<KeelExport> {
-  const [profile, activeBlock, blockHistory, sets, activeSession, completedSessions, conditioning] =
-    await Promise.all([
-      getProfile(),
-      getActiveBlock(),
-      getBlockHistory(),
-      getAllSets(),
-      getActiveSessionRecord(),
-      getCompletedSessions(),
-      getConditioningLogs(),
-    ]);
+  const [
+    profile,
+    activeBlock,
+    blockHistory,
+    sets,
+    activeSession,
+    activePrescription,
+    completedSessions,
+    conditioning,
+  ] = await Promise.all([
+    getProfile(),
+    getActiveBlock(),
+    getBlockHistory(),
+    getAllSets(),
+    getActiveSessionRecord(),
+    getActivePrescription(),
+    getCompletedSessions(),
+    getConditioningLogs(),
+  ]);
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -224,6 +260,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     blockHistory,
     sets,
     activeSession,
+    activePrescription,
     completedSessions,
     conditioning,
   };
@@ -255,6 +292,7 @@ export async function importAll(data: KeelExport): Promise<void> {
     writeKey(STORAGE_KEYS.blockHistory, data.blockHistory),
     writeKey(STORAGE_KEYS.sets, data.sets),
     setOrClear(STORAGE_KEYS.activeSession, data.activeSession),
+    setOrClear(STORAGE_KEYS.activePrescription, data.activePrescription),
     writeKey(STORAGE_KEYS.completedSessions, data.completedSessions),
     writeKey(STORAGE_KEYS.conditioning, data.conditioning),
   ]);

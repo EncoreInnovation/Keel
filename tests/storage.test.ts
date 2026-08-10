@@ -15,12 +15,14 @@ import {
   appendSets,
   completeActiveSession,
   exportAll,
+  getActivePrescription,
   getActiveSession,
   getActiveSessionRecord,
   getAllSets,
   getCompletedSessionsForBlock,
   getConditioningLogs,
   importAll,
+  saveActivePrescription,
   saveProfile,
   getProfile,
   startNewBlock,
@@ -131,13 +133,40 @@ describe('session lifecycle', () => {
     startedAt: T0,
   };
 
+  const prescription = {
+    blockId: 'block-1',
+    weekNumber: 1,
+    dayId: 'a',
+    dayName: 'Lower · Squat',
+    isDeload: false,
+    exercises: [],
+    estimatedMinutes: 35,
+  };
+
   it('has no active session before one starts', async () => {
     expect(await getActiveSessionRecord()).toBeUndefined();
     expect(await getActiveSession()).toBeUndefined();
+    expect(await getActivePrescription()).toBeUndefined();
+  });
+
+  it('persists the prescription alongside the record, and clears both on completion', async () => {
+    await startSession(record, prescription);
+    expect(await getActivePrescription()).toEqual(prescription);
+
+    await completeActiveSession(T0 + 1000);
+    expect(await getActivePrescription()).toBeUndefined();
+  });
+
+  it('an adjusted prescription survives being re-read, as if the app were killed and reopened', async () => {
+    await startSession(record, prescription);
+    const adjusted = { ...prescription, estimatedMinutes: 20 };
+    await saveActivePrescription(adjusted);
+
+    expect(await getActivePrescription()).toEqual(adjusted);
   });
 
   it('resumes an in-progress session with exactly the sets logged so far', async () => {
-    await startSession(record);
+    await startSession(record, prescription);
     await appendSet(makeSet({ id: 'a', sessionId: 'sess-1', setIndex: 0 }));
     await appendSet(makeSet({ id: 'b', sessionId: 'sess-1', setIndex: 1 }));
     // A set from some other session must never bleed into this one.
@@ -149,7 +178,7 @@ describe('session lifecycle', () => {
   });
 
   it('completing a session clears the active pointer and files it as completed', async () => {
-    await startSession(record);
+    await startSession(record, prescription);
     await appendSet(makeSet({ id: 'a', sessionId: 'sess-1' }));
 
     const finished = await completeActiveSession(T0 + 60_000);
@@ -168,11 +197,11 @@ describe('session lifecycle', () => {
   });
 
   it('lists completed sessions scoped to one block', async () => {
-    await startSession({ ...record, id: 's1', blockId: 'block-1' });
+    await startSession({ ...record, id: 's1', blockId: 'block-1' }, prescription);
     await completeActiveSession(T0 + 1000);
-    await startSession({ ...record, id: 's2', blockId: 'block-2' });
+    await startSession({ ...record, id: 's2', blockId: 'block-2' }, prescription);
     await completeActiveSession(T0 + 2000);
-    await startSession({ ...record, id: 's3', blockId: 'block-1' });
+    await startSession({ ...record, id: 's3', blockId: 'block-1' }, prescription);
     await completeActiveSession(T0 + 3000);
 
     const block1 = await getCompletedSessionsForBlock('block-1');

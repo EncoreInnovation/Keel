@@ -1,0 +1,299 @@
+/**
+ * Session orchestration.
+ *
+ * Everything in `src/engine` is pure and everything in `src/storage` is a
+ * thin IndexedDB wrapper; neither knows the other exists. This module is the
+ * seam — it builds the engine's `SelectionContext` from what's on disk,
+ * decides whether today's session already exists (resume) or needs
+ * generating (fresh), and turns a logged set into the three-timescale
+ * autoregulation the plan specifies: this exercise's remaining sets, this
+ * session's targets, and the persisted record either way.
+ */
+
+import {
+  applyConditioning,
+  applySet,
+  earnedImpactCeiling,
+  initialFatigueState,
+  recoveryAt,
+  systemicLoad,
+  volumeMultiplier,
+  type FatigueState,
+} from '../engine/recovery';
+import { createBlock, CRUISE_BLOCK_DAYS, generateSession, nextDay } from '../engine/blocks';
+import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
+import type { SelectionContext } from '../engine/selector';
+import type {
+  Block,
+  ConditioningLog,
+  Exercise,
+  PrescribedExercise,
+  PrescribedSession,
+  SetLog,
+  Side,
+  Slot,
+  UserProfile,
+} from '../engine/types';
+import * as repo from '../storage/repository';
+
+/* ------------------------------------------------------------------ *
+ * Rebuilding fatigue state from the flat log
+ * ------------------------------------------------------------------ */
+
+/**
+ * There is no cached fatigue state on disk — it is cheap to fold the whole
+ * history back into one on every load, and doing it this way means the
+ * number displayed can never drift from the sets and conditioning it was
+ * computed from. At this app's scale (a few thousand sets a year) this is
+ * comfortably sub-millisecond work, not a real cost.
+ */
+export function rebuildFatigue(
+  sets: SetLog[],
+  conditioning: ConditioningLog[],
+  catalogById: Map<string, Exercise>,
+  at: number,
+): FatigueState {
+  const events: { at: number; apply: (s: FatigueState) => FatigueState }[] = [];
+
+  for (const set of sets) {
+    const exercise = catalogById.get(set.exerciseId);
+    if (!exercise) continue;
+    events.push({ at: set.completedAt, apply: (s) => applySet(s, set, exercise) });
+  }
+  for (const log of conditioning) {
+    events.push({ at: log.startedAt, apply: (s) => applyConditioning(s, log) });
+  }
+  events.sort((a, b) => a.at - b.at);
+
+  let state = initialFatigueState(events[0]?.at ?? at);
+  for (const event of events) state = event.apply(state);
+  return state;
+}
+
+export function buildSelectionContext(
+  profile: UserProfile,
+  sets: SetLog[],
+  fatigue: FatigueState,
+  at: number,
+  weeksTrained: number,
+): SelectionContext {
+  const recentExerciseIds = [...new Set([...sets].sort((a, b) => b.completedAt - a.completedAt).map((s) => s.exerciseId))];
+
+  const historyCounts = new Map<string, number>();
+  const seenPerSession = new Set<string>();
+  for (const s of sets) {
+    const key = `${s.sessionId}:${s.exerciseId}`;
+    if (seenPerSession.has(key)) continue;
+    seenPerSession.add(key);
+    historyCounts.set(s.exerciseId, (historyCounts.get(s.exerciseId) ?? 0) + 1);
+  }
+
+  const earnedCeiling = earnedImpactCeiling(fatigue.jointLoad, weeksTrained);
+  const ceilingRank = { none: 0, low: 1, moderate: 2, high: 3 } as const;
+  const impactCeiling =
+    ceilingRank[profile.impactCeiling] < ceilingRank[earnedCeiling] ? profile.impactCeiling : earnedCeiling;
+
+  return {
+    recovery: recoveryAt(fatigue, at),
+    profile,
+    impactCeiling,
+    recentExerciseIds,
+    historyCounts,
+    painFlags: new Set(profile.flaggedJoints),
+  };
+}
+
+/* ------------------------------------------------------------------ *
+ * Today
+ * ------------------------------------------------------------------ */
+
+export interface TodayState {
+  block: Block;
+  /** The prescribed session for today — resumed as-is, or freshly generated. */
+  prescription: PrescribedSession;
+  /** True when this session already has at least one logged set. */
+  resumed: boolean;
+}
+
+/**
+ * Get or create the active block. A fresh block is only ever started when
+ * none exists — advancing to the next block is a deliberate action, not
+ * something that happens quietly during a normal "what's today" load.
+ */
+export async function ensureActiveBlock(catalog: Exercise[], profile: UserProfile, at: number): Promise<Block> {
+  const existing = await repo.getActiveBlock();
+  if (existing) return existing;
+
+  const sets = await repo.getAllSets();
+  const catalogById = new Map(catalog.map((e) => [e.id, e]));
+  const fatigue = rebuildFatigue(sets, await repo.getConditioningLogs(), catalogById, at);
+  const ctx = buildSelectionContext(profile, sets, fatigue, at, 0);
+
+  const block = createBlock('block-1', 'Cruise Block', CRUISE_BLOCK_DAYS, catalog, ctx, at);
+  await repo.startNewBlock(block);
+  return block;
+}
+
+/**
+ * Resume today's session if one is already in progress; otherwise generate
+ * it fresh from current recovery state and persist it immediately, so a kill
+ * one second later resumes the exact same prescription rather than
+ * regenerating (and potentially drifting, since recovery keeps decaying).
+ */
+export async function loadToday(catalog: Exercise[], profile: UserProfile, at: number): Promise<TodayState> {
+  const block = await ensureActiveBlock(catalog, profile, at);
+
+  const existingPrescription = await repo.getActivePrescription();
+  if (existingPrescription && existingPrescription.blockId === block.id) {
+    return { block, prescription: existingPrescription, resumed: true };
+  }
+
+  const sets = await repo.getAllSets();
+  const conditioning = await repo.getConditioningLogs();
+  const catalogById = new Map(catalog.map((e) => [e.id, e]));
+  const fatigue = rebuildFatigue(sets, conditioning, catalogById, at);
+
+  const weeksTrained = Math.floor((at - block.startedAt) / (7 * 86_400_000));
+  const ctx = buildSelectionContext(profile, sets, fatigue, at, weeksTrained);
+
+  const completed = await repo.getCompletedSessionsForBlock(block.id);
+  const { weekNumber, dayId } = nextDay(block, completed);
+
+  const load = systemicLoad(
+    sets.map((s) => ({ set: s, exercise: catalogById.get(s.exerciseId)! })).filter((x) => x.exercise),
+    conditioning,
+    at,
+  );
+
+  const prescription = generateSession({
+    block,
+    weekNumber,
+    dayId,
+    catalog,
+    ctx,
+    profile,
+    history: sets,
+    volumeMultiplier: volumeMultiplier(load, undefined),
+  });
+
+  const sessionId = `sess-${block.id}-${weekNumber}-${dayId}-${at}`;
+  await repo.startSession(
+    { id: sessionId, blockId: block.id, weekNumber, dayId, startedAt: at },
+    prescription,
+  );
+
+  return { block, prescription, resumed: false };
+}
+
+/* ------------------------------------------------------------------ *
+ * Logging a set — the interaction contract from the plan
+ * ------------------------------------------------------------------ */
+
+export interface LogSetInput {
+  prescription: PrescribedSession;
+  slot: Slot;
+  exerciseIndex: number;
+  setIndex: number;
+  side: Side;
+  weight: number;
+  reps: number;
+  rpe: number;
+  at: number;
+  profile: UserProfile;
+}
+
+export interface LogSetResult {
+  prescription: PrescribedSession;
+  adjustment: InSessionAdjustment;
+}
+
+/**
+ * One DONE tap, fully handled: the set is durably written first — before any
+ * adjustment math runs — then the remaining sets on this exercise are
+ * re-tuned per the in-session autoregulation table, and the updated
+ * prescription is persisted so a resume shows the adjusted targets, not the
+ * stale original ones.
+ */
+export async function logSet(sessionId: string, input: LogSetInput): Promise<LogSetResult> {
+  const { prescription, slot, exerciseIndex, setIndex, side, weight, reps, rpe, at, profile } = input;
+  const exercise = prescription.exercises[exerciseIndex];
+  if (!exercise) throw new Error(`No exercise at index ${exerciseIndex}`);
+
+  const entry: SetLog = {
+    id: `set-${sessionId}-${exercise.slotId}-${setIndex}-${side}-${at}`,
+    sessionId,
+    exerciseId: exercise.exercise.id,
+    setIndex,
+    side,
+    weight,
+    reps,
+    rpe,
+    completedAt: at,
+  };
+
+  // Durability first: this write must land before anything downstream reads
+  // "what have I done in this session so far."
+  await repo.appendSet(entry);
+
+  const remaining = exercise.sets.filter((s) => s.setIndex > setIndex);
+  const priorSets = await repo.getAllSets().then((all) =>
+    all
+      .filter((s) => s.sessionId === sessionId && s.exerciseId === exercise.exercise.id)
+      .sort((a, b) => b.completedAt - a.completedAt),
+  );
+  const consecutiveMisses = countConsecutiveMisses(priorSets, slot);
+
+  const adjustment = adjustRemainingSets(entry, remaining, slot, profile, consecutiveMisses);
+
+  const updatedSets = [
+    ...exercise.sets.filter((s) => s.setIndex <= setIndex),
+    ...adjustment.remaining,
+  ];
+  const updatedExercise: PrescribedExercise = { ...exercise, sets: updatedSets };
+  const updatedExercises = prescription.exercises.map((e, i) => (i === exerciseIndex ? updatedExercise : e));
+  const updatedPrescription: PrescribedSession = { ...prescription, exercises: updatedExercises };
+
+  await repo.saveActivePrescription(updatedPrescription);
+
+  return { prescription: updatedPrescription, adjustment };
+}
+
+function countConsecutiveMisses(recentSetsNewestFirst: SetLog[], slot: Slot): number {
+  let count = 0;
+  for (const set of recentSetsNewestFirst) {
+    if (set.skipped) continue;
+    if (set.reps < slot.repMin - 2 || set.rpe >= 9.5) count += 1;
+    else break;
+  }
+  return count;
+}
+
+/** Skip a set (or a whole exercise) with an optional reason — a first-class, not-nagged-about action. */
+export async function skipSet(
+  sessionId: string,
+  exercise: PrescribedExercise,
+  setIndex: number,
+  side: Side,
+  reason: SetLog['skipReason'],
+  at: number,
+): Promise<void> {
+  const entry: SetLog = {
+    id: `skip-${sessionId}-${exercise.slotId}-${setIndex}-${side}-${at}`,
+    sessionId,
+    exerciseId: exercise.exercise.id,
+    setIndex,
+    side,
+    weight: 0,
+    reps: 0,
+    rpe: 0,
+    completedAt: at,
+    skipped: true,
+    skipReason: reason,
+  };
+  await repo.appendSet(entry);
+}
+
+/** Finish the session. */
+export function completeSession(at: number) {
+  return repo.completeActiveSession(at);
+}
