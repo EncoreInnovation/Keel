@@ -111,7 +111,9 @@ export interface TodayState {
   block: Block;
   /** The prescribed session for today — resumed as-is, or freshly generated. */
   prescription: PrescribedSession;
-  /** True when this session already has at least one logged set. */
+  /** The id every `logSet`/`skipSet` call for this session must use. */
+  sessionId: string;
+  /** True when this session already existed on disk before this call. */
   resumed: boolean;
 }
 
@@ -143,9 +145,12 @@ export async function ensureActiveBlock(catalog: Exercise[], profile: UserProfil
 export async function loadToday(catalog: Exercise[], profile: UserProfile, at: number): Promise<TodayState> {
   const block = await ensureActiveBlock(catalog, profile, at);
 
-  const existingPrescription = await repo.getActivePrescription();
-  if (existingPrescription && existingPrescription.blockId === block.id) {
-    return { block, prescription: existingPrescription, resumed: true };
+  const [existingRecord, existingPrescription] = await Promise.all([
+    repo.getActiveSessionRecord(),
+    repo.getActivePrescription(),
+  ]);
+  if (existingRecord && existingPrescription && existingRecord.blockId === block.id) {
+    return { block, prescription: existingPrescription, sessionId: existingRecord.id, resumed: true };
   }
 
   const sets = await repo.getAllSets();
@@ -182,7 +187,7 @@ export async function loadToday(catalog: Exercise[], profile: UserProfile, at: n
     prescription,
   );
 
-  return { block, prescription, resumed: false };
+  return { block, prescription, sessionId, resumed: false };
 }
 
 /* ------------------------------------------------------------------ *
@@ -296,4 +301,32 @@ export async function skipSet(
 /** Finish the session. */
 export function completeSession(at: number) {
   return repo.completeActiveSession(at);
+}
+
+/* ------------------------------------------------------------------ *
+ * Resume position — where in the prescription a session picks back up
+ * ------------------------------------------------------------------ */
+
+/**
+ * Given the sets already logged this session, find the first exercise that
+ * isn't fully logged and the position within it. This is how the player
+ * decides "which set am I on" after a resume — purely from what's on disk,
+ * not from any in-memory pointer that a killed app would have lost.
+ *
+ * An `exerciseIndex` equal to `prescription.exercises.length` means every
+ * exercise is already fully logged — the session is done in substance even
+ * if `completeSession` hasn't been called yet.
+ */
+export function resumePosition(
+  prescription: PrescribedSession,
+  sessionSets: SetLog[],
+): { exerciseIndex: number; setPos: number } {
+  for (let i = 0; i < prescription.exercises.length; i += 1) {
+    const exercise = prescription.exercises[i]!;
+    const loggedCount = sessionSets.filter((s) => s.exerciseId === exercise.exercise.id).length;
+    if (loggedCount < exercise.sets.length) {
+      return { exerciseIndex: i, setPos: loggedCount };
+    }
+  }
+  return { exerciseIndex: prescription.exercises.length, setPos: 0 };
 }

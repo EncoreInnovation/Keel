@@ -1,0 +1,411 @@
+/* KEEL component styles — built on the tokens in tokens.css. Sparse by
+   design: chrome is monochrome, colour is reserved for data (recovery,
+   progress), and nothing here uses it yet because Milestone 1's screens
+   don't show that data. */
+
+.today,
+.setup,
+.phase-screen,
+.session-player {
+  min-height: 100dvh;
+  padding: calc(var(--s6) + var(--safe-top)) var(--s5) calc(var(--s6) + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* ---------------- Today ---------------- */
+
+.today {
+  justify-content: center;
+  gap: var(--s3);
+}
+
+.today--loading {
+  color: var(--text-dim);
+  justify-content: center;
+}
+
+.today__meta {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.today__day {
+  font-size: var(--fs-display);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+  margin: 0;
+}
+
+.today__estimate {
+  color: var(--text-dim);
+  font-size: var(--fs-lg);
+  margin-bottom: var(--s5);
+}
+
+.today__chips {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s6);
+}
+
+/* ---------------- Buttons ---------------- */
+
+.btn {
+  min-height: var(--tap);
+  border-radius: var(--radius-pill);
+  padding: 0 var(--s6);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  transition: background-color var(--dur) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.btn--hero {
+  width: 100%;
+  max-width: 22rem;
+  min-height: 4.5rem;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: var(--fs-title);
+  letter-spacing: var(--tracking-tight);
+}
+
+.btn--hero:active {
+  background: var(--accent-press);
+  transform: scale(0.98);
+}
+
+.btn--ghost {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+}
+
+.btn--text {
+  color: var(--text-dim);
+  min-height: auto;
+  padding: var(--s3);
+  font-weight: 500;
+}
+
+.chip {
+  min-height: var(--tap);
+  padding: 0 var(--s5);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--fs-body);
+  text-transform: capitalize;
+}
+
+/* ---------------- Setup ---------------- */
+
+.setup {
+  justify-content: center;
+  gap: var(--s5);
+}
+
+.setup__title {
+  font-size: var(--fs-display);
+  letter-spacing: var(--tracking-wide);
+  margin: 0;
+}
+
+.setup__lede {
+  color: var(--text-dim);
+  margin: 0 0 var(--s4);
+}
+
+.setup__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: 100%;
+  max-width: 20rem;
+  text-align: left;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.setup__field input {
+  min-height: var(--tap);
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-title);
+  padding: 0 var(--s4);
+}
+
+/* ---------------- Phase screens (Arrive / Downshift / Pillar placeholder) ---------------- */
+
+.phase-screen {
+  justify-content: center;
+  gap: var(--s5);
+}
+
+.phase-screen__eyebrow {
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  font-size: var(--fs-sm);
+}
+
+.placeholder__body {
+  color: var(--text-dim);
+  max-width: 24rem;
+  line-height: var(--lh-body);
+}
+
+.phase-primer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.phase-primer__clock {
+  font-size: var(--fs-numeral);
+  font-weight: 300;
+}
+
+.phase-primer__count {
+  color: var(--text-dim);
+  font-size: var(--fs-lg);
+}
+
+.phase-primer__title {
+  font-size: var(--fs-title);
+  font-weight: 600;
+}
+
+.phase-primer__lines {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  max-width: 22rem;
+}
+
+/* ---------------- Breath pacer ---------------- */
+
+.breath-pacer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s5);
+}
+
+.breath-pacer__ring-wrap {
+  width: 12rem;
+  height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.breath-pacer__ring {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--surface-3), var(--surface-2));
+  border: 1px solid var(--line-strong);
+  transition: transform 0.1s linear;
+}
+
+.breath-pacer__label {
+  font-size: var(--fs-lg);
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* ---------------- Rest timer ---------------- */
+
+.rest-timer {
+  min-height: 100dvh;
+  padding: calc(var(--s6) + var(--safe-top)) var(--s5) calc(var(--s6) + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s5);
+  text-align: center;
+}
+
+.rest-timer__eyebrow {
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  font-size: var(--fs-sm);
+}
+
+.rest-timer__clock {
+  font-size: var(--fs-numeral);
+  font-weight: 300;
+}
+
+.rest-timer__actions {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s5);
+}
+
+/* ---------------- Session player ---------------- */
+
+.session-player {
+  justify-content: flex-start;
+  gap: var(--s5);
+}
+
+.session-player--loading {
+  justify-content: center;
+  color: var(--text-dim);
+}
+
+.session-player__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+  margin-top: var(--s5);
+}
+
+.session-player__eyebrow {
+  color: var(--text-dim);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  font-size: var(--fs-sm);
+}
+
+.session-player__exercise {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  margin: 0;
+}
+
+.session-player__ghost {
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.session-player__cue {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  max-width: 20rem;
+  font-style: italic;
+}
+
+.session-player__toast {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: var(--s3) var(--s4);
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  max-width: 22rem;
+}
+
+.steppers {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s4);
+  width: 100%;
+  margin: var(--s4) 0;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--s5);
+}
+
+.stepper__btn {
+  width: var(--tap);
+  height: var(--tap);
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  font-size: var(--fs-title);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper__btn:active {
+  background: var(--surface-3);
+}
+
+.stepper__value {
+  min-width: 6rem;
+  font-size: var(--fs-numeral);
+  font-weight: 300;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.stepper__label {
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-top: var(--s1);
+}
+
+.rpe-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.rpe-selector__label {
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.rpe-selector__options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+  max-width: 22rem;
+}
+
+.rpe-selector__opt {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.rpe-selector__opt--active {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+
+.skip-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}

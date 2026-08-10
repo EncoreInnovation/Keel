@@ -16,9 +16,10 @@ import {
   ensureActiveBlock,
   loadToday,
   logSet,
+  resumePosition,
 } from '../src/state/sessionController';
 import { getActivePrescription, getAllSets } from '../src/storage/repository';
-import type { Exercise, UserProfile } from '../src/engine/types';
+import type { Exercise, SetLog, UserProfile } from '../src/engine/types';
 
 beforeEach(async () => {
   await clear(keelStore);
@@ -89,7 +90,7 @@ describe('logSet', () => {
     )!;
     const firstSet = exercise.sets[0]!;
 
-    const sessionId = `sess-${today.block.id}-${today.prescription.weekNumber}-${today.prescription.dayId}-${T0}`;
+    const sessionId = today.sessionId;
 
     await logSet(sessionId, {
       prescription: today.prescription,
@@ -116,7 +117,7 @@ describe('logSet', () => {
       (s) => s.id === exercise.slotId,
     )!;
     const firstSet = exercise.sets[0]!;
-    const sessionId = `sess-${today.block.id}-${today.prescription.weekNumber}-${today.prescription.dayId}-${T0}`;
+    const sessionId = today.sessionId;
 
     // A clear overshoot: well past the top of the range at a low RPE.
     const { prescription: updated, adjustment } = await logSet(sessionId, {
@@ -140,6 +141,60 @@ describe('logSet', () => {
     // prescription completely fresh, not the in-memory return value.
     const persisted = await getActivePrescription();
     expect(persisted).toEqual(updated);
+  });
+});
+
+describe('resumePosition', () => {
+  it('points at set zero of exercise zero with nothing logged', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    expect(resumePosition(today.prescription, [])).toEqual({ exerciseIndex: 0, setPos: 0 });
+  });
+
+  it('picks up mid-exercise from what has been logged', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    const firstExerciseId = today.prescription.exercises[0]!.exercise.id;
+    const logged: SetLog[] = [
+      { id: '1', sessionId: 's', exerciseId: firstExerciseId, setIndex: 0, side: 'both', weight: 45, reps: 10, rpe: 8, completedAt: T0 },
+    ];
+    expect(resumePosition(today.prescription, logged)).toEqual({ exerciseIndex: 0, setPos: 1 });
+  });
+
+  it('advances to the next exercise once the first is fully logged', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    const first = today.prescription.exercises[0]!;
+    const logged: SetLog[] = first.sets.map((s, i) => ({
+      id: `l${i}`,
+      sessionId: 's',
+      exerciseId: first.exercise.id,
+      setIndex: s.setIndex,
+      side: s.side,
+      weight: s.weight,
+      reps: s.repTarget,
+      rpe: s.targetRpe,
+      completedAt: T0,
+    }));
+    expect(resumePosition(today.prescription, logged)).toEqual({ exerciseIndex: 1, setPos: 0 });
+  });
+
+  it('reports past the end when every exercise is fully logged', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    const logged: SetLog[] = today.prescription.exercises.flatMap((ex) =>
+      ex.sets.map((s, i) => ({
+        id: `${ex.slotId}-${i}`,
+        sessionId: 's',
+        exerciseId: ex.exercise.id,
+        setIndex: s.setIndex,
+        side: s.side,
+        weight: s.weight,
+        reps: s.repTarget,
+        rpe: s.targetRpe,
+        completedAt: T0,
+      })),
+    );
+    expect(resumePosition(today.prescription, logged)).toEqual({
+      exerciseIndex: today.prescription.exercises.length,
+      setPos: 0,
+    });
   });
 });
 

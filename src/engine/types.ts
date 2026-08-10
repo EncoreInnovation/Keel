@@ -162,6 +162,8 @@ export interface Exercise {
 
 export type Side = 'left' | 'right' | 'both';
 
+export type SkipReason = 'pain' | 'time' | 'equipment' | 'other';
+
 export interface SetLog {
   id: string;
   sessionId: string;
@@ -177,7 +179,7 @@ export interface SetLog {
 
   completedAt: number; // epoch ms
   skipped?: boolean;
-  skipReason?: 'pain' | 'time' | 'equipment' | 'other';
+  skipReason?: SkipReason;
 }
 
 export interface SessionLog {

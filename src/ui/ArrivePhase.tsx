@@ -1,0 +1,68 @@
+/**
+ * Arrive — the momentum ritual that opens every session.
+ *
+ * Three coherent breath cycles (repositioning: a full exhale drops the ribs
+ * and lets the pelvis rotate out of anterior tilt), then a 90-second primer
+ * targeted at today's movement pattern. Turns "start the session" into a
+ * 3-minute commitment instead of a 40-minute one.
+ */
+
+import { useState } from 'react';
+import { BreathSequence, TimedPrompt } from './PhasePrimer';
+import { PROTOCOLS } from './BreathPacer';
+
+const PRIMER_COPY: Record<string, { title: string; lines: string[] }> = {
+  a: {
+    title: 'Lower · Squat primer',
+    lines: [
+      'A few bodyweight sit-to-stands, unhurried.',
+      'Ankle rocks, both sides.',
+      'Exhale fully at the bottom of each rep — ribs down.',
+    ],
+  },
+  b: {
+    title: 'Upper · Push primer',
+    lines: [
+      'Arm circles, both directions.',
+      'A few wall slides, elbows and wrists on the wall.',
+      "Open the chest on the exhale — don't force the reach.",
+    ],
+  },
+  c: {
+    title: 'Lower · Hinge primer',
+    lines: [
+      'Hip hinge pattern with a dowel or broomstick, slow.',
+      'A few glute bridges, exhale at the top.',
+      'Hamstrings loose, not locked out.',
+    ],
+  },
+  d: {
+    title: 'Upper · Pull primer',
+    lines: [
+      'Band pull-aparts, slow.',
+      'Cat-cow through the thoracic spine.',
+      'Shoulder blades reaching forward on the inhale, together on the exhale.',
+    ],
+  },
+};
+
+export interface ArrivePhaseProps {
+  dayId: string;
+  onComplete: () => void;
+}
+
+export function ArrivePhase({ dayId, onComplete }: ArrivePhaseProps) {
+  const [breathDone, setBreathDone] = useState(false);
+  const copy = PRIMER_COPY[dayId] ?? PRIMER_COPY.a!;
+
+  return (
+    <div className="phase-screen">
+      <div className="phase-screen__eyebrow">Arrive</div>
+      {!breathDone ? (
+        <BreathSequence protocol={PROTOCOLS.coherent} cycles={3} onComplete={() => setBreathDone(true)} />
+      ) : (
+        <TimedPrompt seconds={90} title={copy.title} lines={copy.lines} onComplete={onComplete} />
+      )}
+    </div>
+  );
+}

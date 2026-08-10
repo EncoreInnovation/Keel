@@ -1,0 +1,277 @@
+/**
+ * Session player — the interaction contract from the plan, implemented
+ * exactly: one exercise, one set, one oversized DONE button. Steppers
+ * pre-filled with the target and last time's numbers as ghost text. Tapping
+ * DONE writes the set durably, fires a haptic, and auto-starts the rest
+ * timer — nothing else to press.
+ */
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { logSet, resumePosition, skipSet } from '../state/sessionController';
+import { getActiveSession } from '../storage/repository';
+import { RestTimer } from './RestTimer';
+import { primeAudio, playSetComplete } from './audio';
+import { haptics } from './haptics';
+import type { Block, PrescribedSession, SkipReason, Slot, UserProfile } from '../engine/types';
+
+type Phase = 'loading' | 'set' | 'resting' | 'done';
+
+export interface SessionPlayerProps {
+  sessionId: string;
+  block: Block;
+  profile: UserProfile;
+  initialPrescription: PrescribedSession;
+  onSessionComplete: () => void;
+}
+
+function findSlot(block: Block, dayId: string, slotId: string): Slot | undefined {
+  return block.days.find((d) => d.id === dayId)?.slots.find((s) => s.id === slotId);
+}
+
+export function SessionPlayer({
+  sessionId,
+  block,
+  profile,
+  initialPrescription,
+  onSessionComplete,
+}: SessionPlayerProps) {
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [prescription, setPrescription] = useState(initialPrescription);
+  const [exerciseIndex, setExerciseIndex] = useState(0);
+  const [setPos, setSetPos] = useState(0);
+  const [message, setMessage] = useState<string | undefined>();
+  const [showSkip, setShowSkip] = useState(false);
+
+  const [weight, setWeight] = useState(0);
+  const [reps, setReps] = useState(0);
+  const [rpe, setRpe] = useState(7);
+
+  const restSecondsRef = useRef(90);
+
+  // Resume from disk on mount — the position is derived, never assumed.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const active = await getActiveSession();
+      const sessionSets = active?.sets ?? [];
+      const pos = resumePosition(initialPrescription, sessionSets);
+      if (cancelled) return;
+
+      if (pos.exerciseIndex >= initialPrescription.exercises.length) {
+        onSessionComplete();
+        return;
+      }
+      setExerciseIndex(pos.exerciseIndex);
+      setSetPos(pos.setPos);
+      setPhase('set');
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const exercise = prescription.exercises[exerciseIndex];
+  const targetSet = exercise?.sets[setPos];
+  const slot = exercise ? findSlot(block, prescription.dayId, exercise.slotId) : undefined;
+
+  const physicalSetTotal = useMemo(
+    () => (exercise ? new Set(exercise.sets.map((s) => s.setIndex)).size : 0),
+    [exercise],
+  );
+  const physicalSetNumber = targetSet ? targetSet.setIndex + 1 : 0;
+
+  const isLoadable = exercise?.exercise.loadType === 'external';
+
+  // Re-fill the steppers whenever the target set changes.
+  useEffect(() => {
+    if (!targetSet || !exercise) return;
+    // A loadable exercise with no logged history yet gets weight 0 from the
+    // engine — deliberately, per `overload.ts`'s "first time, find a working
+    // load" — but the stepper still needs a starting point to climb from
+    // rather than sitting at a literal, easy-to-miss zero.
+    setWeight(targetSet.weight > 0 ? targetSet.weight : isLoadable ? profile.dumbbellIncrement : 0);
+    setReps(targetSet.repTarget);
+    setRpe(targetSet.targetRpe);
+  }, [targetSet, exercise, isLoadable, profile.dumbbellIncrement]);
+
+  if (phase === 'loading' || !exercise || !targetSet || !slot) {
+    return <div className="session-player session-player--loading">Loading session…</div>;
+  }
+
+  const advance = (justFinishedRestSec: number) => {
+    const isLastSetOfExercise = setPos + 1 >= exercise.sets.length;
+    const isLastExercise = exerciseIndex + 1 >= prescription.exercises.length;
+
+    if (isLastSetOfExercise && isLastExercise) {
+      setPhase('done');
+      onSessionComplete();
+      return;
+    }
+
+    restSecondsRef.current = justFinishedRestSec;
+    setPhase('resting');
+  };
+
+  const afterRest = () => {
+    const isLastSetOfExercise = setPos + 1 >= exercise.sets.length;
+    if (isLastSetOfExercise) {
+      setExerciseIndex((i) => i + 1);
+      setSetPos(0);
+    } else {
+      setSetPos((p) => p + 1);
+    }
+    setPhase('set');
+  };
+
+  const handleDone = async () => {
+    primeAudio();
+    const result = await logSet(sessionId, {
+      prescription,
+      slot,
+      exerciseIndex,
+      setIndex: targetSet.setIndex,
+      side: targetSet.side,
+      weight,
+      reps,
+      rpe,
+      at: Date.now(),
+      profile,
+    });
+
+    playSetComplete();
+    haptics.setComplete();
+    setPrescription(result.prescription);
+    setMessage(result.adjustment.message);
+    advance(exercise.restSec);
+  };
+
+  const handleSkip = async (reason: SkipReason) => {
+    await skipSet(sessionId, exercise, targetSet.setIndex, targetSet.side, reason, Date.now());
+    setShowSkip(false);
+    setMessage(undefined);
+    const isLastSetOfExercise = setPos + 1 >= exercise.sets.length;
+    const isLastExercise = exerciseIndex + 1 >= prescription.exercises.length;
+    if (isLastSetOfExercise && isLastExercise) {
+      setPhase('done');
+      onSessionComplete();
+      return;
+    }
+    if (isLastSetOfExercise) {
+      setExerciseIndex((i) => i + 1);
+      setSetPos(0);
+    } else {
+      setSetPos((p) => p + 1);
+    }
+  };
+
+  if (phase === 'resting') {
+    return (
+      <RestTimer
+        seconds={restSecondsRef.current}
+        onComplete={() => {
+          afterRest();
+        }}
+      />
+    );
+  }
+
+  const sideLabel = targetSet.side === 'left' ? 'L' : targetSet.side === 'right' ? 'R' : undefined;
+
+  return (
+    <div className="session-player">
+      <div className="session-player__header">
+        <div className="session-player__eyebrow">
+          Set {physicalSetNumber} of {physicalSetTotal}
+          {sideLabel ? ` · ${sideLabel}` : ''}
+        </div>
+        <h1 className="session-player__exercise">{exercise.exercise.name}</h1>
+        {exercise.lastPerformance && (
+          <div className="session-player__ghost">
+            Last time: {exercise.lastPerformance.weight > 0 ? `${exercise.lastPerformance.weight} lb × ` : ''}
+            {exercise.lastPerformance.reps} @ RPE {exercise.lastPerformance.rpe}
+          </div>
+        )}
+        {exercise.exercise.breathCue && (
+          <div className="session-player__cue">{exercise.exercise.breathCue}</div>
+        )}
+      </div>
+
+      {message && <div className="session-player__toast">{message}</div>}
+
+      <div className="steppers">
+        {isLoadable && (
+          <Stepper label="lb" value={weight} step={profile.dumbbellIncrement} onChange={setWeight} />
+        )}
+        <Stepper label="reps" value={reps} step={1} min={0} onChange={setReps} />
+        <RpeSelector value={rpe} onChange={setRpe} />
+      </div>
+
+      <button className="btn btn--hero" onClick={() => void handleDone()}>
+        DONE
+      </button>
+
+      {!showSkip ? (
+        <button className="btn btn--text" onClick={() => setShowSkip(true)}>
+          Skip
+        </button>
+      ) : (
+        <div className="skip-reasons">
+          {(['pain', 'time', 'equipment', 'other'] as const).map((reason) => (
+            <button key={reason} className="chip" onClick={() => void handleSkip(reason)}>
+              {reason}
+            </button>
+          ))}
+          <button className="btn btn--text" onClick={() => setShowSkip(false)}>
+            Cancel
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface StepperProps {
+  label: string;
+  value: number;
+  step: number;
+  min?: number;
+  onChange: (v: number) => void;
+}
+
+function Stepper({ label, value, step, min = 0, onChange }: StepperProps) {
+  return (
+    <div className="stepper">
+      <button className="stepper__btn" onClick={() => onChange(Math.max(min, value - step))} aria-label={`Decrease ${label}`}>
+        −
+      </button>
+      <div className="stepper__value" data-numeric>
+        {value}
+        <span className="stepper__label">{label}</span>
+      </div>
+      <button className="stepper__btn" onClick={() => onChange(value + step)} aria-label={`Increase ${label}`}>
+        +
+      </button>
+    </div>
+  );
+}
+
+function RpeSelector({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const options = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+  return (
+    <div className="rpe-selector">
+      <div className="rpe-selector__label">RPE</div>
+      <div className="rpe-selector__options">
+        {options.map((opt) => (
+          <button
+            key={opt}
+            className={`rpe-selector__opt${opt === value ? ' rpe-selector__opt--active' : ''}`}
+            onClick={() => onChange(opt)}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
