@@ -11,6 +11,8 @@ import { Asymmetry } from './ui/Asymmetry';
 import { ArrivePhase } from './ui/ArrivePhase';
 import { DownshiftPhase } from './ui/DownshiftPhase';
 import { PillarPlayer } from './ui/PillarPlayer';
+import { PostureHistory } from './ui/PostureHistory';
+import { PostureScan } from './ui/PostureScan';
 import { Progress } from './ui/Progress';
 import { RecoveryMap } from './ui/RecoveryMap';
 import { SessionPlayer } from './ui/SessionPlayer';
@@ -35,7 +37,9 @@ type Screen =
   | 'pillar'
   | 'asymmetry'
   | 'recovery'
-  | 'progress';
+  | 'progress'
+  | 'postureHistory'
+  | 'postureScan';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -123,6 +127,7 @@ export default function App() {
         onOpenAsymmetry={() => setScreen('asymmetry')}
         onOpenRecovery={() => setScreen('recovery')}
         onOpenProgress={() => setScreen('progress')}
+        onOpenPosture={() => setScreen('postureHistory')}
       />
     );
   }
@@ -141,6 +146,21 @@ export default function App() {
 
   if (screen === 'progress') {
     return <Progress onBack={() => setScreen('today')} onOpenAsymmetry={() => setScreen('asymmetry')} />;
+  }
+
+  if (screen === 'postureHistory') {
+    return (
+      <PostureHistory onBack={() => setScreen('today')} onNewScan={() => setScreen('postureScan')} />
+    );
+  }
+
+  if (screen === 'postureScan') {
+    return (
+      <PostureScan
+        onDone={() => setScreen('postureHistory')}
+        onCancel={() => setScreen('postureHistory')}
+      />
+    );
   }
 
   if (screen === 'arrive') {

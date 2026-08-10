@@ -25,6 +25,7 @@ export interface TodayProps {
   onOpenAsymmetry: () => void;
   onOpenRecovery: () => void;
   onOpenProgress: () => void;
+  onOpenPosture: () => void;
 }
 
 export function Today({
@@ -36,6 +37,7 @@ export function Today({
   onOpenAsymmetry,
   onOpenRecovery,
   onOpenProgress,
+  onOpenPosture,
 }: TodayProps) {
   const label = DAY_LABEL[prescription.dayId] ?? prescription.dayName;
 
@@ -71,6 +73,9 @@ export function Today({
         </button>
         <button className="btn btn--text" onClick={onOpenAsymmetry}>
           Left / right balance
+        </button>
+        <button className="btn btn--text" onClick={onOpenPosture}>
+          Posture
         </button>
       </div>
     </div>

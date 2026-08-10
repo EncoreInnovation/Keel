@@ -23,9 +23,12 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // The catalog and its imagery must be available on the gym floor with no signal.
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        // The catalog and its imagery must be available on the gym floor with
+        // no signal — and so must posture scan's pose model and WASM
+        // runtime, vendored under public/mediapipe/ specifically so this
+        // feature doesn't depend on a CDN being reachable at scan time.
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,json,wasm,task}'],
+        maximumFileSizeToCacheInBytes: 16 * 1024 * 1024,
       },
     }),
   ],
