@@ -14,14 +14,19 @@ import { bestE1RM } from '../engine/overload';
 import { buildLadderIndex, rungDepth } from '../engine/ladders';
 import { asymmetryReport, overallGap } from '../engine/asymmetry';
 import { CATALOG } from '../../catalog/exercises';
+import { askCoach } from '../ai/client';
+import { buildWeeklyReflectionPrompt, summarizeWeek } from '../ai/prompts';
 import {
   appendBodyMetric,
   getAllSets,
   getBodyMetrics,
   getCompletedSessions,
+  getConditioningLogs,
   getPillarLogs,
 } from '../storage/repository';
 import type { BodyMetricLog, Exercise, SetLog } from '../engine/types';
+
+const WEEK_MS = 7 * 86_400_000;
 
 const catalog = CATALOG as Exercise[];
 const catalogById = new Map(catalog.map((e) => [e.id, e]));
@@ -102,6 +107,9 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
   const [bodyMetrics, setBodyMetrics] = useState<BodyMetricLog[]>([]);
   const [weightInput, setWeightInput] = useState('');
   const [asymmetryGap, setAsymmetryGap] = useState(0);
+  const [reflection, setReflection] = useState<string | undefined>();
+  const [reflectionError, setReflectionError] = useState<string | undefined>();
+  const [reflectionBusy, setReflectionBusy] = useState(false);
 
   async function refresh() {
     const [allSets, completed, pillarLogs, metrics] = await Promise.all([
@@ -149,6 +157,38 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
     await appendBodyMetric({ id: `bm-${Date.now()}`, at: Date.now(), weight: value });
     setWeightInput('');
     await refresh();
+  };
+
+  const handleGetReflection = async () => {
+    setReflectionBusy(true);
+    setReflectionError(undefined);
+    setReflection(undefined);
+
+    const since = Date.now() - WEEK_MS;
+    const [completed, pillarLogs, conditioning] = await Promise.all([
+      getCompletedSessions(),
+      getPillarLogs(),
+      getConditioningLogs(),
+    ]);
+
+    const weekSets = sets.filter((s) => s.completedAt >= since);
+    const weekCompleted = completed.filter((s) => s.startedAt >= since);
+    const weekPillar = pillarLogs.filter((p) => p.startedAt >= since);
+    const weekConditioning = conditioning.filter((c) => c.startedAt >= since);
+
+    const summary = summarizeWeek({
+      weekLabel: 'The last 7 days',
+      sets: weekSets,
+      completedSessionCount: weekCompleted.length,
+      catalog,
+      pillarLogs: weekPillar,
+      conditioning: weekConditioning,
+    });
+
+    const result = await askCoach(buildWeeklyReflectionPrompt(summary));
+    setReflectionBusy(false);
+    if (result.ok) setReflection(result.text);
+    else setReflectionError(result.error);
   };
 
   return (
@@ -236,6 +276,19 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
             Save
           </button>
         </div>
+      </section>
+
+      <section className="progress-section">
+        <h2 className="progress-section__title">Weekly reflection</h2>
+        {reflection ? (
+          <div className="coach-note">{reflection}</div>
+        ) : (
+          <p className="placeholder__body">A short AI read on the last 7 days, generated on demand.</p>
+        )}
+        {reflectionError && <div className="posture-scan__error">{reflectionError}</div>}
+        <button className="btn btn--ghost" disabled={reflectionBusy} onClick={() => void handleGetReflection()}>
+          {reflectionBusy ? 'Thinking…' : reflection ? 'Regenerate' : 'Get weekly reflection'}
+        </button>
       </section>
 
       <button className="btn btn--text" onClick={onOpenAsymmetry}>

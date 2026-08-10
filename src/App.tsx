@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { CATALOG } from '../catalog/exercises';
+import { AskCoach } from './ui/AskCoach';
 import { ActivationRating, READINESS_LABELS } from './ui/ActivationRating';
 import { Asymmetry } from './ui/Asymmetry';
 import { ArrivePhase } from './ui/ArrivePhase';
@@ -23,6 +24,8 @@ import { Setup } from './ui/Setup';
 import { Today } from './ui/Today';
 import { primeAudio } from './ui/audio';
 import { acquireWakeLock, type WakeLockHandle } from './ui/wakeLock';
+import { askCoach } from './ai/client';
+import { buildReadinessPrompt } from './ai/prompts';
 import { PILLAR_SESSIONS } from './pillars/library';
 import {
   completeSession,
@@ -50,7 +53,8 @@ type Screen =
   | 'postureHistory'
   | 'postureScan'
   | 'conditioning'
-  | 'settings';
+  | 'settings'
+  | 'askCoach';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -58,6 +62,7 @@ export default function App() {
   const [today, setToday] = useState<TodayState | undefined>();
   const [pillar, setPillar] = useState<PillarKind>('reset');
   const [error, setError] = useState<string | undefined>();
+  const [coachNote, setCoachNote] = useState<string | undefined>();
 
   useEffect(() => {
     (async () => {
@@ -72,13 +77,15 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function refreshToday(p: UserProfile, readiness?: number) {
+  async function refreshToday(p: UserProfile, readiness?: number): Promise<TodayState | undefined> {
     try {
       const state = await loadToday(catalog, p, Date.now(), readiness);
       setToday(state);
       setScreen('today');
+      return state;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong loading today.');
+      return undefined;
     }
   }
 
@@ -105,7 +112,24 @@ export default function App() {
 
   async function handleReadinessSelected(value: number) {
     if (!profile) return;
-    await refreshToday(profile, value);
+    setCoachNote(undefined);
+    const state = await refreshToday(profile, value);
+    if (!state) return;
+
+    // Fire-and-forget: never blocks getting to Today, and a failed or
+    // unreachable coach (e.g. /api/coach doesn't exist in local dev)
+    // just means no note appears — the screen already rendered without it.
+    void askCoach(
+      buildReadinessPrompt({
+        readiness: value,
+        dayName: state.prescription.dayName,
+        isDeload: state.prescription.isDeload,
+        weekNumber: state.prescription.weekNumber,
+        blockWeeks: state.block.weeks,
+      }),
+    ).then((result) => {
+      if (result.ok) setCoachNote(result.text);
+    });
   }
 
   function handleStart() {
@@ -160,6 +184,7 @@ export default function App() {
         prescription={today.prescription}
         weeksTotal={today.block.weeks}
         resumed={today.resumed}
+        coachNote={coachNote}
         onStart={handleStart}
         onOpenPillar={(kind) => {
           setPillar(kind);
@@ -171,6 +196,7 @@ export default function App() {
         onOpenPosture={() => setScreen('postureHistory')}
         onOpenConditioning={() => setScreen('conditioning')}
         onOpenSettings={() => setScreen('settings')}
+        onOpenAskCoach={() => setScreen('askCoach')}
       />
     );
   }
@@ -210,6 +236,10 @@ export default function App() {
     return (
       <ConditioningLogForm onSaved={() => setScreen('today')} onCancel={() => setScreen('today')} />
     );
+  }
+
+  if (screen === 'askCoach') {
+    return <AskCoach onBack={() => setScreen('today')} />;
   }
 
   if (screen === 'settings') {

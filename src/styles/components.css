@@ -827,3 +827,36 @@
   font-size: var(--fs-title);
   padding: 0 var(--s4);
 }
+
+.coach-note {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  padding: var(--s4);
+  white-space: pre-wrap;
+}
+
+.ask-coach {
+  gap: var(--s3);
+}
+
+.ask-coach__input {
+  width: 100%;
+  min-height: 6rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  padding: var(--s4);
+  resize: vertical;
+}
+
+.ask-coach__answer {
+  margin-top: var(--s3);
+}

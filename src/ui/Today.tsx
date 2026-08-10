@@ -20,6 +20,8 @@ export interface TodayProps {
   prescription: PrescribedSession;
   weeksTotal: number;
   resumed: boolean;
+  /** AI readiness commentary, if the coach was reachable — purely supplementary, never blocks rendering. */
+  coachNote?: string;
   onStart: () => void;
   onOpenPillar: (kind: PillarKind) => void;
   onOpenAsymmetry: () => void;
@@ -28,12 +30,14 @@ export interface TodayProps {
   onOpenPosture: () => void;
   onOpenConditioning: () => void;
   onOpenSettings: () => void;
+  onOpenAskCoach: () => void;
 }
 
 export function Today({
   prescription,
   weeksTotal,
   resumed,
+  coachNote,
   onStart,
   onOpenPillar,
   onOpenAsymmetry,
@@ -42,6 +46,7 @@ export function Today({
   onOpenPosture,
   onOpenConditioning,
   onOpenSettings,
+  onOpenAskCoach,
 }: TodayProps) {
   const label = DAY_LABEL[prescription.dayId] ?? prescription.dayName;
 
@@ -55,6 +60,8 @@ export function Today({
       <div className="today__estimate" data-numeric>
         {prescription.estimatedMinutes} min
       </div>
+
+      {coachNote && <div className="coach-note">{coachNote}</div>}
 
       <button className="btn btn--hero" onClick={onStart}>
         {resumed ? 'Continue' : 'Start'}
@@ -86,6 +93,9 @@ export function Today({
         </button>
         <button className="btn btn--text" onClick={onOpenSettings}>
           Settings
+        </button>
+        <button className="btn btn--text" onClick={onOpenAskCoach}>
+          Ask the coach
         </button>
       </div>
     </div>
