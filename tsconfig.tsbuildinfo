@@ -1,1 +1,0 @@
-{"root":["./src/engine/asymmetry.ts","./src/engine/blocks.ts","./src/engine/ladders.ts","./src/engine/overload.ts","./src/engine/recovery.ts","./src/engine/selector.ts","./src/engine/types.ts","./tests/progression.test.ts","./tests/recovery.test.ts","./tests/simulation.test.ts","./catalog/exercises.ts"],"version":"5.9.3"}
