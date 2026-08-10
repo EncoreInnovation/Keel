@@ -49,8 +49,11 @@
 
 .today__chips {
   display: flex;
-  gap: var(--s3);
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2) var(--s3);
   margin-top: var(--s6);
+  max-width: 22rem;
 }
 
 /* ---------------- Buttons ---------------- */
@@ -408,4 +411,95 @@
   justify-content: center;
   gap: var(--s2);
   margin-top: var(--s3);
+}
+
+/* ---------------- Today: balance link ---------------- */
+
+.today__balance-link {
+  margin-top: var(--s6);
+}
+
+/* ---------------- Activation rating ---------------- */
+
+.activation-rating {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  width: 100%;
+  max-width: 20rem;
+}
+
+.activation-rating__opt {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  min-height: var(--tap);
+  padding: 0 var(--s4);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+
+.activation-rating__opt:active {
+  background: var(--surface-3);
+}
+
+.activation-rating__num {
+  font-size: var(--fs-title);
+  font-weight: 300;
+  color: var(--text-dim);
+  width: 1.5rem;
+}
+
+.activation-rating__label {
+  font-size: var(--fs-body);
+}
+
+/* ---------------- Asymmetry ---------------- */
+
+.asymmetry__overall {
+  font-size: var(--fs-title);
+  font-weight: 600;
+}
+
+.asymmetry__overall-sub {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--s5);
+}
+
+.asymmetry__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: 100%;
+  max-width: 22rem;
+  margin-bottom: var(--s5);
+}
+
+.asymmetry__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.asymmetry__row-name {
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.asymmetry__row-gap {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+/* The one spot color appears outside the recovery/progress data ramp: a
+   meaningful side gap is exactly the kind of thing colour should flag. */
+.asymmetry__row-gap--significant {
+  color: var(--data-3);
 }

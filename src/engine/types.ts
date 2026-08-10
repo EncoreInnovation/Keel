@@ -196,6 +196,23 @@ export interface SessionLog {
 }
 
 /* ------------------------------------------------------------------ *
+ * Pillar micro-sessions — breath, nervous-system, mobility, corrective
+ * ------------------------------------------------------------------ */
+
+export const PILLAR_KINDS = ['reset', 'realign', 'unlock', 'ground'] as const;
+export type PillarKind = (typeof PILLAR_KINDS)[number];
+
+export interface PillarLog {
+  id: string;
+  kind: PillarKind;
+  startedAt: number;
+  completedAt?: number;
+  /** 1..5 self-rated activation, captured immediately before and after. */
+  preActivation?: number;
+  postActivation?: number;
+}
+
+/* ------------------------------------------------------------------ *
  * Conditioning
  * ------------------------------------------------------------------ */
 

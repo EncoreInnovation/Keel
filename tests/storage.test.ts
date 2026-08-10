@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { keelStore } from '../src/storage/db';
 import {
   appendConditioningLog,
+  appendPillarLog,
   appendSet,
   appendSets,
   completeActiveSession,
@@ -21,6 +22,7 @@ import {
   getAllSets,
   getCompletedSessionsForBlock,
   getConditioningLogs,
+  getPillarLogs,
   importAll,
   saveActivePrescription,
   saveProfile,
@@ -30,7 +32,7 @@ import {
   SCHEMA_VERSION,
   type SessionRecord,
 } from '../src/storage/repository';
-import type { Block, ConditioningLog, SetLog, UserProfile } from '../src/engine/types';
+import type { Block, ConditioningLog, PillarLog, SetLog, UserProfile } from '../src/engine/types';
 
 beforeEach(async () => {
   await clear(keelStore);
@@ -239,6 +241,28 @@ describe('conditioning', () => {
   });
 });
 
+describe('pillar sessions', () => {
+  it('appends and lists, with pre/post activation ratings intact', async () => {
+    const reset: PillarLog = {
+      id: 'p1',
+      kind: 'reset',
+      startedAt: T0,
+      completedAt: T0 + 5 * 60_000,
+      preActivation: 4,
+      postActivation: 2,
+    };
+    await appendPillarLog(reset);
+    expect(await getPillarLogs()).toEqual([reset]);
+  });
+
+  it('keeps multiple pillar kinds distinct', async () => {
+    await appendPillarLog({ id: 'p1', kind: 'reset', startedAt: T0 });
+    await appendPillarLog({ id: 'p2', kind: 'ground', startedAt: T0 + 1000 });
+    const logs = await getPillarLogs();
+    expect(logs.map((l) => l.kind)).toEqual(['reset', 'ground']);
+  });
+});
+
 describe('export / import', () => {
   it('round-trips a full snapshot', async () => {
     await saveProfile(PROFILE);
@@ -253,11 +277,13 @@ describe('export / import', () => {
       impact: 'none',
       source: 'manual',
     });
+    await appendPillarLog({ id: 'p1', kind: 'ground', startedAt: T0, preActivation: 4 });
 
     const snapshot = await exportAll(T0 + 500);
     expect(snapshot.schemaVersion).toBe(SCHEMA_VERSION);
     expect(snapshot.sets).toHaveLength(1);
     expect(snapshot.profile).toEqual(PROFILE);
+    expect(snapshot.pillarLogs).toHaveLength(1);
 
     await clear(keelStore);
     expect(await getProfile()).toBeUndefined();
@@ -265,6 +291,7 @@ describe('export / import', () => {
     await importAll(snapshot);
     expect(await getProfile()).toEqual(PROFILE);
     expect(await getAllSets()).toHaveLength(1);
+    expect(await getPillarLogs()).toEqual(snapshot.pillarLogs);
     expect((await import('../src/storage/repository').then((m) => m.getActiveBlock()))?.id).toBe(
       'block-1',
     );

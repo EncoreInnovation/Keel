@@ -18,6 +18,7 @@ import { runExclusive } from './mutex';
 import type {
   Block,
   ConditioningLog,
+  PillarLog,
   PrescribedSession,
   SessionLog,
   SetLog,
@@ -215,6 +216,27 @@ export function appendConditioningLog(entry: ConditioningLog): Promise<Condition
 }
 
 /* ------------------------------------------------------------------ *
+ * Pillar sessions
+ *
+ * Short enough (5-12 min) that there's no crash-resume concept, unlike a
+ * strength session — a kill mid-breath is a "start over," not a "restore
+ * exactly where I was." One entry is written on completion.
+ * ------------------------------------------------------------------ */
+
+export function getPillarLogs(): Promise<PillarLog[]> {
+  return readKey<PillarLog[]>(STORAGE_KEYS.pillarLogs).then((v) => v ?? []);
+}
+
+export function appendPillarLog(entry: PillarLog): Promise<PillarLog[]> {
+  return runExclusive('pillarLogs', async () => {
+    const logs = (await readKey<PillarLog[]>(STORAGE_KEYS.pillarLogs)) ?? [];
+    const next = [...logs, entry];
+    await writeKey(STORAGE_KEYS.pillarLogs, next);
+    return next;
+  });
+}
+
+/* ------------------------------------------------------------------ *
  * Export / import — the whole point of local-first with no account
  * ------------------------------------------------------------------ */
 
@@ -229,6 +251,7 @@ export interface KeelExport {
   activePrescription?: PrescribedSession;
   completedSessions: SessionRecord[];
   conditioning: ConditioningLog[];
+  pillarLogs: PillarLog[];
 }
 
 export async function exportAll(now: number): Promise<KeelExport> {
@@ -241,6 +264,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     activePrescription,
     completedSessions,
     conditioning,
+    pillarLogs,
   ] = await Promise.all([
     getProfile(),
     getActiveBlock(),
@@ -250,6 +274,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     getActivePrescription(),
     getCompletedSessions(),
     getConditioningLogs(),
+    getPillarLogs(),
   ]);
 
   return {
@@ -263,6 +288,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     activePrescription,
     completedSessions,
     conditioning,
+    pillarLogs,
   };
 }
 
@@ -295,5 +321,6 @@ export async function importAll(data: KeelExport): Promise<void> {
     setOrClear(STORAGE_KEYS.activePrescription, data.activePrescription),
     writeKey(STORAGE_KEYS.completedSessions, data.completedSessions),
     writeKey(STORAGE_KEYS.conditioning, data.conditioning),
+    writeKey(STORAGE_KEYS.pillarLogs, data.pillarLogs),
   ]);
 }

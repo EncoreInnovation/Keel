@@ -21,6 +21,7 @@ export const STORAGE_KEYS = {
   activePrescription: 'session:active:prescription',
   completedSessions: 'sessions:completed',
   conditioning: 'conditioning',
+  pillarLogs: 'pillar:logs',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

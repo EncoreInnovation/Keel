@@ -7,27 +7,29 @@
 
 import { useEffect, useState } from 'react';
 import { CATALOG } from '../catalog/exercises';
+import { Asymmetry } from './ui/Asymmetry';
 import { ArrivePhase } from './ui/ArrivePhase';
 import { DownshiftPhase } from './ui/DownshiftPhase';
-import { PillarPlaceholder } from './ui/PillarPlaceholder';
+import { PillarPlayer } from './ui/PillarPlayer';
 import { SessionPlayer } from './ui/SessionPlayer';
 import { Setup } from './ui/Setup';
 import { Today } from './ui/Today';
 import { primeAudio } from './ui/audio';
 import { acquireWakeLock, type WakeLockHandle } from './ui/wakeLock';
+import { PILLAR_SESSIONS } from './pillars/library';
 import { completeSession, loadToday, type TodayState } from './state/sessionController';
 import { getProfile, saveProfile } from './storage/repository';
-import type { Exercise, UserProfile } from './engine/types';
+import type { Exercise, PillarKind, UserProfile } from './engine/types';
 
 const catalog = CATALOG as Exercise[];
 
-type Screen = 'loading' | 'setup' | 'today' | 'arrive' | 'session' | 'downshift' | 'pillar';
+type Screen = 'loading' | 'setup' | 'today' | 'arrive' | 'session' | 'downshift' | 'pillar' | 'asymmetry';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
   const [profile, setProfile] = useState<UserProfile | undefined>();
   const [today, setToday] = useState<TodayState | undefined>();
-  const [pillar, setPillar] = useState<'reset' | 'ground'>('reset');
+  const [pillar, setPillar] = useState<PillarKind>('reset');
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -106,12 +108,17 @@ export default function App() {
           setPillar(kind);
           setScreen('pillar');
         }}
+        onOpenAsymmetry={() => setScreen('asymmetry')}
       />
     );
   }
 
   if (screen === 'pillar') {
-    return <PillarPlaceholder kind={pillar} onBack={() => setScreen('today')} />;
+    return <PillarPlayer session={PILLAR_SESSIONS[pillar]} onComplete={() => setScreen('today')} />;
+  }
+
+  if (screen === 'asymmetry') {
+    return <Asymmetry onBack={() => setScreen('today')} />;
   }
 
   if (screen === 'arrive') {

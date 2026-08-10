@@ -6,7 +6,8 @@
  * secondary to that button.
  */
 
-import type { PrescribedSession } from '../engine/types';
+import { PILLAR_KINDS, type PillarKind, type PrescribedSession } from '../engine/types';
+import { PILLAR_SESSIONS } from '../pillars/library';
 
 const DAY_LABEL: Record<string, string> = {
   a: 'Lower · Squat',
@@ -20,10 +21,11 @@ export interface TodayProps {
   weeksTotal: number;
   resumed: boolean;
   onStart: () => void;
-  onOpenPillar: (kind: 'reset' | 'ground') => void;
+  onOpenPillar: (kind: PillarKind) => void;
+  onOpenAsymmetry: () => void;
 }
 
-export function Today({ prescription, weeksTotal, resumed, onStart, onOpenPillar }: TodayProps) {
+export function Today({ prescription, weeksTotal, resumed, onStart, onOpenPillar, onOpenAsymmetry }: TodayProps) {
   const label = DAY_LABEL[prescription.dayId] ?? prescription.dayName;
 
   return (
@@ -42,13 +44,16 @@ export function Today({ prescription, weeksTotal, resumed, onStart, onOpenPillar
       </button>
 
       <div className="today__chips">
-        <button className="chip" onClick={() => onOpenPillar('reset')}>
-          Reset
-        </button>
-        <button className="chip" onClick={() => onOpenPillar('ground')}>
-          Ground
-        </button>
+        {PILLAR_KINDS.map((kind) => (
+          <button key={kind} className="chip" onClick={() => onOpenPillar(kind)}>
+            {PILLAR_SESSIONS[kind].name}
+          </button>
+        ))}
       </div>
+
+      <button className="btn btn--text today__balance-link" onClick={onOpenAsymmetry}>
+        Left / right balance
+      </button>
     </div>
   );
 }
