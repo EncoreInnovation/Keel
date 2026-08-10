@@ -14,6 +14,7 @@ import { activeGym } from '../engine/types';
 import { RestTimer } from './RestTimer';
 import { primeAudio, playSetComplete } from './audio';
 import { haptics } from './haptics';
+import { rpeLabel } from './rpe';
 import type { Block, PrescribedSession, SkipReason, Slot, UserProfile } from '../engine/types';
 
 type Phase = 'loading' | 'set' | 'resting' | 'done';
@@ -314,18 +315,22 @@ function RpeSelector({ value, onChange }: { value: number; onChange: (v: number)
   const options = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
   return (
     <div className="rpe-selector">
-      <div className="rpe-selector__label">RPE</div>
+      <div className="rpe-selector__label">How hard was that?</div>
       <div className="rpe-selector__options">
         {options.map((opt) => (
           <button
             key={opt}
             className={`rpe-selector__opt${opt === value ? ' rpe-selector__opt--active' : ''}`}
             onClick={() => onChange(opt)}
+            title={rpeLabel(opt)}
           >
             {opt}
           </button>
         ))}
       </div>
+      {/* The number alone meant nothing to anyone who hadn't met RPE before,
+          so the selected value always spells itself out. */}
+      <div className="rpe-selector__hint">{rpeLabel(Math.round(value))}</div>
     </div>
   );
 }

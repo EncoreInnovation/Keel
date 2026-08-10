@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { CATALOG } from '../catalog/exercises';
 import { AskCoach } from './ui/AskCoach';
+import { BaselineTest } from './ui/BaselineTest';
 import { ActivationRating, READINESS_LABELS } from './ui/ActivationRating';
 import { Asymmetry } from './ui/Asymmetry';
 import { ArrivePhase } from './ui/ArrivePhase';
@@ -41,6 +42,7 @@ const catalog = CATALOG as Exercise[];
 type Screen =
   | 'loading'
   | 'setup'
+  | 'baseline'
   | 'readiness'
   | 'today'
   | 'arrive'
@@ -72,6 +74,12 @@ export default function App() {
         return;
       }
       setProfile(stored);
+      // A profile that never took the baseline is still guessing at every
+      // load, so the test comes before anything else.
+      if (!stored.baselineCompletedAt) {
+        setScreen('baseline');
+        return;
+      }
       await goToTodayOrReadiness(stored);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,6 +114,11 @@ export default function App() {
 
   async function handleSetupComplete(p: UserProfile) {
     await saveProfile(p);
+    setProfile(p);
+    setScreen('baseline');
+  }
+
+  async function handleBaselineDone(p: UserProfile) {
     setProfile(p);
     await goToTodayOrReadiness(p);
   }
@@ -162,6 +175,16 @@ export default function App() {
 
   if (screen === 'setup') {
     return <Setup onComplete={handleSetupComplete} />;
+  }
+
+  if (screen === 'baseline' && profile) {
+    return (
+      <BaselineTest
+        profile={profile}
+        onComplete={(p) => void handleBaselineDone(p)}
+        onSkip={() => void goToTodayOrReadiness(profile)}
+      />
+    );
   }
 
   if (screen === 'readiness') {

@@ -432,6 +432,17 @@ export interface UserProfile {
   sessionMinutes: number;
   /** Drives the countdown and Block 1's tuning. */
   goalDate?: number;
+  /**
+   * Ladder rungs the baseline test measured you onto.
+   *
+   * Without this, every bodyweight ladder starts at its bottom rung, which is
+   * why a man who can do a dozen push-ups was being handed wall push-ups. One
+   * max-rep test places him where he actually belongs instead of spending six
+   * weeks climbing back to his own starting point.
+   */
+  baselineRungs?: string[];
+  /** Set once the baseline test has been taken, so it isn't asked for twice. */
+  baselineCompletedAt?: number;
 }
 
 /** The gym the profile currently points at, with a safe fallback. */

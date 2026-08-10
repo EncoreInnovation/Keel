@@ -7,6 +7,7 @@
  * can never offer.
  */
 
+import { ladderChain } from './baseline';
 import { achievableLoads, resolveLoad } from './loading';
 import { applyDeload, isDeloadWeek, nextPrescription } from './overload';
 import { primaryRecovery } from './recovery';
@@ -257,6 +258,25 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     ? day.slots.filter((s, i) => s.role !== 'accessory' || i === day.slots.findIndex((x) => x.role === 'accessory'))
     : day.slots;
 
+  /**
+   * The baseline rung sitting on the same ladder as `exercise`, if the test
+   * placed one there. Matching by chain rather than by id is what lets a
+   * push-up test govern the whole push-up ladder no matter which rung the
+   * selector happened to pick.
+   */
+  function baselineRungFor(
+    exercise: Exercise,
+    p: UserProfile,
+    index: LadderIndex,
+    byId: Map<string, Exercise>,
+  ): Exercise | undefined {
+    if (!p.baselineRungs?.length) return undefined;
+    const chain = ladderChain(exercise, index, byId);
+    const chainIds = new Set(chain.map((e) => e.id));
+    const match = p.baselineRungs.find((id) => chainIds.has(id));
+    return match ? byId.get(match) : undefined;
+  }
+
   for (const slotDef of slots) {
     const lockedId = block.lockedAssignments[slotDef.id];
     let exercise = selectForSlot(catalog, slotDef, ctx, lockedId, chosenThisSession);
@@ -265,8 +285,16 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     // Ladder: bodyweight and band work progresses by variant, not by load.
     const attempts = attemptsFor(history, exercise.id);
     if (exercise.loadType !== 'external') {
-      const verdict = evaluateLadder(attempts, slotDef);
-      exercise = nextRung(exercise, verdict, ladderIndex, catalogById, availableEquipment);
+      // Before any history exists, honour what the baseline test measured.
+      // Climbing from the bottom rung when the test already proved a higher
+      // one would waste weeks re-earning a known starting point.
+      const baselineRung = baselineRungFor(exercise, profile, ladderIndex, catalogById);
+      if (attempts.length === 0 && baselineRung) {
+        exercise = baselineRung;
+      } else {
+        const verdict = evaluateLadder(attempts, slotDef);
+        exercise = nextRung(exercise, verdict, ladderIndex, catalogById, availableEquipment);
+      }
     }
 
     chosenThisSession.add(exercise.id);
