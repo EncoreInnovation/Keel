@@ -13,12 +13,24 @@
  * and exactly one place to look if the numbers ever look wrong.
  */
 
-import { deleteKey, readKey, writeKey, STORAGE_KEYS } from './db';
+import {
+  deleteBlob,
+  deleteKey,
+  posturePhotoKey,
+  readBlob,
+  readKey,
+  writeBlob,
+  writeKey,
+  STORAGE_KEYS,
+} from './db';
 import { runExclusive } from './mutex';
 import type {
   Block,
+  BodyMetricLog,
   ConditioningLog,
   PillarLog,
+  PostureLog,
+  PostureView,
   PrescribedSession,
   SessionLog,
   SetLog,
@@ -237,6 +249,68 @@ export function appendPillarLog(entry: PillarLog): Promise<PillarLog[]> {
 }
 
 /* ------------------------------------------------------------------ *
+ * Body metrics
+ * ------------------------------------------------------------------ */
+
+export function getBodyMetrics(): Promise<BodyMetricLog[]> {
+  return readKey<BodyMetricLog[]>(STORAGE_KEYS.bodyMetrics).then((v) => v ?? []);
+}
+
+export function appendBodyMetric(entry: BodyMetricLog): Promise<BodyMetricLog[]> {
+  return runExclusive('bodyMetrics', async () => {
+    const logs = (await readKey<BodyMetricLog[]>(STORAGE_KEYS.bodyMetrics)) ?? [];
+    const next = [...logs, entry].sort((a, b) => a.at - b.at);
+    await writeKey(STORAGE_KEYS.bodyMetrics, next);
+    return next;
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * Posture scan
+ *
+ * Photos are written to their own blob keys and never included in
+ * `exportAll`/`importAll` — export is JSON, and a photo doesn't survive a
+ * JSON round-trip. A future "export my photos" would be a separate,
+ * explicit action, not a side effect of backing up training data.
+ * ------------------------------------------------------------------ */
+
+export function getPostureLogs(): Promise<PostureLog[]> {
+  return readKey<PostureLog[]>(STORAGE_KEYS.postureLogs).then((v) => v ?? []);
+}
+
+export async function savePostureLog(
+  entry: PostureLog,
+  photos: Partial<Record<PostureView, Blob>>,
+): Promise<PostureLog[]> {
+  await Promise.all(
+    (Object.entries(photos) as [PostureView, Blob | undefined][])
+      .filter((pair): pair is [PostureView, Blob] => Boolean(pair[1]))
+      .map(([view, blob]) => writeBlob(posturePhotoKey(entry.id, view), blob)),
+  );
+
+  return runExclusive('postureLogs', async () => {
+    const logs = (await readKey<PostureLog[]>(STORAGE_KEYS.postureLogs)) ?? [];
+    const next = [...logs, entry].sort((a, b) => a.at - b.at);
+    await writeKey(STORAGE_KEYS.postureLogs, next);
+    return next;
+  });
+}
+
+export function getPosturePhoto(postureLogId: string, view: PostureView): Promise<Blob | undefined> {
+  return readBlob(posturePhotoKey(postureLogId, view));
+}
+
+export async function deletePostureLog(id: string): Promise<PostureLog[]> {
+  await Promise.all([deleteBlob(posturePhotoKey(id, 'front')), deleteBlob(posturePhotoKey(id, 'side'))]);
+  return runExclusive('postureLogs', async () => {
+    const logs = (await readKey<PostureLog[]>(STORAGE_KEYS.postureLogs)) ?? [];
+    const next = logs.filter((l) => l.id !== id);
+    await writeKey(STORAGE_KEYS.postureLogs, next);
+    return next;
+  });
+}
+
+/* ------------------------------------------------------------------ *
  * Export / import — the whole point of local-first with no account
  * ------------------------------------------------------------------ */
 
@@ -252,6 +326,9 @@ export interface KeelExport {
   completedSessions: SessionRecord[];
   conditioning: ConditioningLog[];
   pillarLogs: PillarLog[];
+  bodyMetrics: BodyMetricLog[];
+  /** Angles only — photos are on-device binaries and never part of a JSON export. */
+  postureLogs: PostureLog[];
 }
 
 export async function exportAll(now: number): Promise<KeelExport> {
@@ -265,6 +342,8 @@ export async function exportAll(now: number): Promise<KeelExport> {
     completedSessions,
     conditioning,
     pillarLogs,
+    bodyMetrics,
+    postureLogs,
   ] = await Promise.all([
     getProfile(),
     getActiveBlock(),
@@ -275,6 +354,8 @@ export async function exportAll(now: number): Promise<KeelExport> {
     getCompletedSessions(),
     getConditioningLogs(),
     getPillarLogs(),
+    getBodyMetrics(),
+    getPostureLogs(),
   ]);
 
   return {
@@ -289,6 +370,8 @@ export async function exportAll(now: number): Promise<KeelExport> {
     completedSessions,
     conditioning,
     pillarLogs,
+    bodyMetrics,
+    postureLogs,
   };
 }
 
@@ -322,5 +405,7 @@ export async function importAll(data: KeelExport): Promise<void> {
     writeKey(STORAGE_KEYS.completedSessions, data.completedSessions),
     writeKey(STORAGE_KEYS.conditioning, data.conditioning),
     writeKey(STORAGE_KEYS.pillarLogs, data.pillarLogs),
+    writeKey(STORAGE_KEYS.bodyMetrics, data.bodyMetrics),
+    writeKey(STORAGE_KEYS.postureLogs, data.postureLogs),
   ]);
 }

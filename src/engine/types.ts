@@ -213,6 +213,55 @@ export interface PillarLog {
 }
 
 /* ------------------------------------------------------------------ *
+ * Body metrics — weight and tape measurements
+ * ------------------------------------------------------------------ */
+
+export const MEASUREMENT_SITES = ['waist', 'chest', 'hips', 'neck'] as const;
+export type MeasurementSite = (typeof MEASUREMENT_SITES)[number];
+
+export interface BodyMetricLog {
+  id: string;
+  at: number;
+  /** lbs. */
+  weight?: number;
+  /** Inches, keyed by site. Sparse — log only what you measured that day. */
+  measurements?: Partial<Record<MeasurementSite, number>>;
+  notes?: string;
+}
+
+/* ------------------------------------------------------------------ *
+ * Posture scan
+ *
+ * A tracker, not a diagnosis: a single 2D photo can't measure true pelvic
+ * tilt, and camera angle alone can swing these numbers more than real change
+ * will. The value is in the delta across repeated, same-conditions captures,
+ * not in any one reading's absolute number.
+ * ------------------------------------------------------------------ */
+
+export interface PostureAngles {
+  /** Degrees off horizontal. Positive = right shoulder higher. */
+  shoulderTilt: number;
+  /** Degrees off horizontal. Positive = right hip higher. */
+  hipTilt: number;
+  /** Signed midline offset of shoulders vs. hips, as a fraction of shoulder width. Positive = shifted right. */
+  lateralShift: number;
+  /** Side-view only: ear-to-shoulder horizontal offset, as a fraction of shoulder width. */
+  forwardHead?: number;
+  /** Side-view only: degrees of shoulder-over-hip forward lean. */
+  trunkLean?: number;
+}
+
+export type PostureView = 'front' | 'side';
+
+export interface PostureLog {
+  id: string;
+  at: number;
+  angles: PostureAngles;
+  /** Which views contributed a photo — drives which angle fields are meaningful. */
+  views: PostureView[];
+}
+
+/* ------------------------------------------------------------------ *
  * Conditioning
  * ------------------------------------------------------------------ */
 

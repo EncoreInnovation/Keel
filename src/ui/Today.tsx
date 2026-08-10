@@ -23,9 +23,20 @@ export interface TodayProps {
   onStart: () => void;
   onOpenPillar: (kind: PillarKind) => void;
   onOpenAsymmetry: () => void;
+  onOpenRecovery: () => void;
+  onOpenProgress: () => void;
 }
 
-export function Today({ prescription, weeksTotal, resumed, onStart, onOpenPillar, onOpenAsymmetry }: TodayProps) {
+export function Today({
+  prescription,
+  weeksTotal,
+  resumed,
+  onStart,
+  onOpenPillar,
+  onOpenAsymmetry,
+  onOpenRecovery,
+  onOpenProgress,
+}: TodayProps) {
   const label = DAY_LABEL[prescription.dayId] ?? prescription.dayName;
 
   return (
@@ -51,9 +62,17 @@ export function Today({ prescription, weeksTotal, resumed, onStart, onOpenPillar
         ))}
       </div>
 
-      <button className="btn btn--text today__balance-link" onClick={onOpenAsymmetry}>
-        Left / right balance
-      </button>
+      <div className="today__links">
+        <button className="btn btn--text" onClick={onOpenRecovery}>
+          Recovery
+        </button>
+        <button className="btn btn--text" onClick={onOpenProgress}>
+          Progress
+        </button>
+        <button className="btn btn--text" onClick={onOpenAsymmetry}>
+          Left / right balance
+        </button>
+      </div>
     </div>
   );
 }

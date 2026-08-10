@@ -10,21 +10,27 @@ import { clear } from 'idb-keyval';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { keelStore } from '../src/storage/db';
 import {
+  appendBodyMetric,
   appendConditioningLog,
   appendPillarLog,
   appendSet,
   appendSets,
   completeActiveSession,
+  deletePostureLog,
   exportAll,
   getActivePrescription,
   getActiveSession,
   getActiveSessionRecord,
   getAllSets,
+  getBodyMetrics,
   getCompletedSessionsForBlock,
   getConditioningLogs,
   getPillarLogs,
+  getPostureLogs,
+  getPosturePhoto,
   importAll,
   saveActivePrescription,
+  savePostureLog,
   saveProfile,
   getProfile,
   startNewBlock,
@@ -32,7 +38,7 @@ import {
   SCHEMA_VERSION,
   type SessionRecord,
 } from '../src/storage/repository';
-import type { Block, ConditioningLog, PillarLog, SetLog, UserProfile } from '../src/engine/types';
+import type { Block, ConditioningLog, PillarLog, PostureLog, SetLog, UserProfile } from '../src/engine/types';
 
 beforeEach(async () => {
   await clear(keelStore);
@@ -260,6 +266,56 @@ describe('pillar sessions', () => {
     await appendPillarLog({ id: 'p2', kind: 'ground', startedAt: T0 + 1000 });
     const logs = await getPillarLogs();
     expect(logs.map((l) => l.kind)).toEqual(['reset', 'ground']);
+  });
+});
+
+describe('body metrics', () => {
+  it('appends and returns sorted by time', async () => {
+    await appendBodyMetric({ id: 'm2', at: T0 + 1000, weight: 289 });
+    await appendBodyMetric({ id: 'm1', at: T0, weight: 292, measurements: { waist: 44 } });
+    const logs = await getBodyMetrics();
+    expect(logs.map((l) => l.id)).toEqual(['m1', 'm2']);
+    expect(logs[0]!.measurements?.waist).toBe(44);
+  });
+});
+
+describe('posture logs', () => {
+  const angles: PostureLog['angles'] = { shoulderTilt: 2.1, hipTilt: -1.4, lateralShift: 0.03 };
+
+  it('stores the log and both photo blobs, retrievable independently', async () => {
+    const front = new Blob(['front-bytes'], { type: 'image/png' });
+    const side = new Blob(['side-bytes'], { type: 'image/png' });
+
+    await savePostureLog({ id: 'pos1', at: T0, angles, views: ['front', 'side'] }, { front, side });
+
+    const logs = await getPostureLogs();
+    expect(logs).toHaveLength(1);
+    expect(logs[0]!.angles).toEqual(angles);
+
+    const storedFront = await getPosturePhoto('pos1', 'front');
+    const storedSide = await getPosturePhoto('pos1', 'side');
+    expect(await storedFront?.text()).toBe('front-bytes');
+    expect(await storedSide?.text()).toBe('side-bytes');
+  });
+
+  it('deletes the log and its photos together', async () => {
+    const front = new Blob(['front-bytes'], { type: 'image/png' });
+    await savePostureLog({ id: 'pos1', at: T0, angles, views: ['front'] }, { front });
+
+    await deletePostureLog('pos1');
+
+    expect(await getPostureLogs()).toHaveLength(0);
+    expect(await getPosturePhoto('pos1', 'front')).toBeUndefined();
+  });
+
+  it('is not part of a JSON export — photos are on-device binaries, not sync payload', async () => {
+    const front = new Blob(['front-bytes'], { type: 'image/png' });
+    await savePostureLog({ id: 'pos1', at: T0, angles, views: ['front'] }, { front });
+
+    const snapshot = await exportAll(T0 + 500);
+    expect(snapshot.postureLogs).toHaveLength(1);
+    // The angles travel; nothing in the export contains photo bytes.
+    expect(JSON.stringify(snapshot)).not.toContain('front-bytes');
   });
 });
 

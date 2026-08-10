@@ -22,6 +22,8 @@ export const STORAGE_KEYS = {
   completedSessions: 'sessions:completed',
   conditioning: 'conditioning',
   pillarLogs: 'pillar:logs',
+  bodyMetrics: 'body:metrics',
+  postureLogs: 'posture:logs',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -35,5 +37,28 @@ export function writeKey<T>(key: StorageKey, value: T): Promise<void> {
 }
 
 export function deleteKey(key: StorageKey): Promise<void> {
+  return del(key, keelStore);
+}
+
+/**
+ * Posture photos, one Blob per key, namespaced separately from the JSON
+ * value keys above — binary and per-id, so folding them into one of the
+ * array-valued keys would mean rewriting every photo on every unrelated
+ * write. IndexedDB stores Blobs natively via structured clone; nothing here
+ * ever leaves the device.
+ */
+export function posturePhotoKey(postureLogId: string, view: 'front' | 'side'): string {
+  return `posture:photo:${postureLogId}:${view}`;
+}
+
+export function readBlob(key: string): Promise<Blob | undefined> {
+  return get<Blob>(key, keelStore);
+}
+
+export function writeBlob(key: string, blob: Blob): Promise<void> {
+  return set(key, blob, keelStore);
+}
+
+export function deleteBlob(key: string): Promise<void> {
   return del(key, keelStore);
 }

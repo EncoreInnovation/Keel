@@ -11,6 +11,8 @@ import { Asymmetry } from './ui/Asymmetry';
 import { ArrivePhase } from './ui/ArrivePhase';
 import { DownshiftPhase } from './ui/DownshiftPhase';
 import { PillarPlayer } from './ui/PillarPlayer';
+import { Progress } from './ui/Progress';
+import { RecoveryMap } from './ui/RecoveryMap';
 import { SessionPlayer } from './ui/SessionPlayer';
 import { Setup } from './ui/Setup';
 import { Today } from './ui/Today';
@@ -23,7 +25,17 @@ import type { Exercise, PillarKind, UserProfile } from './engine/types';
 
 const catalog = CATALOG as Exercise[];
 
-type Screen = 'loading' | 'setup' | 'today' | 'arrive' | 'session' | 'downshift' | 'pillar' | 'asymmetry';
+type Screen =
+  | 'loading'
+  | 'setup'
+  | 'today'
+  | 'arrive'
+  | 'session'
+  | 'downshift'
+  | 'pillar'
+  | 'asymmetry'
+  | 'recovery'
+  | 'progress';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -109,6 +121,8 @@ export default function App() {
           setScreen('pillar');
         }}
         onOpenAsymmetry={() => setScreen('asymmetry')}
+        onOpenRecovery={() => setScreen('recovery')}
+        onOpenProgress={() => setScreen('progress')}
       />
     );
   }
@@ -119,6 +133,14 @@ export default function App() {
 
   if (screen === 'asymmetry') {
     return <Asymmetry onBack={() => setScreen('today')} />;
+  }
+
+  if (screen === 'recovery') {
+    return <RecoveryMap onBack={() => setScreen('today')} />;
+  }
+
+  if (screen === 'progress') {
+    return <Progress onBack={() => setScreen('today')} onOpenAsymmetry={() => setScreen('asymmetry')} />;
   }
 
   if (screen === 'arrive') {

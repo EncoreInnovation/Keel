@@ -413,9 +413,13 @@
   margin-top: var(--s3);
 }
 
-/* ---------------- Today: balance link ---------------- */
+/* ---------------- Today: secondary links ---------------- */
 
-.today__balance-link {
+.today__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2) var(--s4);
   margin-top: var(--s6);
 }
 
@@ -502,4 +506,189 @@
    meaningful side gap is exactly the kind of thing colour should flag. */
 .asymmetry__row-gap--significant {
   color: var(--data-3);
+}
+
+/* ---------------- Recovery map ---------------- */
+
+.recovery-map {
+  justify-content: flex-start;
+  gap: var(--s4);
+}
+
+.recovery-map__figures {
+  display: flex;
+  gap: var(--s6);
+  margin: var(--s2) 0 var(--s4);
+}
+
+.recovery-map__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.recovery-map__figure-label {
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.recovery-map__load {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  margin-bottom: var(--s2);
+}
+
+.recovery-map__bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: 100%;
+  max-width: 22rem;
+  margin-bottom: var(--s5);
+}
+
+.recovery-map__bar-row {
+  display: grid;
+  grid-template-columns: 6rem 1fr 3rem;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.recovery-map__bar-label {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-align: left;
+}
+
+.recovery-map__bar-track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--data-muted);
+  overflow: hidden;
+}
+
+.recovery-map__bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width var(--dur) var(--ease);
+}
+
+.recovery-map__bar-pct {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* ---------------- Progress ---------------- */
+
+.progress-screen {
+  justify-content: flex-start;
+  gap: var(--s2);
+}
+
+.progress-stats {
+  display: flex;
+  gap: var(--s6);
+  margin: var(--s3) 0 var(--s6);
+}
+
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s1);
+}
+
+.progress-stat__value {
+  font-size: var(--fs-title);
+  font-weight: 600;
+}
+
+.progress-stat__label {
+  font-size: var(--fs-micro);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  text-align: center;
+}
+
+.progress-section {
+  width: 100%;
+  max-width: 22rem;
+  margin-bottom: var(--s5);
+  text-align: left;
+}
+
+.progress-section__title {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin: 0 0 var(--s3);
+  font-weight: 500;
+}
+
+.progress-lift {
+  margin-bottom: var(--s4);
+}
+
+.progress-lift__header {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  margin-bottom: var(--s2);
+}
+
+.sparkline {
+  width: 100%;
+  height: auto;
+}
+
+.progress-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.progress-list__row {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+.progress-weight {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  font-size: var(--fs-title);
+  margin: 0 0 var(--s3);
+}
+
+.progress-weight__delta {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+}
+
+.progress-weight-entry {
+  display: flex;
+  gap: var(--s2);
+}
+
+.progress-weight-entry input {
+  flex: 1;
+  min-height: var(--tap);
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--fs-body);
+  padding: 0 var(--s4);
 }
