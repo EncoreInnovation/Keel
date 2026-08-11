@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { getPostureLogs } from '../storage/repository';
+import { describeTilt } from '../posture/describe';
 import type { PostureAngles, PostureLog } from '../engine/types';
 
 export interface PostureHistoryProps {
@@ -73,9 +74,14 @@ export function PostureHistory({ onBack, onNewScan }: PostureHistoryProps) {
                 {ANGLE_FIELDS.filter((f) => log.angles[f.key] !== undefined).map((f) => {
                   const value = log.angles[f.key]!;
                   const prevValue = previous?.angles[f.key];
+                  const direction =
+                    f.key === 'hipTilt' ? describeTilt('hip', value) : f.key === 'shoulderTilt' ? describeTilt('shoulder', value) : undefined;
                   return (
                     <div key={f.key} className="posture-history__row">
-                      <span className="posture-history__row-label">{f.label}</span>
+                      <span className="posture-history__row-label">
+                        {f.label}
+                        {direction && <span className="posture-history__row-direction"> — {direction}</span>}
+                      </span>
                       <span data-numeric>{formatValue(f.key, value)}</span>
                       {prevValue !== undefined && (
                         <span className="posture-history__row-delta" data-numeric>
