@@ -10,6 +10,11 @@
 
 import { createStore, del, get, set } from 'idb-keyval';
 
+// The database name is intentionally left as 'keel-db' from the original
+// build, not renamed to match the COLOSSUS branding — IndexedDB opens by
+// name, so a rename here would silently start every existing install on an
+// empty database and orphan real training history. Cosmetic only; never
+// touch this string on a rebrand.
 export const keelStore = createStore('keel-db', 'kv');
 
 export const STORAGE_KEYS = {

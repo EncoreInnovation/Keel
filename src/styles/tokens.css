@@ -1,5 +1,5 @@
 /*
- * KEEL design tokens.
+ * COLOSSUS design tokens.
  *
  * Governing rule: the interface chrome is monochrome. Colour is reserved
  * exclusively for data — recovery state, progress, asymmetry. The moment
@@ -82,7 +82,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* KEEL is a dark-only product by intent, not by omission. A light theme would
+/* COLOSSUS is a dark-only product by intent, not by omission. A light theme would
    fight the nervous-system-downshift framing of the pillar work. */
 
 * {

@@ -37,7 +37,7 @@ export function Setup({ onComplete }: SetupProps) {
 
   return (
     <div className="setup">
-      <h1 className="setup__title">KEEL</h1>
+      <h1 className="setup__title">COLOSSUS</h1>
       <p className="setup__lede">Two answers, then we find your working weights.</p>
 
       <label className="setup__field">

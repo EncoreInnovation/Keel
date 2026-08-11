@@ -1,9 +1,9 @@
 ---
 name: verify-in-browser
-description: Drive the KEEL app in a real headless browser to verify a change actually works before calling it done. Use after any UI change, engine change that reaches the UI, or before committing a feature. Typechecking and unit tests are not sufficient evidence.
+description: Drive the COLOSSUS app in a real headless browser to verify a change actually works before calling it done. Use after any UI change, engine change that reaches the UI, or before committing a feature. Typechecking and unit tests are not sufficient evidence.
 ---
 
-# Verifying KEEL in a real browser
+# Verifying COLOSSUS in a real browser
 
 Every significant defect found in this project so far was found here, not by
 the type checker and not by unit tests. A green suite means the code does what

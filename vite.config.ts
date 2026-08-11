@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'KEEL',
-        short_name: 'KEEL',
+        name: 'COLOSSUS',
+        short_name: 'COLOSSUS',
         description: 'Personal training OS',
         theme_color: '#08080A',
         background_color: '#08080A',

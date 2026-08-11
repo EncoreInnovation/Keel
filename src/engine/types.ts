@@ -1,5 +1,5 @@
 /**
- * KEEL domain model.
+ * COLOSSUS domain model.
  *
  * Everything in `src/engine` is pure: plain data in, plain data out, no I/O and
  * no React. That is what makes the programming logic testable and what keeps

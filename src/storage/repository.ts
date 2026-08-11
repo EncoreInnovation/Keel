@@ -169,7 +169,7 @@ export async function getActiveSession(): Promise<SessionLog | undefined> {
 /**
  * Begin a session. Overwrites any existing active-session pointer — the
  * caller is responsible for having resolved or abandoned a prior one first,
- * since KEEL only ever runs one session at a time by design.
+ * since COLOSSUS only ever runs one session at a time by design.
  */
 export function startSession(record: SessionRecord, prescription: PrescribedSession): Promise<void> {
   return runExclusive('session', async () => {

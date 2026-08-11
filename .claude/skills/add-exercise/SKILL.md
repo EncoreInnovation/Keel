@@ -1,9 +1,9 @@
 ---
 name: add-exercise
-description: Add exercises to the KEEL catalog correctly, with the right muscle roles, ladder edges, equipment tags, and goal/corrective ratings. Use whenever adding, editing, or auditing entries in catalog/exercises.ts, or when expanding a progression ladder.
+description: Add exercises to the COLOSSUS catalog correctly, with the right muscle roles, ladder edges, equipment tags, and goal/corrective ratings. Use whenever adding, editing, or auditing entries in catalog/exercises.ts, or when expanding a progression ladder.
 ---
 
-# Adding an exercise to the KEEL catalog
+# Adding an exercise to the COLOSSUS catalog
 
 The catalog is the input to every scoring decision the engine makes. A
 mistagged exercise doesn't fail loudly — it quietly skews selection, fatigue,

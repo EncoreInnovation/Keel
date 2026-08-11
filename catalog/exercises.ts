@@ -1,5 +1,5 @@
 /**
- * KEEL exercise catalog — Cruise Block (Block 1).
+ * COLOSSUS exercise catalog — Cruise Block (Block 1).
  *
  * Hand-authored rather than imported, because the metadata that matters here —
  * ladder edges, breath cues, corrective value, joint load — doesn't exist in

@@ -1,5 +1,5 @@
 /**
- * The one server-side function in KEEL, and its only job: hold the Gemini
+ * The one server-side function in COLOSSUS, and its only job: hold the Gemini
  * API key so it never ships in the client bundle. Everything about *what*
  * to ask — the prompt text — is built client-side in `src/ai/prompts.ts`,
  * fully testable without this file or a network call. This function is a
