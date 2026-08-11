@@ -350,6 +350,8 @@
 
 .rest-timer__actions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--s3);
   margin-top: var(--s5);
 }

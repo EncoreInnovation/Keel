@@ -18,6 +18,7 @@ export interface RestTimerProps {
 }
 
 const EXTEND_SECONDS = 30;
+const SHORTEN_SECONDS = 30;
 
 export function RestTimer({ seconds, onComplete }: RestTimerProps) {
   const [remaining, setRemaining] = useState(seconds);
@@ -61,6 +62,12 @@ export function RestTimer({ seconds, onComplete }: RestTimerProps) {
       </div>
       <BreathPacer protocol={PROTOCOLS.coherent} />
       <div className="rest-timer__actions">
+        <button
+          className="btn btn--ghost"
+          onClick={() => setRemaining((r) => Math.max(0, r - SHORTEN_SECONDS))}
+        >
+          −30s
+        </button>
         <button className="btn btn--ghost" onClick={() => setRemaining((r) => r + EXTEND_SECONDS)}>
           +30s
         </button>

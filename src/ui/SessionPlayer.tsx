@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { logSet, resumePosition, skipSet } from '../state/sessionController';
 import { getActiveSession } from '../storage/repository';
 import { achievableLoads, nextLoadStep, previousLoadStep } from '../engine/loading';
+import { adjustRestSeconds } from '../engine/rest';
 import { activeGym } from '../engine/types';
 import { RestTimer } from './RestTimer';
 import { primeAudio, playSetComplete } from './audio';
@@ -161,7 +162,10 @@ export function SessionPlayer({
     haptics.setComplete();
     setPrescription(result.prescription);
     setMessage(result.adjustment.message);
-    advance(exercise.restSec);
+    // Rest matches how the set actually went, not just its slot role — a
+    // grinder near target RPE gets more recovery than an easy warm-up set
+    // in the same slot would.
+    advance(adjustRestSeconds(exercise.restSec, rpe, targetSet.targetRpe));
   };
 
   const handleSkip = async (reason: SkipReason) => {
