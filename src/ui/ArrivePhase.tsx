@@ -2,9 +2,11 @@
  * Arrive — the momentum ritual that opens every session.
  *
  * Three coherent breath cycles (repositioning: a full exhale drops the ribs
- * and lets the pelvis rotate out of anterior tilt), then a 90-second primer
+ * and lets the pelvis rotate out of anterior tilt), then a 45-second primer
  * targeted at today's movement pattern. Turns "start the session" into a
- * 3-minute commitment instead of a 40-minute one.
+ * roughly 2-minute commitment instead of a 40-minute one. Was 90 seconds;
+ * shortened after feedback that the gap between the breath work and the
+ * actual lifting was dragging.
  */
 
 import { useState } from 'react';
@@ -61,7 +63,7 @@ export function ArrivePhase({ dayId, onComplete }: ArrivePhaseProps) {
       {!breathDone ? (
         <BreathSequence protocol={PROTOCOLS.coherent} cycles={3} onComplete={() => setBreathDone(true)} />
       ) : (
-        <TimedPrompt seconds={90} title={copy.title} lines={copy.lines} onComplete={onComplete} />
+        <TimedPrompt seconds={45} title={copy.title} lines={copy.lines} onComplete={onComplete} />
       )}
     </div>
   );

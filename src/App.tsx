@@ -123,6 +123,18 @@ export default function App() {
     await goToTodayOrReadiness(p);
   }
 
+  /**
+   * Skipping still resolves the question — otherwise every relaunch lands
+   * back on the baseline screen forever, since `baselineCompletedAt` is
+   * what stops it being asked twice and nothing was ever setting it here.
+   */
+  async function handleBaselineSkip(p: UserProfile) {
+    const updated: UserProfile = { ...p, baselineCompletedAt: Date.now() };
+    await saveProfile(updated);
+    setProfile(updated);
+    await goToTodayOrReadiness(updated);
+  }
+
   async function handleReadinessSelected(value: number) {
     if (!profile) return;
     setCoachNote(undefined);
@@ -182,7 +194,7 @@ export default function App() {
       <BaselineTest
         profile={profile}
         onComplete={(p) => void handleBaselineDone(p)}
-        onSkip={() => void goToTodayOrReadiness(profile)}
+        onSkip={() => void handleBaselineSkip(profile)}
       />
     );
   }
@@ -287,6 +299,20 @@ export default function App() {
         profile={profile}
         initialPrescription={today.prescription}
         onSessionComplete={() => setScreen('downshift')}
+        onFinishEarly={() => {
+          void (async () => {
+            await completeSession(Date.now());
+            await goToTodayOrReadiness(profile);
+          })();
+        }}
+        onPause={() => {
+          // A raw setScreen('today') would reuse the stale `today.resumed`
+          // captured before this session existed, showing "Start" on a
+          // session that's actually still active. Re-running the normal
+          // today-load path picks up the now-active record and correctly
+          // flips the button to "Continue".
+          void refreshToday(profile);
+        }}
       />
     );
   }

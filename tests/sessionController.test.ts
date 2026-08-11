@@ -19,7 +19,12 @@ import {
   logSet,
   resumePosition,
 } from '../src/state/sessionController';
-import { getActivePrescription, getActiveSessionRecord, getAllSets } from '../src/storage/repository';
+import {
+  getActivePrescription,
+  getActiveSessionRecord,
+  getAllSets,
+  getCompletedSessions,
+} from '../src/storage/repository';
 import type { Exercise, SetLog, UserProfile } from '../src/engine/types';
 import { TEST_GYM } from './support/profile';
 
@@ -191,12 +196,12 @@ describe('resumePosition', () => {
 
 describe('readiness', () => {
   it('reports no session started before the first loadToday of a block', async () => {
-    expect(await hasStartedTodaySession()).toBe(false);
+    expect(await hasStartedTodaySession(T0)).toBe(false);
   });
 
   it('reports started once a session exists, and threads readiness onto its record', async () => {
     await loadToday(catalog, PROFILE, T0, 4);
-    expect(await hasStartedTodaySession()).toBe(true);
+    expect(await hasStartedTodaySession(T0)).toBe(true);
     expect((await getActiveSessionRecord())?.readiness).toBe(4);
   });
 
@@ -220,6 +225,70 @@ describe('readiness', () => {
     const resumed = await loadToday(catalog, PROFILE, T0 + 3600_000);
     expect(resumed.resumed).toBe(true);
     expect(resumed.prescription).toEqual(first.prescription);
+  });
+
+  it('still reports started for a session resumed later the same day', async () => {
+    await loadToday(catalog, PROFILE, T0, 3);
+    // T0 isn't UTC-midnight-aligned, so this stays deliberately small — large
+    // enough to prove "later" resumes correctly, small enough to guarantee it
+    // can't cross into the next UTC calendar day regardless of T0's time-of-day.
+    expect(await hasStartedTodaySession(T0 + 3600_000)).toBe(true);
+  });
+});
+
+describe('stale session self-heal', () => {
+  it('auto-closes a session abandoned on a previous calendar day rather than blocking forever', async () => {
+    await loadToday(catalog, PROFILE, T0, 3);
+    expect(await hasStartedTodaySession(T0)).toBe(true);
+
+    // Reopen the app the next day without ever finishing or pausing —
+    // exactly the "walked away" case the bug report described.
+    const nextDayAt = T0 + DAY;
+    expect(await hasStartedTodaySession(nextDayAt)).toBe(false);
+
+    // The stale session is gone from "active" and filed as completed —
+    // not silently discarded.
+    expect(await getActiveSessionRecord()).toBeUndefined();
+    const completed = await getCompletedSessions();
+    expect(completed).toHaveLength(1);
+    expect(completed[0]!.startedAt).toBe(T0);
+  });
+
+  it('a healed day generates a fresh session and asks readiness again', async () => {
+    await loadToday(catalog, PROFILE, T0, 3);
+    const nextDayAt = T0 + DAY;
+    await hasStartedTodaySession(nextDayAt); // triggers the heal as a side effect, same as App.tsx's flow
+
+    expect(await hasStartedTodaySession(nextDayAt)).toBe(false);
+    const fresh = await loadToday(catalog, PROFILE, nextDayAt, 4);
+    expect(fresh.resumed).toBe(false);
+  });
+
+  it('preserves any sets already logged before the stale session is closed', async () => {
+    const state = await loadToday(catalog, PROFILE, T0, 3);
+    const exercise = state.prescription.exercises[0]!;
+    const slot = state.block.days
+      .find((d) => d.id === state.prescription.dayId)!
+      .slots.find((s) => s.id === exercise.slotId)!;
+    const firstSet = exercise.sets[0]!;
+
+    await logSet(state.sessionId, {
+      prescription: state.prescription,
+      slot,
+      exerciseIndex: 0,
+      setIndex: firstSet.setIndex,
+      side: firstSet.side,
+      weight: firstSet.weight,
+      reps: firstSet.repTarget,
+      rpe: 8,
+      at: T0 + 60_000,
+      profile: PROFILE,
+    });
+
+    await hasStartedTodaySession(T0 + DAY);
+
+    const sets = await getAllSets();
+    expect(sets.filter((s) => s.sessionId === state.sessionId)).toHaveLength(1);
   });
 });
 

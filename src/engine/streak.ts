@@ -8,11 +8,7 @@
  * count. Both read straight off data already logged; nothing new to store.
  */
 
-const DAY_MS = 86_400_000;
-
-function dayKey(ms: number): number {
-  return Math.floor(ms / DAY_MS);
-}
+import { DAY_MS, dayKey } from './time';
 
 /**
  * Consecutive calendar days, most recent first, with at least one completed

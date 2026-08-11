@@ -25,6 +25,10 @@ export interface SessionPlayerProps {
   profile: UserProfile;
   initialPrescription: PrescribedSession;
   onSessionComplete: () => void;
+  /** Save whatever sets were logged, close the session cleanly, and leave. */
+  onFinishEarly: () => void;
+  /** Leave the session running — it stays "active" and resumes exactly here next time. */
+  onPause: () => void;
 }
 
 function findSlot(block: Block, dayId: string, slotId: string): Slot | undefined {
@@ -37,6 +41,8 @@ export function SessionPlayer({
   profile,
   initialPrescription,
   onSessionComplete,
+  onFinishEarly,
+  onPause,
 }: SessionPlayerProps) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [prescription, setPrescription] = useState(initialPrescription);
@@ -44,6 +50,7 @@ export function SessionPlayer({
   const [setPos, setSetPos] = useState(0);
   const [message, setMessage] = useState<string | undefined>();
   const [showSkip, setShowSkip] = useState(false);
+  const [showExit, setShowExit] = useState(false);
 
   const [weight, setWeight] = useState(0);
   const [reps, setReps] = useState(0);
@@ -232,6 +239,24 @@ export function SessionPlayer({
             </button>
           ))}
           <button className="btn btn--text" onClick={() => setShowSkip(false)}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {!showExit ? (
+        <button className="btn btn--text session-player__exit-trigger" onClick={() => setShowExit(true)}>
+          Exit
+        </button>
+      ) : (
+        <div className="skip-reasons">
+          <button className="chip" onClick={onFinishEarly}>
+            Finish early
+          </button>
+          <button className="chip" onClick={onPause}>
+            Pause — resume later
+          </button>
+          <button className="btn btn--text" onClick={() => setShowExit(false)}>
             Cancel
           </button>
         </div>

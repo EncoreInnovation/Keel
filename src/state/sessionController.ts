@@ -25,6 +25,7 @@ import { achievableLoads } from '../engine/loading';
 import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
 import type { SelectionContext } from '../engine/selector';
 import { activeGym } from '../engine/types';
+import { isSameCalendarDay } from '../engine/time';
 import type {
   Block,
   ConditioningLog,
@@ -204,10 +205,28 @@ export async function loadToday(
   return { block, prescription, sessionId, resumed: false };
 }
 
-/** Whether a session already exists for "today" — tells the UI whether it's too late to ask readiness. */
-export async function hasStartedTodaySession(): Promise<boolean> {
+/**
+ * Whether a session already exists for "today" — tells the UI whether it's
+ * too late to ask readiness.
+ *
+ * Self-healing: without this, a session started and then paused or simply
+ * forgotten stays "active" indefinitely, and every future app open sees it
+ * and offers "Continue" instead of ever asking readiness or generating a
+ * new day — silently stuck on whatever day it was abandoned. A session
+ * whose record dates to an earlier calendar day is closed out here instead:
+ * whatever sets were logged still count toward progress and fatigue, they
+ * just get filed as finished rather than holding every day after it hostage.
+ */
+export async function hasStartedTodaySession(now: number = Date.now()): Promise<boolean> {
   const [record, prescription] = await Promise.all([repo.getActiveSessionRecord(), repo.getActivePrescription()]);
-  return Boolean(record && prescription);
+  if (!record || !prescription) return false;
+
+  if (!isSameCalendarDay(record.startedAt, now)) {
+    await repo.completeActiveSession(now);
+    return false;
+  }
+
+  return true;
 }
 
 /* ------------------------------------------------------------------ *

@@ -291,6 +291,7 @@
 .breath-pacer__ring-wrap {
   width: 12rem;
   height: 12rem;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -302,7 +303,17 @@
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, var(--surface-3), var(--surface-2));
   border: 1px solid var(--line-strong);
-  transition: transform 0.1s linear;
+  /* No CSS transition here on purpose — the ring's scale is recomputed every
+     animation frame from breathTiming.ts, so a transition would just be a
+     second animation system fighting the first one for the same property.
+     That fight was a real cause of the pacer's old jumpiness. */
+}
+
+.breath-pacer__count {
+  position: absolute;
+  font-size: var(--fs-title);
+  font-weight: 600;
+  color: var(--text);
 }
 
 .breath-pacer__label {
@@ -492,6 +503,11 @@
   justify-content: center;
   gap: var(--s2);
   margin-top: var(--s3);
+}
+
+.session-player__exit-trigger {
+  opacity: 0.6;
+  font-size: var(--fs-sm);
 }
 
 /* ---------------- Today: secondary links ---------------- */

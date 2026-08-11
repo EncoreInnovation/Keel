@@ -441,7 +441,12 @@ export interface UserProfile {
    * weeks climbing back to his own starting point.
    */
   baselineRungs?: string[];
-  /** Set once the baseline test has been taken, so it isn't asked for twice. */
+  /**
+   * Set once the baseline question has been resolved — taken OR explicitly
+   * skipped — so it isn't asked again on every relaunch. Whether real data
+   * came out of it is a separate question, answered by `baselineRungs` and
+   * the presence of `baseline-*` SetLogs.
+   */
   baselineCompletedAt?: number;
 }
 

@@ -13,7 +13,14 @@
  * loses the thing that makes it work.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  buildBreathKeyframes,
+  computeBreathFrame,
+  cycleDurationSeconds,
+  cycleNumber,
+  type BreathFrame,
+} from './breathTiming';
 
 export type BreathPhaseKind = 'in' | 'out' | 'holdExpanded' | 'holdContracted';
 
@@ -27,9 +34,6 @@ export interface BreathProtocol {
   name: string;
   phases: BreathPhase[];
 }
-
-const RING_MIN = 0.55;
-const RING_MAX = 1.0;
 
 export const PROTOCOLS = {
   /** Coherent breathing — the Arrive default. Even, unhurried, easy to sync to. */
@@ -84,68 +88,60 @@ export const PROTOCOLS = {
   },
 } as const satisfies Record<string, BreathProtocol>;
 
-function targetScale(kind: BreathPhaseKind, previousEnd: number): number {
-  if (kind === 'in') return RING_MAX;
-  if (kind === 'out') return RING_MIN;
-  return previousEnd;
-}
-
 export interface BreathPacerProps {
   protocol: BreathProtocol;
   /** Called whenever a new cycle begins (the phase list wraps back to its start). */
   onCycle?: () => void;
 }
 
+/**
+ * Driven by `requestAnimationFrame` sampling `performance.now()`, not a
+ * `setInterval` accumulator — every frame recomputes ring position directly
+ * from elapsed wall-clock time via the pure math in `breathTiming.ts`, so
+ * there's nothing to drift and nothing for a jittery timer to desynchronize
+ * from. See that module's header for the full account of what was wrong
+ * with the previous version.
+ */
 export function BreathPacer({ protocol, onCycle }: BreathPacerProps) {
-  const [phaseIndex, setPhaseIndex] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const lastScaleRef = useRef(RING_MIN);
-  const phaseStartScaleRef = useRef(RING_MIN);
+  const keyframes = useMemo(() => buildBreathKeyframes(protocol), [protocol]);
+  const totalSeconds = useMemo(() => cycleDurationSeconds(protocol), [protocol]);
+
+  const [frame, setFrame] = useState<BreathFrame>(() => computeBreathFrame(keyframes, totalSeconds, 0));
+  const startRef = useRef(0);
+  const lastCycleRef = useRef(-1);
+  const rafRef = useRef<number>();
 
   useEffect(() => {
-    setPhaseIndex(0);
-    setElapsed(0);
-    lastScaleRef.current = RING_MIN;
-    phaseStartScaleRef.current = RING_MIN;
-  }, [protocol]);
+    startRef.current = performance.now();
+    lastCycleRef.current = -1;
 
-  useEffect(() => {
-    const phase = protocol.phases[phaseIndex];
-    if (!phase) return;
+    const tick = (now: number) => {
+      const elapsedSeconds = (now - startRef.current) / 1000;
+      const cycle = cycleNumber(totalSeconds, elapsedSeconds);
+      if (cycle !== lastCycleRef.current) {
+        lastCycleRef.current = cycle;
+        onCycle?.();
+      }
+      setFrame(computeBreathFrame(keyframes, totalSeconds, elapsedSeconds));
+      rafRef.current = requestAnimationFrame(tick);
+    };
 
-    phaseStartScaleRef.current = lastScaleRef.current;
-    if (phaseIndex === 0) onCycle?.();
-
-    const id = window.setInterval(() => {
-      setElapsed((prev) => {
-        const next = prev + 0.1;
-        if (next >= phase.seconds) {
-          lastScaleRef.current = targetScale(phase.kind, phaseStartScaleRef.current);
-          setPhaseIndex((i) => (i + 1) % protocol.phases.length);
-          return 0;
-        }
-        return next;
-      });
-    }, 100);
-
-    return () => window.clearInterval(id);
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phaseIndex, protocol]);
-
-  const phase = protocol.phases[phaseIndex];
-  if (!phase) return null;
-
-  const progress = phase.seconds > 0 ? elapsed / phase.seconds : 1;
-  const start = phaseStartScaleRef.current;
-  const end = targetScale(phase.kind, start);
-  const scale = start + (end - start) * progress;
+  }, [keyframes, totalSeconds]);
 
   return (
     <div className="breath-pacer" aria-live="polite">
       <div className="breath-pacer__ring-wrap">
-        <div className="breath-pacer__ring" style={{ transform: `scale(${scale})` }} />
+        <div className="breath-pacer__ring" style={{ transform: `scale(${frame.scale})` }} />
+        <div className="breath-pacer__count" data-numeric>
+          {frame.secondsRemaining}
+        </div>
       </div>
-      <div className="breath-pacer__label">{phase.label}</div>
+      <div className="breath-pacer__label">{frame.phase.label}</div>
     </div>
   );
 }
