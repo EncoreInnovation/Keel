@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { PILLAR_KINDS, type PillarKind, type PrescribedSession } from '../engine/types';
+import { PILLAR_KINDS, type Gym, type GymId, type PillarKind, type PrescribedSession } from '../engine/types';
 import { PILLAR_SESSIONS } from '../pillars/library';
 import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
@@ -30,6 +30,9 @@ export interface TodayProps {
   resumed: boolean;
   /** AI readiness commentary, if the coach was reachable — purely supplementary, never blocks rendering. */
   coachNote?: string;
+  gyms: Gym[];
+  activeGymId: GymId;
+  onSwitchGym: (id: GymId) => void;
   onStart: () => void;
   onOpenPillar: (kind: PillarKind) => void;
   onOpenAsymmetry: () => void;
@@ -46,6 +49,9 @@ export function Today({
   weeksTotal,
   resumed,
   coachNote,
+  gyms,
+  activeGymId,
+  onSwitchGym,
   onStart,
   onOpenPillar,
   onOpenAsymmetry,
@@ -112,6 +118,23 @@ export function Today({
       </div>
 
       {coachNote && <div className="coach-note">{coachNote}</div>}
+
+      {/* Switching gyms changes what today's session can be built from, so it
+          only makes sense before a session exists — once one's active, its
+          exercises are already locked in against whichever gym generated it. */}
+      {!resumed && gyms.length > 1 && (
+        <div className="gym-switch">
+          {gyms.map((gym) => (
+            <button
+              key={gym.id}
+              className={`chip${gym.id === activeGymId ? ' chip--active' : ''}`}
+              onClick={() => onSwitchGym(gym.id)}
+            >
+              {gym.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       <button className="btn btn--hero" onClick={onStart}>
         {resumed ? 'Continue' : 'Start'}

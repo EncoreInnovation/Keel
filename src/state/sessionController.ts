@@ -343,6 +343,10 @@ export function completeSession(at: number) {
   return repo.completeActiveSession(at);
 }
 
+export function discardUntouchedSession() {
+  return repo.discardActiveSessionIfUntouched();
+}
+
 /* ------------------------------------------------------------------ *
  * Resume position — where in the prescription a session picks back up
  * ------------------------------------------------------------------ */

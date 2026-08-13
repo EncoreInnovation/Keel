@@ -79,6 +79,13 @@
   font-size: var(--fs-sm);
 }
 
+.gym-switch {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s2);
+}
+
 .today__streak-item [data-numeric] {
   color: var(--text);
   font-weight: 600;

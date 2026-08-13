@@ -17,6 +17,7 @@ import {
   appendSets,
   completeActiveSession,
   deletePostureLog,
+  discardActiveSessionIfUntouched,
   exportAll,
   getActivePrescription,
   getActiveSession,
@@ -215,6 +216,47 @@ describe('session lifecycle', () => {
 
     const block1 = await getCompletedSessionsForBlock('block-1');
     expect(block1.map((s) => s.id)).toEqual(['s1', 's3']);
+  });
+});
+
+describe('discardActiveSessionIfUntouched — the gym-switch case', () => {
+  const record: SessionRecord = {
+    id: 'sess-1',
+    blockId: 'block-1',
+    weekNumber: 1,
+    dayId: 'a',
+    startedAt: T0,
+  };
+  const prescription = {
+    blockId: 'block-1',
+    weekNumber: 1,
+    dayId: 'a',
+    dayName: 'Lower · Squat',
+    isDeload: false,
+    exercises: [],
+    estimatedMinutes: 35,
+  };
+
+  it('is a no-op, not an error, with nothing active', async () => {
+    await expect(discardActiveSessionIfUntouched()).resolves.toBe(false);
+  });
+
+  it('clears an untouched session without filing it as completed', async () => {
+    await startSession(record, prescription);
+    expect(await discardActiveSessionIfUntouched()).toBe(true);
+
+    expect(await getActiveSessionRecord()).toBeUndefined();
+    expect(await getActivePrescription()).toBeUndefined();
+    expect(await getCompletedSessionsForBlock('block-1')).toHaveLength(0);
+  });
+
+  it('refuses to discard once any set has actually been logged — real work is never silently dropped', async () => {
+    await startSession(record, prescription);
+    await appendSet(makeSet({ id: 'a', sessionId: 'sess-1' }));
+
+    expect(await discardActiveSessionIfUntouched()).toBe(false);
+    expect(await getActiveSessionRecord()).toEqual(record);
+    expect(await getAllSets()).toHaveLength(1);
   });
 });
 

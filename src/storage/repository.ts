@@ -210,6 +210,28 @@ export async function completeActiveSession(completedAt: number): Promise<Sessio
   });
 }
 
+/**
+ * Discard the active session with no completed-session record filed —
+ * distinct from `completeActiveSession`, which always files one. Only for
+ * the case where the session hasn't actually been trained yet (e.g.
+ * regenerating today's prescription after switching gyms before pressing
+ * Start): refuses to run if any set has been logged against it, so real
+ * work is never silently dropped. Returns whether anything was discarded.
+ */
+export async function discardActiveSessionIfUntouched(): Promise<boolean> {
+  return runExclusive('session', async () => {
+    const record = await readKey<SessionRecord>(STORAGE_KEYS.activeSession);
+    if (!record) return false;
+
+    const allSets = (await readKey<SetLog[]>(STORAGE_KEYS.sets)) ?? [];
+    if (allSets.some((s) => s.sessionId === record.id)) return false;
+
+    await deleteKey(STORAGE_KEYS.activeSession);
+    await deleteKey(STORAGE_KEYS.activePrescription);
+    return true;
+  });
+}
+
 /* ------------------------------------------------------------------ *
  * Conditioning
  * ------------------------------------------------------------------ */

@@ -30,12 +30,13 @@ import { buildReadinessPrompt } from './ai/prompts';
 import { PILLAR_SESSIONS } from './pillars/library';
 import {
   completeSession,
+  discardUntouchedSession,
   hasStartedTodaySession,
   loadToday,
   type TodayState,
 } from './state/sessionController';
 import { getProfile, saveProfile } from './storage/repository';
-import type { Exercise, PillarKind, UserProfile } from './engine/types';
+import type { Exercise, GymId, PillarKind, UserProfile } from './engine/types';
 
 const catalog = CATALOG as Exercise[];
 
@@ -135,6 +136,26 @@ export default function App() {
     await goToTodayOrReadiness(updated);
   }
 
+  /**
+   * `loadToday` persists a session record the moment readiness is answered —
+   * well before Start is pressed — so by the time this control is visible,
+   * today's exercises are already committed to storage against the OLD gym.
+   * Simply calling `refreshToday` again would just hand back that same
+   * prescription (`loadToday` sees the existing record and resumes it).
+   * `discardUntouchedSession` clears it first — safe here specifically
+   * because Today only shows this control while `!resumed`, i.e. nothing
+   * has been trained against it yet; it refuses to run (and this becomes a
+   * no-op) if any set has actually been logged.
+   */
+  async function handleSwitchGym(gymId: GymId) {
+    if (!profile) return;
+    await discardUntouchedSession();
+    const updated: UserProfile = { ...profile, activeGymId: gymId };
+    await saveProfile(updated);
+    setProfile(updated);
+    await refreshToday(updated);
+  }
+
   async function handleReadinessSelected(value: number) {
     if (!profile) return;
     setCoachNote(undefined);
@@ -220,6 +241,9 @@ export default function App() {
         weeksTotal={today.block.weeks}
         resumed={today.resumed}
         coachNote={coachNote}
+        gyms={profile.gyms}
+        activeGymId={profile.activeGymId}
+        onSwitchGym={(gymId) => void handleSwitchGym(gymId)}
         onStart={handleStart}
         onOpenPillar={(kind) => {
           setPillar(kind);
