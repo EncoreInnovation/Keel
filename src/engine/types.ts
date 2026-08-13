@@ -68,6 +68,14 @@ export const MOVEMENT_PATTERNS = [
   'bridge',
   'neck',
   'gait',
+  // Added for the physique-catalog expansion — true single-joint isolation
+  // work doesn't fit any of the compound patterns above without corrupting
+  // slot-matching for the real compound lifts that already use them.
+  'elbowFlexion',
+  'elbowExtension',
+  'shoulderAbduction',
+  'calfRaise',
+  'coreFlexion',
 ] as const;
 
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];

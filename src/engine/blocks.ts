@@ -282,16 +282,24 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     let exercise = selectForSlot(catalog, slotDef, ctx, lockedId, chosenThisSession);
     if (!exercise) continue;
 
+    // A locked primary's whole point is that its *identity* holds for the
+    // entire block — only its reps and load are allowed to move. Ladder
+    // rung changes are exactly the kind of identity change that's reserved
+    // for slots the selector is still free to rotate.
+    const isLockedPrimary = slotDef.locked && Boolean(lockedId);
+
     // Ladder: bodyweight and band work progresses by variant, not by load.
     const attempts = attemptsFor(history, exercise.id);
     if (exercise.loadType !== 'external') {
       // Before any history exists, honour what the baseline test measured.
       // Climbing from the bottom rung when the test already proved a higher
-      // one would waste weeks re-earning a known starting point.
+      // one would waste weeks re-earning a known starting point. This still
+      // applies to a locked primary — it sets where the lock starts, not
+      // where it moves to mid-block.
       const baselineRung = baselineRungFor(exercise, profile, ladderIndex, catalogById);
       if (attempts.length === 0 && baselineRung) {
         exercise = baselineRung;
-      } else {
+      } else if (!isLockedPrimary) {
         const verdict = evaluateLadder(attempts, slotDef);
         exercise = nextRung(exercise, verdict, ladderIndex, catalogById, availableEquipment);
       }
