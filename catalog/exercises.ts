@@ -1005,28 +1005,11 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
    * ---------------------------------------------------------------- */
 
   /* ---- Barbell (home) ---- */
-  ex({
-    id: 'barbell-bench-press',
-    name: 'Barbell Bench Press',
-    primaryMuscles: ['chest'],
-    secondaryMuscles: ['triceps', 'shoulders'],
-    patterns: ['horizontalPush'],
-    equipment: ['barbell', 'bench'],
-    loadType: 'external',
-    impact: 'none',
-    level: 'intermediate',
-    unilateral: false,
-    goalFit: 0.9,
-    correctiveFit: 0.2,
-    jointLoad: ['shoulder', 'elbow', 'wrist'],
-    breathCue: 'Inhale at the chest, exhale driving up.',
-    instructions: [
-      'Grip just past shoulder width, shoulder blades pinned to the bench.',
-      'Lower the bar to the chest under control.',
-      'Drive it back up in a straight line without bouncing.',
-    ],
-    videoSearch: 'barbell bench press form tutorial',
-  }),
+  //
+  // No barbell bench press: this equipment model never puts a barbell and a
+  // bench in the same gym (home has the bar, apartment has the bench), so
+  // that entry would be permanently unreachable dead weight. Barbell Floor
+  // Press below fills the same horizontalPush/chest role at home.
   ex({
     id: 'barbell-row',
     name: 'Barbell Row',
@@ -1121,7 +1104,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     primaryMuscles: ['glutes'],
     secondaryMuscles: ['hamstrings', 'abs'],
     patterns: ['bridge'],
-    equipment: ['barbell', 'bench'],
+    equipment: ['barbell', 'chair'],
     loadType: 'external',
     impact: 'none',
     level: 'intermediate',
@@ -1132,7 +1115,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     progressionOf: 'hip-thrust-db',
     breathCue: 'Exhale hard at the top, squeezing the glutes, not the low back.',
     instructions: [
-      'Upper back on the bench, bar across the hips, feet flat.',
+      'Upper back braced against a sturdy chair or couch edge, bar across the hips, feet flat.',
       'Drive through the heels, exhaling to full hip extension.',
       'Squeeze at the top, then lower under control.',
     ],
@@ -1164,11 +1147,11 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
   }),
   ex({
     id: 'ez-bar-skullcrusher',
-    name: 'EZ Bar Skullcrusher',
+    name: 'EZ Bar Floor Skullcrusher',
     primaryMuscles: ['triceps'],
     secondaryMuscles: [],
     patterns: ['elbowExtension'],
-    equipment: ['ezBar', 'bench'],
+    equipment: ['ezBar'],
     loadType: 'external',
     impact: 'none',
     level: 'intermediate',
@@ -1178,7 +1161,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     jointLoad: ['elbow'],
     breathCue: 'Inhale lowering to the forehead, exhale pressing out.',
     instructions: [
-      'Lying on a bench, bar over the chest, upper arms vertical.',
+      'Lying on the floor, bar over the chest, upper arms vertical.',
       'Bend only at the elbow, lowering the bar toward the forehead.',
       'Extend back up without letting the upper arms drift.',
     ],
@@ -1212,7 +1195,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     primaryMuscles: ['biceps'],
     secondaryMuscles: [],
     patterns: ['elbowFlexion'],
-    equipment: ['ezBar', 'bench'],
+    equipment: ['ezBar', 'chair'],
     loadType: 'external',
     impact: 'none',
     level: 'intermediate',
@@ -1223,8 +1206,8 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     progressionOf: 'ez-bar-curl',
     breathCue: 'Exhale curling up. Never let the elbows leave the pad.',
     instructions: [
-      'Chest against the preacher pad, arms resting on the angled surface.',
-      'Curl the bar up without lifting the elbows off the pad.',
+      'Chest against the back of a sturdy chair, arms resting on top as the pad.',
+      'Curl the bar up without lifting the elbows off the chair back.',
       'Lower all the way to a full stretch under control.',
     ],
     videoSearch: 'EZ bar preacher curl form tutorial',
