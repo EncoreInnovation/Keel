@@ -17,13 +17,6 @@ import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
 import { getCompletedSessions, getPostureLogs } from '../storage/repository';
 
-const DAY_LABEL: Record<string, string> = {
-  a: 'Lower · Squat',
-  b: 'Upper · Push',
-  c: 'Lower · Hinge',
-  d: 'Upper · Pull',
-};
-
 export interface TodayProps {
   prescription: PrescribedSession;
   weeksTotal: number;
@@ -62,7 +55,7 @@ export function Today({
   onOpenSettings,
   onOpenAskCoach,
 }: TodayProps) {
-  const label = DAY_LABEL[prescription.dayId] ?? prescription.dayName;
+  const label = prescription.dayName;
 
   const [alignment, setAlignment] = useState<AlignmentSummary | undefined>();
   const [streak, setStreak] = useState(0);

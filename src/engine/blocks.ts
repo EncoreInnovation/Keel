@@ -57,64 +57,93 @@ function slot(
 }
 
 /**
- * Upper/lower split across four days, so every muscle is trained twice a week
- * — the frequency that actually drives adaptation at 30–45 minutes a session.
+ * Push / Pull / Legs / Upper / Lower across five days.
  *
- * Rep ranges sit deliberately high and RPE targets deliberately low for the
- * first block. At high bodyweight with an anterior pelvic tilt, the limiting
- * factor early on is connective tissue and movement quality, not willingness
- * to suffer.
+ * Every muscle still lands two exposures a week — the strongest single
+ * predictor of hypertrophy — but PPL now carries the volume (wide rep ranges,
+ * isolation work as first-class slots instead of an afterthought) while the
+ * Upper/Lower half adds a second heavier compound exposure. Five days rather
+ * than six leaves real recovery headroom at 41 and 290 lbs, where joint load
+ * and systemic fatigue are constraints conditioning work adds to, not just
+ * lifting.
+ *
+ * Corrective work doesn't get a separate day — it never did. It rides along
+ * on the slots that already double as the counterweight: upper-back volume
+ * on push work, unilateral bias on lunges, anti-rotation and anti-extension
+ * accessories. That's a demotion from headline to ingredient, not a removal.
  */
-export const CRUISE_BLOCK_DAYS: DayTemplate[] = [
+export const HYPERTROPHY_BLOCK_DAYS: DayTemplate[] = [
   {
-    id: 'a',
-    name: 'Lower · Squat',
+    id: 'push',
+    name: 'Push',
     slots: [
-      slot('a-primary', 'primary', 'squat', 3, 8, 12, 7.5, 150),
-      slot('a-sec-1', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
-      slot('a-sec-2', 'secondary', 'hinge', 3, 8, 12, 7.5, 120),
-      slot('a-acc-1', 'accessory', 'bridge', 2, 10, 15, 7, 75, { preferCorrective: true }),
-      slot('a-acc-2', 'accessory', 'antiRotation', 2, 8, 12, 7, 75, { preferCorrective: true }),
-      slot('a-fin', 'finisher', 'carry', 2, 30, 45, 7, 60),
-    ],
-  },
-  {
-    id: 'b',
-    name: 'Upper · Push',
-    slots: [
-      slot('b-primary', 'primary', 'horizontalPush', 3, 8, 12, 7.5, 150),
-      slot('b-sec-1', 'secondary', 'verticalPush', 3, 8, 12, 7.5, 120),
+      slot('push-primary', 'primary', 'horizontalPush', 6, 6, 10, 8, 150),
+      slot('push-sec-1', 'secondary', 'verticalPush', 3, 8, 12, 7.5, 120),
       // Upper-back volume on a push day is not a mistake. It is the direct
       // counterweight to rolled-forward shoulders, and it happens to be the
       // same tissue that builds the wrestler silhouette.
-      slot('b-sec-2', 'secondary', 'horizontalPull', 3, 10, 15, 7, 120, { preferCorrective: true }),
-      slot('b-acc-1', 'accessory', 'antiExtension', 2, 8, 12, 7, 75, { preferCorrective: true }),
-      slot('b-acc-2', 'accessory', 'rotation', 2, 10, 15, 7, 60, { preferCorrective: true }),
-      slot('b-fin', 'finisher', 'neck', 2, 10, 15, 6.5, 60, { preferCorrective: true }),
+      slot('push-sec-2', 'secondary', 'horizontalPull', 3, 10, 15, 7, 120, { preferCorrective: true }),
+      slot('push-acc-1', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
+      slot('push-acc-2', 'accessory', 'elbowExtension', 3, 10, 15, 7, 60),
+      slot('push-fin', 'finisher', 'coreFlexion', 2, 12, 20, 6.5, 60),
     ],
   },
   {
-    id: 'c',
-    name: 'Lower · Hinge',
+    id: 'pull',
+    name: 'Pull',
     slots: [
-      slot('c-primary', 'primary', 'hinge', 3, 8, 12, 7.5, 150),
-      slot('c-sec-1', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
-      slot('c-sec-2', 'secondary', 'squat', 3, 10, 15, 7, 120),
-      slot('c-acc-1', 'accessory', 'bridge', 2, 10, 15, 7, 75, { preferCorrective: true }),
-      slot('c-acc-2', 'accessory', 'antiRotation', 2, 8, 12, 7, 75, { preferCorrective: true }),
-      slot('c-fin', 'finisher', 'carry', 2, 30, 45, 7, 60),
+      slot('pull-primary', 'primary', 'verticalPull', 4, 6, 10, 8, 150),
+      slot('pull-sec-1', 'secondary', 'horizontalPull', 3, 8, 12, 7.5, 120),
+      slot('pull-sec-2', 'secondary', 'elbowFlexion', 3, 10, 15, 7, 75),
+      slot('pull-acc-1', 'accessory', 'antiRotation', 2, 8, 12, 7, 75, { preferCorrective: true }),
+      slot('pull-acc-2', 'accessory', 'rotation', 2, 10, 15, 7, 60, { preferCorrective: true }),
+      slot('pull-fin', 'finisher', 'neck', 2, 10, 15, 6.5, 60, { preferCorrective: true }),
     ],
   },
   {
-    id: 'd',
-    name: 'Upper · Pull',
+    id: 'legs',
+    name: 'Legs',
     slots: [
-      slot('d-primary', 'primary', 'verticalPull', 3, 6, 12, 7.5, 150),
-      slot('d-sec-1', 'secondary', 'horizontalPull', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
-      slot('d-sec-2', 'secondary', 'horizontalPush', 3, 10, 15, 7, 120),
-      slot('d-acc-1', 'accessory', 'antiExtension', 2, 8, 12, 7, 75, { preferCorrective: true }),
-      slot('d-acc-2', 'accessory', 'rotation', 2, 10, 15, 7, 60, { preferCorrective: true }),
-      slot('d-fin', 'finisher', 'neck', 2, 10, 15, 6.5, 60, { preferCorrective: true }),
+      slot('legs-primary', 'primary', 'squat', 4, 6, 10, 8, 150),
+      slot('legs-sec-1', 'secondary', 'hinge', 3, 8, 12, 7.5, 120),
+      slot('legs-sec-2', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
+      slot('legs-acc-1', 'accessory', 'bridge', 2, 10, 15, 7, 75, { preferCorrective: true }),
+      slot('legs-acc-2', 'accessory', 'calfRaise', 5, 12, 20, 7, 60),
+      slot('legs-fin', 'finisher', 'carry', 2, 30, 45, 7, 60),
+    ],
+  },
+  {
+    id: 'upper',
+    name: 'Upper',
+    slots: [
+      // Two heavy compounds, not one — this day's whole job is a second
+      // weekly exposure for chest and back at real intensity, on top of what
+      // Push and Pull already deliver. `createBlock` locks each primary from
+      // the ranked candidate list in slot order, so this naturally lands a
+      // different chest/back exercise than Push/Pull chose rather than
+      // repeating them.
+      slot('upper-primary-push', 'primary', 'horizontalPush', 6, 6, 10, 8, 150),
+      slot('upper-primary-pull', 'primary', 'horizontalPull', 3, 6, 10, 8, 150),
+      slot('upper-sec-1', 'secondary', 'elbowFlexion', 3, 8, 12, 7.5, 75),
+      slot('upper-sec-2', 'secondary', 'elbowExtension', 3, 8, 12, 7.5, 75),
+      slot('upper-acc-1', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
+      slot('upper-fin', 'finisher', 'antiExtension', 2, 8, 12, 6.5, 60, { preferCorrective: true }),
+    ],
+  },
+  {
+    id: 'lower',
+    name: 'Lower',
+    slots: [
+      slot('lower-primary', 'primary', 'hinge', 4, 6, 10, 8, 150),
+      slot('lower-sec-1', 'secondary', 'squat', 3, 10, 15, 7, 120),
+      slot('lower-sec-2', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
+      slot('lower-acc-1', 'accessory', 'bridge', 2, 10, 15, 7, 75, { preferCorrective: true }),
+      // Abs already land well past the volume floor from bracing work on
+      // every compound day (squats, hinges, presses, carries all credit abs
+      // as a secondary mover) — calves get nothing outside a dedicated slot,
+      // so this is their second weekly exposure, not a repeat of Legs day.
+      slot('lower-acc-2', 'accessory', 'calfRaise', 5, 12, 20, 7, 60),
+      slot('lower-fin', 'finisher', 'carry', 2, 30, 45, 7, 60),
     ],
   },
 ];

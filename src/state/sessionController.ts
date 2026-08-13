@@ -20,7 +20,7 @@ import {
   volumeMultiplier,
   type FatigueState,
 } from '../engine/recovery';
-import { createBlock, CRUISE_BLOCK_DAYS, generateSession, nextDay } from '../engine/blocks';
+import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay } from '../engine/blocks';
 import { achievableLoads } from '../engine/loading';
 import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
 import type { SelectionContext } from '../engine/selector';
@@ -134,7 +134,7 @@ export async function ensureActiveBlock(catalog: Exercise[], profile: UserProfil
   const fatigue = rebuildFatigue(sets, await repo.getConditioningLogs(), catalogById, at);
   const ctx = buildSelectionContext(profile, sets, fatigue, at, 0);
 
-  const block = createBlock('block-1', 'Cruise Block', CRUISE_BLOCK_DAYS, catalog, ctx, at);
+  const block = createBlock('block-2', 'Hypertrophy Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, at);
   await repo.startNewBlock(block);
   return block;
 }

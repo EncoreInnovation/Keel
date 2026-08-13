@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from '../catalog/exercises';
-import { createBlock, CRUISE_BLOCK_DAYS, generateSession, nextDay } from '../src/engine/blocks';
+import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay } from '../src/engine/blocks';
 import {
   applyConditioning,
   applySet,
@@ -25,6 +25,7 @@ import {
 import { rungDepth, buildLadderIndex } from '../src/engine/ladders';
 import type { SelectionContext } from '../src/engine/selector';
 import { achievableLoads } from '../src/engine/loading';
+import { VOLUME_LANDMARK_MIN, weeklyMuscleVolume } from '../src/engine/volume';
 import { TEST_GYM } from './support/profile';
 import type {
   ConditioningLog,
@@ -36,8 +37,13 @@ import type {
 const DAY = 86_400_000;
 const T0 = 1_700_000_000_000;
 
-/** Training days land Mon / Tue / Thu / Fri — 48–72h between same-type days. */
-const DAY_OFFSETS = [0, 1, 3, 4];
+/**
+ * Push / Pull / Legs / Upper / Lower, Mon–Fri with weekends off — the real
+ * schedule a five-day split assumes. The two-day gap after Legs (before
+ * Upper) and the weekend gap after Lower (before next week's Push) are what
+ * keep the same-muscle days from stacking on top of each other.
+ */
+const DAY_OFFSETS = [0, 1, 2, 4, 5];
 
 const PROFILE: UserProfile = {
   bodyweight: 292,
@@ -46,11 +52,12 @@ const PROFILE: UserProfile = {
   activeGymId: 'home',
   flaggedJoints: [],
   impactCeiling: 'high',
-  daysPerWeek: 4,
+  daysPerWeek: 5,
   sessionMinutes: 40,
 };
 
 const catalog = CATALOG as Exercise[];
+const catalogById = new Map(catalog.map((e) => [e.id, e]));
 
 interface SimResult {
   history: SetLog[];
@@ -59,6 +66,10 @@ interface SimResult {
     dayId: string;
     at: number;
     primaryIds: string[];
+    /** slotId -> exerciseId, so a day with more than one locked slot (Upper
+     *  has two: a chest primary and a back primary) can be checked per slot
+     *  rather than conflating both into one "the day's primary" bucket. */
+    primaryBySlot: Record<string, string>;
     accessoryIds: string[];
     totalSets: number;
     minPrimaryRecovery: number;
@@ -122,29 +133,32 @@ function simulate(options: { conditioning?: ConditioningLog[] } = {}): SimResult
   let seed = 1;
   let block = createBlock(
     'block-1',
-    'Cruise Block',
-    CRUISE_BLOCK_DAYS,
+    'Hypertrophy Block',
+    HYPERTROPHY_BLOCK_DAYS,
     catalog,
     buildContext(history, conditioning, fatigue, T0, 0),
     T0,
   );
   let blockStart = T0;
 
-  for (let sessionNo = 0; sessionNo < 48; sessionNo += 1) {
-    const weekIndex = Math.floor(sessionNo / 4);
-    const dayIndex = sessionNo % 4;
+  const DAYS_PER_WEEK = DAY_OFFSETS.length;
+  const SESSIONS = DAYS_PER_WEEK * 12; // two six-week blocks
+
+  for (let sessionNo = 0; sessionNo < SESSIONS; sessionNo += 1) {
+    const weekIndex = Math.floor(sessionNo / DAYS_PER_WEEK);
+    const dayIndex = sessionNo % DAYS_PER_WEEK;
     const at = T0 + weekIndex * 7 * DAY + DAY_OFFSETS[dayIndex]! * DAY + 17 * 3_600_000;
 
     // Second block starts fresh after six weeks, re-picking its primaries.
     // Fires exactly once, at the first session of week 7 — guarding on
-    // dayIndex too, since weekIndex alone stays 6 for all four of that
-    // week's sessions and would otherwise reset `completed` before every
-    // one of them, collapsing the day rotation to "day A, four times".
+    // dayIndex too, since weekIndex alone stays 6 for all of that week's
+    // sessions and would otherwise reset `completed` before every one of
+    // them, collapsing the day rotation to "day one, five times".
     if (weekIndex === 6 && dayIndex === 0) {
       block = createBlock(
         'block-2',
         'Build Block',
-        CRUISE_BLOCK_DAYS,
+        HYPERTROPHY_BLOCK_DAYS,
         catalog,
         buildContext(history, conditioning, fatigue, at, 6),
         at,
@@ -232,6 +246,9 @@ function simulate(options: { conditioning?: ConditioningLog[] } = {}): SimResult
       dayId,
       at,
       primaryIds: session.exercises.filter((e) => e.role === 'primary').map((e) => e.exercise.id),
+      primaryBySlot: Object.fromEntries(
+        session.exercises.filter((e) => e.role === 'primary').map((e) => [e.slotId, e.exercise.id]),
+      ),
       accessoryIds: session.exercises
         .filter((e) => e.role === 'accessory')
         .map((e) => e.exercise.id),
@@ -252,7 +269,7 @@ describe('12-week simulation', () => {
   const result = simulate();
 
   it('runs a full two blocks without throwing', () => {
-    expect(result.sessions.length).toBe(48);
+    expect(result.sessions.length).toBe(60);
     expect(result.history.length).toBeGreaterThan(500);
   });
 
@@ -276,22 +293,24 @@ describe('12-week simulation', () => {
   });
 
   it('holds the primary lifts constant across each block', () => {
-    for (const blockSessions of [result.sessions.slice(0, 24), result.sessions.slice(24)]) {
-      const byDay = new Map<string, Set<string>>();
+    for (const blockSessions of [result.sessions.slice(0, 30), result.sessions.slice(30)]) {
+      const bySlot = new Map<string, Set<string>>();
       for (const s of blockSessions) {
-        const seen = byDay.get(s.dayId) ?? new Set<string>();
-        s.primaryIds.forEach((id) => seen.add(id));
-        byDay.set(s.dayId, seen);
+        for (const [slotId, exerciseId] of Object.entries(s.primaryBySlot)) {
+          const seen = bySlot.get(slotId) ?? new Set<string>();
+          seen.add(exerciseId);
+          bySlot.set(slotId, seen);
+        }
       }
-      for (const [dayId, ids] of byDay) {
-        expect(ids.size, `day ${dayId} swapped its primary mid-block`).toBe(1);
+      for (const [slotId, ids] of bySlot) {
+        expect(ids.size, `slot ${slotId} swapped its primary mid-block`).toBe(1);
       }
     }
   });
 
   it('rotates accessory work so it does not go stale', () => {
-    const dayA = result.sessions.filter((s) => s.dayId === 'a');
-    const distinct = new Set(dayA.flatMap((s) => s.accessoryIds));
+    const pushDays = result.sessions.filter((s) => s.dayId === 'push');
+    const distinct = new Set(pushDays.flatMap((s) => s.accessoryIds));
     expect(distinct.size).toBeGreaterThan(1);
   });
 
@@ -330,10 +349,30 @@ describe('12-week simulation', () => {
   });
 
   it('produces sessions in the promised time envelope', () => {
-    // Sanity: 4 days/week at 30-45 min. Deload weeks run shorter by design.
+    // Sanity: 5 days/week at 30-45 min. Deload weeks run shorter by design.
     for (const s of result.sessions) {
       expect(s.totalSets).toBeGreaterThan(4);
       expect(s.totalSets).toBeLessThan(60);
+    }
+  });
+
+  it('clears the weekly volume floor for every muscle with dedicated hypertrophy slots', () => {
+    // Measured at the end of week 4 — a full build week, past the ramp-in and
+    // clear of the week-6 deload, so it reflects steady-state programming
+    // rather than an edge of the block. Scoped to muscles this split gives
+    // deliberate, direct slots (chest, shoulders, arms, quads, hamstrings,
+    // calves) rather than every muscle in the body: things like abs and
+    // upper back pick up real volume as a secondary mover on nearly every
+    // compound lift, which legitimately pushes them well past 20 and isn't
+    // a target this test is trying to hold them to.
+    const week4 = result.sessions.filter((s) => s.weekNumber === 4);
+    const at = week4.at(-1)!.at;
+    const volume = weeklyMuscleVolume(result.history, catalogById, at);
+
+    for (const muscle of ['chest', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'calves'] as const) {
+      expect(volume[muscle], `${muscle} under the weekly volume floor`).toBeGreaterThanOrEqual(
+        VOLUME_LANDMARK_MIN,
+      );
     }
   });
 });
