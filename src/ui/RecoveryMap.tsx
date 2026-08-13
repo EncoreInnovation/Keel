@@ -110,7 +110,7 @@ function Silhouette({ label, hotspots, recovery }: { label: string; hotspots: Ho
   );
 }
 
-const MUSCLE_LABEL: Record<Muscle, string> = {
+export const MUSCLE_LABEL: Record<Muscle, string> = {
   chest: 'Chest',
   upperBack: 'Upper back',
   lats: 'Lats',

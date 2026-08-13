@@ -1,10 +1,13 @@
 /*
  * COLOSSUS design tokens.
  *
- * Governing rule: the interface chrome is monochrome. Colour is reserved
- * exclusively for data — recovery state, progress, asymmetry. The moment
- * colour leaks into buttons and headers, the whole thing reads as a sports
- * app instead of an instrument.
+ * Governing rule: purple is the action colour — buttons, active states,
+ * completed sets. Gold is reserved strictly for achievement moments (PRs,
+ * ladder advances, block completion) and never appears anywhere the recovery
+ * map or data ramp is on screen, since achievement gold sits close to the
+ * amber/fatigued end of that ramp and the two must never be mistaken for
+ * each other. Everything else stays near-black chrome so purple and gold
+ * both mean something when they show up.
  */
 
 :root {
@@ -21,10 +24,16 @@
   --text-dim: #8a8a96;
   --text-faint: #56565f;
 
-  /* Platinum accent — primary actions only. Never decorative. */
-  --accent: #d6dce5;
-  --accent-press: #aeb6c2;
-  --on-accent: #08080a;
+  /* Purple accent — primary actions: buttons, active states, completed sets. */
+  --accent: #8b5cf6;
+  --accent-press: #7c3aed;
+  --on-accent: #f8f7ff;
+
+  /* Gold — achievement moments only (PRs, ladder advances, block
+     completion). Never on a screen showing the recovery map or data ramp. */
+  --gold: #d4af37;
+  --gold-press: #b8942a;
+  --on-gold: #1a1206;
 
   /* Data ramp. Cool = recovered/good, warm = fatigued/attention.
      Used by the body map, recovery bars, and asymmetry charts. Nowhere else. */

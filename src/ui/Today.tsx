@@ -16,6 +16,8 @@ import { PILLAR_SESSIONS } from '../pillars/library';
 import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
 import { getCompletedSessions, getPostureLogs } from '../storage/repository';
+import { SessionPreview } from './SessionPreview';
+import { VolumeReadout } from './VolumeReadout';
 
 export interface TodayProps {
   prescription: PrescribedSession;
@@ -58,6 +60,7 @@ export function Today({
   const label = prescription.dayName;
 
   const [alignment, setAlignment] = useState<AlignmentSummary | undefined>();
+  const [alignmentLoaded, setAlignmentLoaded] = useState(false);
   const [streak, setStreak] = useState(0);
   const [weekCount, setWeekCount] = useState(0);
 
@@ -65,7 +68,9 @@ export function Today({
     let cancelled = false;
     const now = Date.now();
     void getPostureLogs().then((logs) => {
-      if (!cancelled) setAlignment(alignmentSummary(logs, now));
+      if (cancelled) return;
+      setAlignment(alignmentSummary(logs, now));
+      setAlignmentLoaded(true);
     });
     void getCompletedSessions().then((sessions) => {
       if (cancelled) return;
@@ -98,6 +103,18 @@ export function Today({
               Realign routine
             </button>
           )}
+        </div>
+      )}
+      {alignmentLoaded && !alignment && (
+        <div className="alignment-strip alignment-strip--empty">
+          <button
+            className="alignment-strip__main"
+            onClick={onOpenPosture}
+            aria-label="Take your first posture scan"
+          >
+            <span className="alignment-strip__text">No posture scan yet — take one to see which side is off.</span>
+            <span className="alignment-strip__chevron">›</span>
+          </button>
         </div>
       )}
 
@@ -145,6 +162,13 @@ export function Today({
           </span>
         </div>
       )}
+
+      <SessionPreview
+        exercises={prescription.exercises}
+        gym={gyms.find((g) => g.id === activeGymId) ?? gyms[0]!}
+      />
+
+      <VolumeReadout />
 
       <div className="today__section">
         <div className="today__section-title">Mobility & recovery</div>

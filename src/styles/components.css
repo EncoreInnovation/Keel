@@ -1,7 +1,7 @@
-/* COLOSSUS component styles — built on the tokens in tokens.css. Sparse by
-   design: chrome is monochrome, colour is reserved for data (recovery,
-   progress), and nothing here uses it yet because Milestone 1's screens
-   don't show that data. */
+/* COLOSSUS component styles — built on the tokens in tokens.css. Purple marks
+   actions (buttons, active states); gold marks achievement moments only;
+   everything else stays monochrome so both of those keep meaning something
+   when they show up. */
 
 .today,
 .setup,
@@ -109,6 +109,10 @@
   border-color: var(--data-0);
 }
 
+.alignment-strip--empty {
+  border-color: var(--line-strong);
+}
+
 .alignment-strip--left,
 .alignment-strip--right {
   border-color: var(--warn);
@@ -142,6 +146,62 @@
   font-size: var(--fs-sm);
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* ---------------- Session preview ---------------- */
+
+.session-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: 100%;
+}
+
+.session-preview__card {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--s3) var(--s4);
+  text-align: left;
+}
+
+.session-preview__card--primary {
+  border-color: var(--line-strong);
+}
+
+.session-preview__name {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.session-preview__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s3);
+  margin-top: var(--s1);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.session-preview__muscles {
+  text-align: right;
+}
+
+.session-preview__ladder {
+  display: flex;
+  gap: var(--s3);
+  margin-top: var(--s1);
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.session-preview__reduced {
+  margin-top: var(--s1);
+  color: var(--data-3);
+  font-size: var(--fs-micro);
 }
 
 /* ---------------- Buttons ---------------- */
@@ -722,6 +782,73 @@
   font-size: var(--fs-sm);
   color: var(--text-dim);
   text-align: right;
+}
+
+/* ---------------- Volume readout ---------------- */
+
+.volume-readout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: 100%;
+}
+
+.volume-readout__row {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr 2.25rem 4rem;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.volume-readout__label {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-align: left;
+}
+
+.volume-readout__track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.volume-readout__fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--text-dim);
+  transition: width var(--dur) var(--ease);
+}
+
+.volume-readout__fill--in-range {
+  background: var(--text);
+}
+
+/* Marks the 10-set floor on the track, independent of the fill's own width. */
+.volume-readout__floor-mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--line-strong);
+}
+
+.volume-readout__count {
+  font-size: var(--fs-sm);
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.volume-readout__status {
+  font-size: var(--fs-micro);
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.volume-readout__status--in-range {
+  color: var(--text-dim);
 }
 
 /* ---------------- Progress ---------------- */
