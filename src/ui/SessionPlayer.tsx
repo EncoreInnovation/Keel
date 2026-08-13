@@ -52,6 +52,7 @@ export function SessionPlayer({
   const [message, setMessage] = useState<string | undefined>();
   const [showSkip, setShowSkip] = useState(false);
   const [showExit, setShowExit] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const [weight, setWeight] = useState(0);
   const [reps, setReps] = useState(0);
@@ -101,6 +102,12 @@ export function SessionPlayer({
     () => (exercise ? achievableLoads(exercise.exercise, activeGym(profile)) : []),
     [exercise, profile],
   );
+
+  // Collapse the how-to panel per exercise, not per set — expanding it once
+  // shouldn't re-collapse between set 1 and set 2 of the same movement.
+  useEffect(() => {
+    setShowInstructions(false);
+  }, [exercise?.exercise.id]);
 
   // Re-fill the steppers whenever the target set changes.
   useEffect(() => {
@@ -216,6 +223,35 @@ export function SessionPlayer({
         )}
         {exercise.exercise.breathCue && (
           <div className="session-player__cue">{exercise.exercise.breathCue}</div>
+        )}
+
+        {exercise.exercise.instructions.length > 0 && (
+          <div className="session-player__howto">
+            <button
+              className="session-player__howto-toggle"
+              onClick={() => setShowInstructions((s) => !s)}
+              aria-expanded={showInstructions}
+            >
+              {showInstructions ? 'Hide form cues' : 'How to'}
+            </button>
+            {showInstructions && (
+              <ol className="session-player__howto-list">
+                {exercise.exercise.instructions.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ol>
+            )}
+            {showInstructions && exercise.exercise.videoUrl && (
+              <a
+                className="session-player__howto-video"
+                href={exercise.exercise.videoUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Watch technique video
+              </a>
+            )}
+          </div>
         )}
       </div>
 

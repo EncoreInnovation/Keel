@@ -408,6 +408,42 @@
   font-style: italic;
 }
 
+.session-player__howto {
+  margin-top: var(--s2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.session-player__howto-toggle {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.session-player__howto-list {
+  max-width: 22rem;
+  text-align: left;
+  color: var(--text);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+  padding-left: var(--s5);
+  margin: 0;
+}
+
+.session-player__howto-list li + li {
+  margin-top: var(--s1);
+}
+
+.session-player__howto-video {
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
 .session-player__toast {
   background: var(--surface-2);
   border: 1px solid var(--line);
