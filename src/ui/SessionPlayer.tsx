@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { logSet, resumePosition, skipSet } from '../state/sessionController';
 import { getActiveSession } from '../storage/repository';
 import { achievableLoads, nextLoadStep, previousLoadStep } from '../engine/loading';
+import { epley1RM } from '../engine/overload';
 import { adjustRestSeconds } from '../engine/rest';
 import { activeGym } from '../engine/types';
 import { RestTimer } from './RestTimer';
@@ -50,6 +51,7 @@ export function SessionPlayer({
   const [exerciseIndex, setExerciseIndex] = useState(0);
   const [setPos, setSetPos] = useState(0);
   const [message, setMessage] = useState<string | undefined>();
+  const [achievement, setAchievement] = useState<string | undefined>();
   const [showSkip, setShowSkip] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -147,6 +149,7 @@ export function SessionPlayer({
     } else {
       setSetPos((p) => p + 1);
     }
+    setAchievement(undefined);
     setPhase('set');
   };
 
@@ -169,6 +172,18 @@ export function SessionPlayer({
     haptics.setComplete();
     setPrescription(result.prescription);
     setMessage(result.adjustment.message);
+
+    // A genuine PR: this set's e1RM beats the best ever logged for this
+    // exercise, not just last session's number. Only loadable work has a
+    // meaningful e1RM — bodyweight/band progress shows up as a ladder rung
+    // instead, which the session preview already surfaces.
+    const newE1RM = isLoadable ? epley1RM(weight, reps) : 0;
+    setAchievement(
+      newE1RM > 0 && exercise.bestE1RM !== undefined && newE1RM > exercise.bestE1RM
+        ? `New PR — beat your best on ${exercise.exercise.name}`
+        : undefined,
+    );
+
     // Rest matches how the set actually went, not just its slot role — a
     // grinder near target RPE gets more recovery than an easy warm-up set
     // in the same slot would.
@@ -179,6 +194,7 @@ export function SessionPlayer({
     await skipSet(sessionId, exercise, targetSet.setIndex, targetSet.side, reason, Date.now());
     setShowSkip(false);
     setMessage(undefined);
+    setAchievement(undefined);
     const isLastSetOfExercise = setPos + 1 >= exercise.sets.length;
     const isLastExercise = exerciseIndex + 1 >= prescription.exercises.length;
     if (isLastSetOfExercise && isLastExercise) {
@@ -198,6 +214,7 @@ export function SessionPlayer({
     return (
       <RestTimer
         seconds={restSecondsRef.current}
+        achievement={achievement}
         onComplete={() => {
           afterRest();
         }}

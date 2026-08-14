@@ -9,7 +9,7 @@
 
 import { ladderChain } from './baseline';
 import { achievableLoads, resolveLoad } from './loading';
-import { applyDeload, isDeloadWeek, nextPrescription } from './overload';
+import { applyDeload, bestE1RM, isDeloadWeek, nextPrescription } from './overload';
 import { primaryRecovery } from './recovery';
 import { attemptsFor, buildLadderIndex, evaluateLadder, nextRung, type LadderIndex } from './ladders';
 import { asymmetryFor, sideOrder } from './asymmetry';
@@ -373,6 +373,7 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     }
 
     const last = lastAttempt[lastAttempt.length - 1];
+    const priorBest = bestE1RM(history.filter((s) => s.exerciseId === exercise.id));
 
     exercises.push({
       slotId: slotDef.id,
@@ -383,6 +384,7 @@ export function generateSession(input: GenerationInput): PrescribedSession {
       lastPerformance: last
         ? { weight: last.weight, reps: last.reps, rpe: last.rpe, at: last.completedAt }
         : undefined,
+      bestE1RM: priorBest > 0 ? priorBest : undefined,
       reducedForRecovery: underRecovered && !deload,
     });
   }

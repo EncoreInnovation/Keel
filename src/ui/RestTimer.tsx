@@ -15,12 +15,14 @@ import { haptics } from './haptics';
 export interface RestTimerProps {
   seconds: number;
   onComplete: () => void;
+  /** A PR or other achievement to celebrate during this rest, if one happened. */
+  achievement?: string;
 }
 
 const EXTEND_SECONDS = 30;
 const SHORTEN_SECONDS = 30;
 
-export function RestTimer({ seconds, onComplete }: RestTimerProps) {
+export function RestTimer({ seconds, onComplete, achievement }: RestTimerProps) {
   const [remaining, setRemaining] = useState(seconds);
   const tickedRef = useRef(new Set<number>());
   const startedRef = useRef(false);
@@ -56,6 +58,7 @@ export function RestTimer({ seconds, onComplete }: RestTimerProps) {
 
   return (
     <div className="rest-timer">
+      {achievement && <div className="rest-timer__achievement">{achievement}</div>}
       <div className="rest-timer__eyebrow">Rest</div>
       <div className="rest-timer__clock" data-numeric>
         {mm}:{ss.toString().padStart(2, '0')}

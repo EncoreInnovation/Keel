@@ -358,6 +358,8 @@ export interface PrescribedExercise {
   restSec: number;
   /** Populated from history so the player can show "last time" ghosts. */
   lastPerformance?: { weight: number; reps: number; rpe: number; at: number };
+  /** Best e1RM ever logged for this exercise, if any — the bar a PR clears. */
+  bestE1RM?: number;
   /**
    * Set when the recovery guard cut this exercise back. Surfaced in the player
    * so a lighter day reads as a deliberate call rather than the app losing
