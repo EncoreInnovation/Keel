@@ -16,6 +16,7 @@ import { PILLAR_SESSIONS } from '../pillars/library';
 import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
 import { getCompletedSessions, getPostureLogs } from '../storage/repository';
+import { RecoveryPreview } from './RecoveryPreview';
 import { SessionPreview } from './SessionPreview';
 import { VolumeReadout } from './VolumeReadout';
 
@@ -117,6 +118,8 @@ export function Today({
           </button>
         </div>
       )}
+
+      <RecoveryPreview onOpenRecovery={onOpenRecovery} />
 
       <div className="today__meta">
         Week {prescription.weekNumber} of {weeksTotal}

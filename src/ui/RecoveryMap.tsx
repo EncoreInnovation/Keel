@@ -21,7 +21,7 @@ const CATALOG_BY_ID = new Map(CATALOG.map((e) => [e.id, e]));
 /** Mirrors the --data-0..--data-4 ramp in tokens.css — recovered (teal) to fatigued (amber). */
 const DATA_RAMP = ['#4ad9c0', '#6fd08c', '#b8cc5e', '#e8b04b', '#e07a4a'];
 
-function colorForRecovery(recovery: number): string {
+export function colorForRecovery(recovery: number): string {
   // recovery 1 (fully recovered) -> ramp[0]; recovery 0 (fatigued) -> ramp[4].
   const t = Math.min(1, Math.max(0, 1 - recovery)) * (DATA_RAMP.length - 1);
   const lo = Math.floor(t);
