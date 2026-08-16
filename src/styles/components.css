@@ -1066,6 +1066,95 @@
   text-align: right;
 }
 
+/* ---------------- Posture compare ---------------- */
+
+.posture-compare__pickers {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  width: 100%;
+  max-width: 22rem;
+  margin-top: var(--s4);
+}
+
+.posture-compare__select {
+  flex: 1;
+  min-height: var(--tap);
+  padding: 0 var(--s3);
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: var(--fs-sm);
+}
+
+.posture-compare__vs {
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.posture-compare__view-toggle {
+  display: flex;
+  gap: var(--s2);
+  margin-top: var(--s3);
+}
+
+.posture-compare__slider {
+  position: relative;
+  width: 100%;
+  max-width: 22rem;
+  aspect-ratio: 3 / 4;
+  margin-top: var(--s5);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--surface-2);
+  touch-action: pan-y;
+}
+
+.posture-compare__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.posture-compare__img--after {
+  overflow: hidden;
+}
+
+.posture-compare__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  pointer-events: none;
+  transform: translateX(-1.5px);
+}
+
+.posture-compare__range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.posture-compare__labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 22rem;
+  margin-top: var(--s2);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
 .posture-scan__error {
   color: var(--warn);
   font-size: var(--fs-sm);

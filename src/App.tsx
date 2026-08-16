@@ -15,6 +15,7 @@ import { ArrivePhase } from './ui/ArrivePhase';
 import { ConditioningLogForm } from './ui/ConditioningLogForm';
 import { DownshiftPhase } from './ui/DownshiftPhase';
 import { PillarPlayer } from './ui/PillarPlayer';
+import { PostureCompare } from './ui/PostureCompare';
 import { PostureHistory } from './ui/PostureHistory';
 import { PostureScan } from './ui/PostureScan';
 import { Progress } from './ui/Progress';
@@ -55,6 +56,7 @@ type Screen =
   | 'progress'
   | 'postureHistory'
   | 'postureScan'
+  | 'postureCompare'
   | 'conditioning'
   | 'settings'
   | 'askCoach';
@@ -278,7 +280,11 @@ export default function App() {
 
   if (screen === 'postureHistory') {
     return (
-      <PostureHistory onBack={() => setScreen('today')} onNewScan={() => setScreen('postureScan')} />
+      <PostureHistory
+        onBack={() => setScreen('today')}
+        onNewScan={() => setScreen('postureScan')}
+        onCompare={() => setScreen('postureCompare')}
+      />
     );
   }
 
@@ -289,6 +295,10 @@ export default function App() {
         onCancel={() => setScreen('postureHistory')}
       />
     );
+  }
+
+  if (screen === 'postureCompare') {
+    return <PostureCompare onBack={() => setScreen('postureHistory')} />;
   }
 
   if (screen === 'conditioning') {

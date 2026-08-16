@@ -17,6 +17,7 @@ import type { PostureAngles, PostureLog } from '../engine/types';
 export interface PostureHistoryProps {
   onBack: () => void;
   onNewScan: () => void;
+  onCompare: () => void;
 }
 
 const ANGLE_FIELDS: { key: keyof PostureAngles; label: string; unit: string; views: number }[] = [
@@ -38,7 +39,7 @@ function formatDelta(key: keyof PostureAngles, delta: number): string {
   return `${sign}${delta.toFixed(1)}°`;
 }
 
-export function PostureHistory({ onBack, onNewScan }: PostureHistoryProps) {
+export function PostureHistory({ onBack, onNewScan, onCompare }: PostureHistoryProps) {
   const [logs, setLogs] = useState<PostureLog[] | undefined>();
 
   useEffect(() => {
@@ -61,6 +62,11 @@ export function PostureHistory({ onBack, onNewScan }: PostureHistoryProps) {
       <button className="btn btn--hero" onClick={onNewScan}>
         New scan
       </button>
+      {logs.length >= 2 && (
+        <button className="btn btn--ghost" onClick={onCompare}>
+          Compare photos
+        </button>
+      )}
 
       {logs.length === 0 ? (
         <p className="placeholder__body">No scans yet.</p>
