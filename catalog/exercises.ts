@@ -1,5 +1,5 @@
 /**
- * COLOSSUS exercise catalog — Cruise Block (Block 1).
+ * COLOSSUS exercise catalog.
  *
  * Hand-authored rather than imported, because the metadata that matters here —
  * ladder edges, breath cues, corrective value, joint load — doesn't exist in
@@ -17,10 +17,13 @@
  *   and breath-driven repositioning directly oppose an anterior pelvic tilt,
  *   a right-side shift, and rolled-forward shoulders.
  *
- * NOTE ON VIDEOS: `videoSearch` holds a precise search query rather than a
- * hardcoded video id. Inventing YouTube ids would produce dead or wrong links,
- * which for technique instruction is worse than no link at all. Verified
- * per-exercise embeds are a follow-up pass.
+ * NOTE ON VIDEOS: `videoSearch` holds the original search query each
+ * `videoUrl` was sourced from — kept alongside the resolved link as a record
+ * of provenance and a starting point for re-curation if a link ever rots.
+ * Every entry now carries a real, verified `videoUrl`: inventing YouTube ids
+ * would produce dead or wrong links, which for technique instruction is
+ * worse than no link at all, so every one of these came from a live search
+ * result rather than a guess.
  */
 
 import type { Exercise } from '../src/engine/types';
