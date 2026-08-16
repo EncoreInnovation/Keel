@@ -295,6 +295,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Let the back foot pivot; keep the pelvis stacked over the down leg.',
     ],
     videoSearch: 'low to high band chop rotation exercise form',
+    videoUrl: 'https://www.youtube.com/watch?v=8CBW3HxwUrw',
   }),
   ex({
     id: 'open-book',
@@ -370,6 +371,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Count reps as paces.',
     ],
     videoSearch: 'farmer carry form grip posture',
+    videoUrl: 'https://www.youtube.com/watch?v=lLAw6fUccKA',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -419,6 +421,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Descend to the depth you can hold without the low back rounding.',
     ],
     videoSearch: 'bodyweight squat form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=P-yaD24bUE8',
   }),
   ex({
     id: 'goblet-squat',
@@ -515,6 +518,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Push through the front heel to return.',
     ],
     videoSearch: 'dumbbell reverse lunge form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=RZKXLMxPF_I',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -590,6 +594,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Do not let the free-side hip rotate open.',
     ],
     videoSearch: 'single leg romanian deadlift form hips square',
+    videoUrl: 'https://www.youtube.com/watch?v=3ed_5PmwLMU',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -734,6 +739,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control.',
     ],
     videoSearch: 'band overhead press form ribs down',
+    videoUrl: 'https://www.youtube.com/watch?v=Zli1UXH9ZeE',
   }),
   ex({
     id: 'overhead-press-db-seated',
@@ -805,6 +811,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return slowly, letting the blades travel forward.',
     ],
     videoSearch: 'seated band row form scapular retraction',
+    videoUrl: 'https://www.youtube.com/watch?v=mnP10HI18uI',
   }),
   ex({
     id: 'bent-row-db',
@@ -899,6 +906,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return slowly and let the shoulder blades rise at the top.',
     ],
     videoSearch: 'band lat pulldown kneeling form',
+    videoUrl: 'https://www.youtube.com/watch?v=o5bXFrdw5iI',
   }),
   ex({
     id: 'suspension-assisted-pullup',
@@ -994,6 +1002,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Hold three seconds and release. Small range, no tilting.',
     ],
     videoSearch: 'chin tuck exercise forward head posture',
+    videoUrl: 'https://www.youtube.com/watch?v=ekJzJTnd43s',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -1065,6 +1074,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Stop when the hamstrings are fully loaded, then drive the hips forward.',
     ],
     videoSearch: 'barbell romanian deadlift form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=xgusDooVfKU',
   }),
   ex({
     id: 'barbell-floor-press',
@@ -1087,6 +1097,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press back up without arching off the floor.',
     ],
     videoSearch: 'barbell floor press form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=gacJl2rHwtg',
   }),
   ex({
     id: 'barbell-overhead-press',
@@ -1132,6 +1143,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Squeeze at the top, then lower under control.',
     ],
     videoSearch: 'barbell hip thrust form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=pBH7pKHn-dI',
   }),
 
   /* ---- EZ bar (home) ---- */
@@ -1614,6 +1626,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower all the way under control.',
     ],
     videoSearch: 'dumbbell bicep curl form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=6DeLZ6cbgWQ',
   }),
   ex({
     id: 'dumbbell-hammer-curl',
@@ -1727,6 +1740,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower slowly past level, then repeat before switching sides.',
     ],
     videoSearch: 'single leg calf raise form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=Ux47hU-ePXs',
   }),
 
   /* ---- Abs ladder (home + apartment) ---- */
@@ -1823,6 +1837,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press up without the hips leading or lagging.',
     ],
     videoSearch: 'feet elevated push up form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=4aUUcfwyfE0',
   }),
   ex({
     id: 'deficit-pushup',
