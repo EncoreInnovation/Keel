@@ -70,6 +70,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Hold, breathe quietly through your nose for 4 breaths, then lower.',
     ],
     videoSearch: '90/90 hip lift with balloon PRI tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=DVDBBYeGLsg',
   }),
   ex({
     id: 'glute-bridge',
@@ -94,6 +95,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control.',
     ],
     videoSearch: 'glute bridge proper form posterior pelvic tilt',
+    videoUrl: 'https://www.youtube.com/watch?v=brgT1Qq4Tk0',
   }),
   ex({
     id: 'single-leg-glute-bridge',
@@ -117,6 +119,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower without letting the free-side hip drop.',
     ],
     videoSearch: 'single leg glute bridge form level hips',
+    videoUrl: 'https://www.youtube.com/watch?v=VUl8R0kn6v4',
   }),
   ex({
     id: 'hip-thrust-db',
@@ -166,6 +169,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return, and switch sides. Stop the range where the back starts to lift.',
     ],
     videoSearch: 'dead bug exercise form low back flat',
+    videoUrl: 'https://www.youtube.com/watch?v=bxn9FBrt4-A',
   }),
   ex({
     id: 'dead-bug-band',
@@ -189,6 +193,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Keeping that tension, lower one leg at a time on a long exhale.',
     ],
     videoSearch: 'banded dead bug lat tension core exercise',
+    videoUrl: 'https://www.youtube.com/watch?v=6oiD9Yv0CMQ',
   }),
   ex({
     id: 'plank',
@@ -239,6 +244,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return under control.',
     ],
     videoSearch: 'pallof press anti rotation core form',
+    videoUrl: 'https://www.youtube.com/watch?v=dBAmQ9bx3JA',
   }),
   ex({
     id: 'pallof-press-half-kneeling',
@@ -262,6 +268,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press out and resist rotation without letting the ribs flare.',
     ],
     videoSearch: 'half kneeling pallof press form ribs down',
+    videoUrl: 'https://www.youtube.com/watch?v=O3LtfPsiRy8',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -310,6 +317,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Follow the hand with your eyes and exhale at the end of the range.',
     ],
     videoSearch: 'open book thoracic rotation stretch form',
+    videoUrl: 'https://www.youtube.com/watch?v=peeW19ofFUg',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -533,6 +541,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Keep all three contact points as you hinge, then stand.',
     ],
     videoSearch: 'hip hinge dowel drill three points of contact',
+    videoUrl: 'https://www.youtube.com/watch?v=45DQiwq4oKk',
   }),
   ex({
     id: 'rdl-db',
