@@ -142,6 +142,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Pause one second at the top, then lower.',
     ],
     videoSearch: 'dumbbell hip thrust form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=29OfN4ztW_g',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -217,6 +218,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Hold only as long as that position survives.',
     ],
     videoSearch: 'front plank form posterior pelvic tilt glutes',
+    videoUrl: 'https://www.youtube.com/watch?v=A2b2EmIg0dA',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -349,6 +351,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Count reps as paces. Match both sides.',
     ],
     videoSearch: 'suitcase carry form anti lateral flexion',
+    videoUrl: 'https://www.youtube.com/watch?v=y-hn_Ha1-RE',
   }),
   ex({
     id: 'farmer-carry',
@@ -398,6 +401,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Stand fully, squeezing the glutes at the top.',
     ],
     videoSearch: 'box squat to chair form beginner',
+    videoUrl: 'https://www.youtube.com/watch?v=7LpLZOdz68A',
   }),
   ex({
     id: 'bodyweight-squat',
@@ -446,6 +450,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'The front load helps keep the chest up — let it.',
     ],
     videoSearch: 'goblet squat form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=gCESNsDsbqk',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -472,6 +477,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Push through the front heel to stand. Keep the pelvis square.',
     ],
     videoSearch: 'supported split squat form beginner',
+    videoUrl: 'https://www.youtube.com/watch?v=nXgZ0smNacE',
   }),
   ex({
     id: 'split-squat',
@@ -495,6 +501,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Drive through the front heel, keeping the torso upright.',
     ],
     videoSearch: 'split squat form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=Ft-NS5Ogti0',
   }),
   ex({
     id: 'reverse-lunge-db',
@@ -571,6 +578,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Drive the hips forward to stand.',
     ],
     videoSearch: 'dumbbell romanian deadlift form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=aa57T45iFSE',
   }),
   ex({
     id: 'single-leg-rdl-supported',
@@ -621,6 +629,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press away, spreading the shoulder blades at the top.',
     ],
     videoSearch: 'wall push up proper form beginner',
+    videoUrl: 'https://www.youtube.com/watch?v=YB0egDzsu18',
   }),
   ex({
     id: 'incline-pushup',
@@ -644,6 +653,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press up and spread the shoulder blades.',
     ],
     videoSearch: 'incline push up form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=0JUrOH--Kdk',
   }),
   ex({
     id: 'knee-pushup',
@@ -667,6 +677,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower the chest, then press up.',
     ],
     videoSearch: 'knee push up correct form',
+    videoUrl: 'https://www.youtube.com/watch?v=lFR1GWy1Dcs',
   }),
   ex({
     id: 'pushup',
@@ -690,6 +701,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press up without letting the hips lead or lag.',
     ],
     videoSearch: 'push up perfect form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=WDIpL0pjun0',
   }),
   ex({
     id: 'floor-press-db',
@@ -762,6 +774,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower to ear height under control.',
     ],
     videoSearch: 'seated dumbbell shoulder press form',
+    videoUrl: 'https://www.youtube.com/watch?v=C0We_bEyxlM',
   }),
   ex({
     id: 'half-kneeling-press-db',
@@ -857,6 +870,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower fully and let the shoulder blade reach forward at the bottom.',
     ],
     videoSearch: 'single arm dumbbell row form no rotation',
+    videoUrl: 'https://www.youtube.com/watch?v=fURsHPHgssI',
   }),
   ex({
     id: 'suspension-row',
@@ -880,6 +894,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'The more upright you stand, the easier it is — use that to scale.',
     ],
     videoSearch: 'TRX suspension row form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=yCuSGoe1gjY',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -930,6 +945,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Use the legs to assist, taking away help as you get stronger.',
     ],
     videoSearch: 'TRX assisted pull up progression',
+    videoUrl: 'https://www.youtube.com/watch?v=VqjszeojIAU',
   }),
   ex({
     id: 'negative-pullup',
@@ -954,6 +970,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Step back up to reset. Never drop off the bar.',
     ],
     videoSearch: 'pull up negatives progression tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=bn76WhQQMlI',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -980,6 +997,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Repeat on the back and each side. Nothing should move.',
     ],
     videoSearch: 'neck isometric exercise safe form',
+    videoUrl: 'https://www.youtube.com/watch?v=PSwHo-kcfhc',
   }),
   ex({
     id: 'chin-tuck',
@@ -1052,6 +1070,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control without losing the hinge.',
     ],
     videoSearch: 'barbell row form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=rqTOAM8WoeM',
   }),
   ex({
     id: 'barbell-rdl',
@@ -1120,6 +1139,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control back to the collarbone.',
     ],
     videoSearch: 'barbell overhead press strict form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=bMksDb5a3P0',
   }),
   ex({
     id: 'barbell-hip-thrust',
@@ -1168,6 +1188,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower all the way under control.',
     ],
     videoSearch: 'EZ bar curl form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=5NsFLGUf0Fo',
   }),
   ex({
     id: 'ez-bar-skullcrusher',
@@ -1213,6 +1234,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control.',
     ],
     videoSearch: 'EZ bar upright row form tutorial shoulder friendly',
+    videoUrl: 'https://www.youtube.com/watch?v=7Ya4W7pzGuY',
   }),
   ex({
     id: 'ez-bar-preacher-curl',
@@ -1236,6 +1258,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower all the way to a full stretch under control.',
     ],
     videoSearch: 'EZ bar preacher curl form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=e7X6G07KnPI',
   }),
 
   /* ---- Cable (apartment) ---- */
@@ -1283,6 +1306,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'The direct fix for rolled-forward shoulders — feel it between the blades.',
     ],
     videoSearch: 'cable face pull form tutorial rounded shoulders',
+    videoUrl: 'https://www.youtube.com/watch?v=eTCBSFlCJ_s',
   }),
   ex({
     id: 'cable-triceps-pushdown',
@@ -1305,6 +1329,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return under control without letting the elbows flare.',
     ],
     videoSearch: 'cable triceps pushdown form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=_iSX_125XUg',
   }),
   ex({
     id: 'cable-lat-pulldown',
@@ -1350,6 +1375,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return until the shoulder blades protract, then repeat.',
     ],
     videoSearch: 'cable seated row form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=EU7bOadUsNI',
   }),
   ex({
     id: 'cable-lateral-raise',
@@ -1420,6 +1446,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press through the whole foot, without locking the knees out hard.',
     ],
     videoSearch: 'leg press form tutorial knee tracking',
+    videoUrl: 'https://www.youtube.com/watch?v=8nm863C0c60',
   }),
 
   /* ---- Kettlebell (apartment) ---- */
@@ -1444,6 +1471,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'The arms are just along for the ride — power comes from the hips.',
     ],
     videoSearch: 'kettlebell swing form tutorial hip hinge',
+    videoUrl: 'https://www.youtube.com/watch?v=1Qi0NQW89Oc',
   }),
   ex({
     id: 'kettlebell-single-arm-row',
@@ -1491,6 +1519,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Pick it up and reset — this one is about intent, not a slow tempo.',
     ],
     videoSearch: 'medicine ball slam form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=EsAhU1jHpiQ',
   }),
   ex({
     id: 'medicine-ball-rotational-throw',
@@ -1564,6 +1593,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Pull back to start using the abs, not the hips.',
     ],
     videoSearch: 'ab wheel rollout form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=NbudTqiwguk',
   }),
 
   /* ---- Dumbbell isolation (home + apartment) ---- */
@@ -1611,6 +1641,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Squeeze the shoulder blades together at the top, then lower slowly.',
     ],
     videoSearch: 'dumbbell rear delt fly form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=hwBu73GZn98',
   }),
   ex({
     id: 'dumbbell-bicep-curl',
@@ -1656,6 +1687,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control.',
     ],
     videoSearch: 'dumbbell hammer curl form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=FNvndC4Ov04',
   }),
   ex({
     id: 'dumbbell-skullcrusher',
@@ -1678,6 +1710,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press back up without letting the upper arms drift back.',
     ],
     videoSearch: 'dumbbell skullcrusher form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=tj81tVq3wLo',
   }),
   ex({
     id: 'dumbbell-triceps-kickback',
@@ -1700,6 +1733,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control, then switch sides.',
     ],
     videoSearch: 'dumbbell triceps kickback form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=m9me06UBPKc',
   }),
 
   /* ---- Calves (home + apartment) ---- */
@@ -1724,6 +1758,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower slowly past level for a full stretch.',
     ],
     videoSearch: 'standing calf raise form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=ndQc4mz4mBU',
   }),
   ex({
     id: 'single-leg-calf-raise',
@@ -1772,6 +1807,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower only as far as the low back stays flat, then repeat.',
     ],
     videoSearch: 'lying leg raise form tutorial low back',
+    videoUrl: 'https://www.youtube.com/watch?v=sY2ZgV2Sj_s',
   }),
   ex({
     id: 'hanging-knee-raise',
@@ -1819,6 +1855,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower slowly under control back to a dead hang.',
     ],
     videoSearch: 'hanging leg raise form tutorial strict',
+    videoUrl: 'https://www.youtube.com/watch?v=rbOJSK07AGA',
   }),
 
   /* ---- Push-up ladder completion ---- */
@@ -1868,6 +1905,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press back up, keeping the body one straight line.',
     ],
     videoSearch: 'deficit push up form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=Ua5IdZSRgi0',
   }),
   ex({
     id: 'archer-pushup',
@@ -1891,6 +1929,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press back to center, then repeat shifting to the other side.',
     ],
     videoSearch: 'archer push up form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=A0r8ploEnZY',
   }),
   ex({
     id: 'one-arm-pushup',
@@ -1914,6 +1953,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press back up. The goal, not the starting point.',
     ],
     videoSearch: 'one arm push up progression tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=7mD64neBas4',
   }),
 
   /* ---- Pull-up ladder completion — the actual bug fix ---- */
@@ -1939,6 +1979,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower all the way back to a dead hang under control.',
     ],
     videoSearch: 'strict pull up form tutorial full range',
+    videoUrl: 'https://www.youtube.com/watch?v=RvT3beYzPrI',
   }),
   ex({
     id: 'weighted-pullup',
@@ -1962,6 +2003,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under complete control — no dropping.',
     ],
     videoSearch: 'weighted pull up form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=fnJ0F1Xsu7Y',
   }),
 
   /* ---- Dip ---- */
@@ -2011,6 +2053,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Hold with the low back rounded slightly, not arched.',
     ],
     videoSearch: 'tuck hold gymnastics core form',
+    videoUrl: 'https://www.youtube.com/watch?v=fEQg1Tr6LN4',
   }),
   ex({
     id: 'l-sit',
@@ -2034,6 +2077,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Hold as long as the legs stay level and straight.',
     ],
     videoSearch: 'l-sit progression form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=eywCpp0p7lg',
   }),
 
   /* ---- Dead hang ---- */
@@ -2058,6 +2102,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Hold, breathing normally, until grip genuinely fails.',
     ],
     videoSearch: 'dead hang form tutorial grip shoulder health',
+    videoUrl: 'https://www.youtube.com/watch?v=Nc-JGSZZMAQ',
   }),
 
   /* ---- Single-leg squat ladder ---- */
@@ -2083,6 +2128,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Stand back up through the working leg, taking away hand support as you improve.',
     ],
     videoSearch: 'single leg box squat progression pistol squat',
+    videoUrl: 'https://www.youtube.com/watch?v=b8-P4g5Px_4',
   }),
   ex({
     id: 'pistol-squat',
@@ -2106,6 +2152,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Stand back up through the heel without the other foot touching down.',
     ],
     videoSearch: 'pistol squat progression tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=vq5-vdgJc0I',
   }),
 
   /* ---- Hollow body hold ---- */
@@ -2131,6 +2178,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Hold only as long as the low back stays pinned to the floor.',
     ],
     videoSearch: 'hollow body hold form tutorial gymnastics',
+    videoUrl: 'https://www.youtube.com/watch?v=0yPin8hSc8o',
   }),
 ];
 
