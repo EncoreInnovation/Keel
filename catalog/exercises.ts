@@ -707,6 +707,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower until the triceps touch the floor, pause, repeat.',
     ],
     videoSearch: 'dumbbell floor press form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=qHCI9rK7HqM',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -777,6 +778,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press overhead without letting the ribs flare or the torso lean.',
     ],
     videoSearch: 'half kneeling single arm dumbbell press form',
+    videoUrl: 'https://www.youtube.com/watch?v=d3CRIDSCOhw',
   }),
 
   /* ---------------------------------------------------------------- *
@@ -825,6 +827,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control.',
     ],
     videoSearch: 'dumbbell bent over row form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=knB5Q4FN4ck',
   }),
   ex({
     id: 'single-arm-row-db',
@@ -1175,6 +1178,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Extend back up without letting the upper arms drift.',
     ],
     videoSearch: 'EZ bar skullcrusher form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=D47mYdoKllE',
   }),
   ex({
     id: 'ez-bar-upright-row',
@@ -1565,6 +1569,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower slowly — the negative is where this one is won.',
     ],
     videoSearch: 'dumbbell lateral raise form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=ssAo_xwFt5c',
   }),
   ex({
     id: 'dumbbell-rear-delt-fly',
@@ -1769,6 +1774,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control back to a dead hang.',
     ],
     videoSearch: 'hanging knee raise form tutorial no swing',
+    videoUrl: 'https://www.youtube.com/watch?v=p9hhX_Sx5v0',
   }),
   ex({
     id: 'hanging-leg-raise',
