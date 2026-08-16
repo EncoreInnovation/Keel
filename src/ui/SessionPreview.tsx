@@ -6,9 +6,11 @@
  * of the app's best ideas.
  */
 
+import { useState } from 'react';
 import { CATALOG } from '../../catalog/exercises';
 import { buildLadderIndex, rungDepth } from '../engine/ladders';
-import type { Equipment, Gym, PrescribedExercise } from '../engine/types';
+import type { Equipment, Exercise, Gym, PrescribedExercise } from '../engine/types';
+import type { SwapCandidate } from '../state/sessionController';
 
 const CATALOG_BY_ID = new Map(CATALOG.map((e) => [e.id, e]));
 const LADDER_INDEX = buildLadderIndex(CATALOG);
@@ -48,10 +50,36 @@ function nextRungName(exerciseId: string, availableEquipment: ReadonlySet<Equipm
 export interface SessionPreviewProps {
   exercises: PrescribedExercise[];
   gym: Gym;
+  /** Both omitted (e.g. once a session is resumed) hides the swap affordance entirely. */
+  onSwap?: (slotId: string, newExerciseId: string) => void;
+  loadSwapCandidates?: (slotId: string) => Promise<SwapCandidate[]>;
 }
 
-export function SessionPreview({ exercises, gym }: SessionPreviewProps) {
+export function SessionPreview({ exercises, gym, onSwap, loadSwapCandidates }: SessionPreviewProps) {
   const availableEquipment = new Set(gym.equipment);
+  const [openSlotId, setOpenSlotId] = useState<string | undefined>();
+  const [candidates, setCandidates] = useState<Exercise[]>([]);
+  const [loadingSlotId, setLoadingSlotId] = useState<string | undefined>();
+
+  async function toggleSwap(slotId: string) {
+    if (openSlotId === slotId) {
+      setOpenSlotId(undefined);
+      return;
+    }
+    setOpenSlotId(slotId);
+    setCandidates([]);
+    if (!loadSwapCandidates) return;
+    setLoadingSlotId(slotId);
+    const ranked = await loadSwapCandidates(slotId);
+    setLoadingSlotId(undefined);
+    setCandidates(ranked.slice(0, 6).map((c) => c.exercise));
+  }
+
+  function pick(slotId: string, exerciseId: string) {
+    onSwap?.(slotId, exerciseId);
+    setOpenSlotId(undefined);
+    setCandidates([]);
+  }
 
   return (
     <div className="today__section">
@@ -81,6 +109,35 @@ export function SessionPreview({ exercises, gym }: SessionPreviewProps) {
                 </div>
               )}
               {pe.reducedForRecovery && <div className="session-preview__reduced">Reduced for recovery</div>}
+              {onSwap && loadSwapCandidates && pe.role !== 'primary' && (
+                <button
+                  type="button"
+                  className="session-preview__swap-toggle"
+                  onClick={() => void toggleSwap(pe.slotId)}
+                >
+                  {openSlotId === pe.slotId ? 'Cancel' : 'Swap'}
+                </button>
+              )}
+              {openSlotId === pe.slotId && (
+                <div className="session-preview__swap-list">
+                  {loadingSlotId === pe.slotId && (
+                    <span className="session-preview__swap-status">Finding alternatives…</span>
+                  )}
+                  {loadingSlotId !== pe.slotId && candidates.length === 0 && (
+                    <span className="session-preview__swap-status">No alternatives available in this gym.</span>
+                  )}
+                  {candidates.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className="chip"
+                      onClick={() => pick(pe.slotId, c.id)}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

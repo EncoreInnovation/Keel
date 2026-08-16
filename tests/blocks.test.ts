@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CATALOG } from '../catalog/exercises';
-import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession } from '../src/engine/blocks';
+import { CATALOG, CATALOG_BY_ID } from '../catalog/exercises';
+import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, swapExerciseInSlot } from '../src/engine/blocks';
 import { epley1RM } from '../src/engine/overload';
 import { TEST_GYM, testProfile } from './support/profile';
 import type { Exercise, SetLog } from '../src/engine/types';
@@ -83,5 +83,68 @@ describe('generateSession — bestE1RM', () => {
 
     const primary = session.exercises.find((e) => e.slotId === 'push-primary')!;
     expect(primary.bestE1RM).toBeCloseTo(epley1RM(30, 8), 5);
+  });
+});
+
+describe('swapExerciseInSlot', () => {
+  it('rebuilds the slot around the chosen exercise instead of the selected one', () => {
+    const ctx = makeContext();
+    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
+
+    const result = swapExerciseInSlot(
+      block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1,
+    );
+
+    expect(result.exercise.id).toBe('dumbbell-lateral-raise');
+    expect(result.slotId).toBe('push-acc-1');
+    expect(result.role).toBe('accessory');
+  });
+
+  it('sizes sets to the slot the exercise is swapped into, not the exercise\'s home slot', () => {
+    const ctx = makeContext();
+    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
+
+    const result = swapExerciseInSlot(
+      block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1,
+    );
+
+    const slotDef = HYPERTROPHY_BLOCK_DAYS.find((d) => d.id === 'push')!.slots.find((s) => s.id === 'push-acc-1')!;
+    for (const set of result.sets) {
+      expect(set.repTarget).toBe(slotDef.repMin);
+      expect(set.targetRpe).toBe(slotDef.targetRpe);
+    }
+  });
+
+  it('refuses to swap a locked primary slot', () => {
+    const ctx = makeContext();
+    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
+
+    expect(() =>
+      swapExerciseInSlot(block, 'push', 'push-primary', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1),
+    ).toThrow(/locked primary/);
+  });
+
+  it('throws for an unknown slot id', () => {
+    const ctx = makeContext();
+    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
+
+    expect(() =>
+      swapExerciseInSlot(block, 'push', 'not-a-real-slot', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1),
+    ).toThrow();
+  });
+
+  it('applies deload scaling on the deload week same as fresh generation would', () => {
+    const ctx = makeContext();
+    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
+
+    const normal = swapExerciseInSlot(block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1);
+    const deloadWeek = swapExerciseInSlot(block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, block.deloadWeek, 1);
+
+    expect(deloadWeek.sets.length).toBeLessThan(normal.sets.length);
   });
 });

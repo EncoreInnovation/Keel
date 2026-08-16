@@ -20,10 +20,10 @@ import {
   volumeMultiplier,
   type FatigueState,
 } from '../engine/recovery';
-import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay } from '../engine/blocks';
+import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay, swapExerciseInSlot } from '../engine/blocks';
 import { achievableLoads } from '../engine/loading';
 import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
-import type { SelectionContext } from '../engine/selector';
+import { rankCandidates, type SelectionContext } from '../engine/selector';
 import { activeGym } from '../engine/types';
 import { isSameCalendarDay } from '../engine/time';
 import type {
@@ -311,6 +311,115 @@ function countConsecutiveMisses(recentSetsNewestFirst: SetLog[], slot: Slot): nu
     else break;
   }
   return count;
+}
+
+/* ------------------------------------------------------------------ *
+ * Swapping an exercise mid-session
+ * ------------------------------------------------------------------ */
+
+export interface SwapCandidate {
+  exercise: Exercise;
+  score: number;
+}
+
+/**
+ * Rank alternatives for a slot the same way the generator itself fills that
+ * slot, so "Swap" offers exactly what selection would have chosen — not a
+ * separate ad hoc list. Returns an empty list for a locked slot rather than
+ * throwing: the caller (UI) hides the swap affordance on locked slots
+ * anyway, and an empty picker is easier for it to handle than an error.
+ */
+export async function swapCandidates(
+  catalog: Exercise[],
+  profile: UserProfile,
+  slotId: string,
+  at: number,
+): Promise<SwapCandidate[]> {
+  const [block, prescription, sets, conditioning] = await Promise.all([
+    repo.getActiveBlock(),
+    repo.getActivePrescription(),
+    repo.getAllSets(),
+    repo.getConditioningLogs(),
+  ]);
+  if (!block || !prescription) return [];
+
+  const day = block.days.find((d) => d.id === prescription.dayId);
+  const slotDef = day?.slots.find((s) => s.id === slotId);
+  if (!slotDef || slotDef.locked) return [];
+
+  const catalogById = new Map(catalog.map((e) => [e.id, e]));
+  const fatigue = rebuildFatigue(sets, conditioning, catalogById, at);
+  const weeksTrained = Math.floor((at - block.startedAt) / (7 * 86_400_000));
+  const ctx = buildSelectionContext(profile, sets, fatigue, at, weeksTrained);
+
+  const currentExerciseId = prescription.exercises.find((e) => e.slotId === slotId)?.exercise.id;
+
+  return rankCandidates(catalog, slotDef, ctx).filter((c) => c.exercise.id !== currentExerciseId);
+}
+
+export interface SwapExerciseInput {
+  sessionId: string;
+  slotId: string;
+  newExerciseId: string;
+  catalog: Exercise[];
+  profile: UserProfile;
+  at: number;
+}
+
+/**
+ * Replace one non-locked exercise in today's prescription with another,
+ * rebuilding its sets from scratch against the target slot's rules (not the
+ * exercise's own history in some other slot). Reuses the exact same fatigue
+ * and volume-multiplier inputs `loadToday` would compute right now, so a
+ * swapped exercise is sized as if it had been selected fresh — not just
+ * dropped in with yesterday's numbers.
+ */
+export async function swapExercise(input: SwapExerciseInput): Promise<PrescribedSession> {
+  const { sessionId, slotId, newExerciseId, catalog, profile, at } = input;
+
+  const [block, record, prescription, sets, conditioning] = await Promise.all([
+    repo.getActiveBlock(),
+    repo.getActiveSessionRecord(),
+    repo.getActivePrescription(),
+    repo.getAllSets(),
+    repo.getConditioningLogs(),
+  ]);
+  if (!block) throw new Error('No active block');
+  if (!record || record.id !== sessionId) throw new Error(`Session "${sessionId}" is not the active session`);
+  if (!prescription) throw new Error('No active prescription');
+
+  const exercise = catalog.find((e) => e.id === newExerciseId);
+  if (!exercise) throw new Error(`Unknown exercise "${newExerciseId}"`);
+
+  const catalogById = new Map(catalog.map((e) => [e.id, e]));
+  const fatigue = rebuildFatigue(sets, conditioning, catalogById, at);
+  const recovery = recoveryAt(fatigue, at);
+
+  const load = systemicLoad(
+    sets.map((s) => ({ set: s, exercise: catalogById.get(s.exerciseId)! })).filter((x) => x.exercise),
+    conditioning,
+    at,
+  );
+
+  const swapped = swapExerciseInSlot(
+    block,
+    prescription.dayId,
+    slotId,
+    exercise,
+    activeGym(profile),
+    profile,
+    sets,
+    recovery,
+    prescription.weekNumber,
+    volumeMultiplier(load, record.readiness),
+  );
+
+  const updatedExercises = prescription.exercises.map((e) => (e.slotId === slotId ? swapped : e));
+  const updatedPrescription: PrescribedSession = { ...prescription, exercises: updatedExercises };
+
+  await repo.saveActivePrescription(updatedPrescription);
+
+  return updatedPrescription;
 }
 
 /** Skip a set (or a whole exercise) with an optional reason — a first-class, not-nagged-about action. */

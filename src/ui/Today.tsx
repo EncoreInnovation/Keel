@@ -16,6 +16,7 @@ import { PILLAR_SESSIONS } from '../pillars/library';
 import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
 import { getCompletedSessions, getPostureLogs } from '../storage/repository';
+import type { SwapCandidate } from '../state/sessionController';
 import { RecoveryPreview } from './RecoveryPreview';
 import { SessionPreview } from './SessionPreview';
 import { VolumeReadout } from './VolumeReadout';
@@ -38,6 +39,8 @@ export interface TodayProps {
   onOpenConditioning: () => void;
   onOpenSettings: () => void;
   onOpenAskCoach: () => void;
+  onSwapExercise: (slotId: string, newExerciseId: string) => void;
+  loadSwapCandidates: (slotId: string) => Promise<SwapCandidate[]>;
 }
 
 export function Today({
@@ -57,6 +60,8 @@ export function Today({
   onOpenConditioning,
   onOpenSettings,
   onOpenAskCoach,
+  onSwapExercise,
+  loadSwapCandidates,
 }: TodayProps) {
   const label = prescription.dayName;
 
@@ -169,6 +174,12 @@ export function Today({
       <SessionPreview
         exercises={prescription.exercises}
         gym={gyms.find((g) => g.id === activeGymId) ?? gyms[0]!}
+        // Swapping only makes sense before a session is actively being
+        // trained — same reasoning as the gym switch above: once sets exist
+        // against an exercise, replacing it out from under a resumed session
+        // would strand those logged sets under an id nothing points to anymore.
+        onSwap={resumed ? undefined : onSwapExercise}
+        loadSwapCandidates={resumed ? undefined : loadSwapCandidates}
       />
 
       <VolumeReadout />

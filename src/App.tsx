@@ -34,6 +34,8 @@ import {
   discardUntouchedSession,
   hasStartedTodaySession,
   loadToday,
+  swapCandidates,
+  swapExercise,
   type TodayState,
 } from './state/sessionController';
 import { getProfile, saveProfile } from './storage/repository';
@@ -158,6 +160,35 @@ export default function App() {
     await refreshToday(updated);
   }
 
+  /**
+   * Rebuilds just the one slot around a manually chosen exercise, using the
+   * exact same prescription math a fresh generation would (see
+   * `swapExerciseInSlot`), then swaps only that slot into the in-memory
+   * prescription — every other exercise, and anything already logged, is
+   * untouched.
+   */
+  async function handleSwapExercise(slotId: string, newExerciseId: string) {
+    if (!profile || !today) return;
+    try {
+      const updated = await swapExercise({
+        sessionId: today.sessionId,
+        slotId,
+        newExerciseId,
+        catalog,
+        profile,
+        at: Date.now(),
+      });
+      setToday({ ...today, prescription: updated });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not swap that exercise.');
+    }
+  }
+
+  function handleLoadSwapCandidates(slotId: string) {
+    if (!profile) return Promise.resolve([]);
+    return swapCandidates(catalog, profile, slotId, Date.now());
+  }
+
   async function handleReadinessSelected(value: number) {
     if (!profile) return;
     setCoachNote(undefined);
@@ -258,6 +289,8 @@ export default function App() {
         onOpenConditioning={() => setScreen('conditioning')}
         onOpenSettings={() => setScreen('settings')}
         onOpenAskCoach={() => setScreen('askCoach')}
+        onSwapExercise={(slotId, exerciseId) => void handleSwapExercise(slotId, exerciseId)}
+        loadSwapCandidates={handleLoadSwapCandidates}
       />
     );
   }

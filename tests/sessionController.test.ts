@@ -18,6 +18,7 @@ import {
   loadToday,
   logSet,
   resumePosition,
+  swapExercise,
 } from '../src/state/sessionController';
 import {
   getActivePrescription,
@@ -289,6 +290,83 @@ describe('stale session self-heal', () => {
 
     const sets = await getAllSets();
     expect(sets.filter((s) => s.sessionId === state.sessionId)).toHaveLength(1);
+  });
+});
+
+describe('swapExercise', () => {
+  it('replaces the exercise in a non-locked slot and persists the change', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    const slot = today.prescription.exercises.find((e) => e.role !== 'primary')!;
+    const replacement = catalog.find((e) => e.id !== slot.exercise.id)!;
+
+    const updated = await swapExercise({
+      sessionId: today.sessionId,
+      slotId: slot.slotId,
+      newExerciseId: replacement.id,
+      catalog,
+      profile: PROFILE,
+      at: T0 + 60_000,
+    });
+
+    const swapped = updated.exercises.find((e) => e.slotId === slot.slotId)!;
+    expect(swapped.exercise.id).toBe(replacement.id);
+
+    const persisted = await getActivePrescription();
+    expect(persisted).toEqual(updated);
+  });
+
+  it('leaves every other slot in the prescription untouched', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    const slot = today.prescription.exercises.find((e) => e.role !== 'primary')!;
+    const replacement = catalog.find((e) => e.id !== slot.exercise.id)!;
+
+    const updated = await swapExercise({
+      sessionId: today.sessionId,
+      slotId: slot.slotId,
+      newExerciseId: replacement.id,
+      catalog,
+      profile: PROFILE,
+      at: T0 + 60_000,
+    });
+
+    for (const exercise of today.prescription.exercises) {
+      if (exercise.slotId === slot.slotId) continue;
+      expect(updated.exercises.find((e) => e.slotId === exercise.slotId)).toEqual(exercise);
+    }
+  });
+
+  it('refuses to swap the locked primary slot', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    const primary = today.prescription.exercises.find((e) => e.role === 'primary')!;
+    const replacement = catalog.find((e) => e.id !== primary.exercise.id)!;
+
+    await expect(
+      swapExercise({
+        sessionId: today.sessionId,
+        slotId: primary.slotId,
+        newExerciseId: replacement.id,
+        catalog,
+        profile: PROFILE,
+        at: T0 + 60_000,
+      }),
+    ).rejects.toThrow(/locked primary/);
+  });
+
+  it('rejects a session id that is not the currently active session', async () => {
+    const today = await loadToday(catalog, PROFILE, T0);
+    const slot = today.prescription.exercises.find((e) => e.role !== 'primary')!;
+    const replacement = catalog.find((e) => e.id !== slot.exercise.id)!;
+
+    await expect(
+      swapExercise({
+        sessionId: 'not-the-active-session',
+        slotId: slot.slotId,
+        newExerciseId: replacement.id,
+        catalog,
+        profile: PROFILE,
+        at: T0 + 60_000,
+      }),
+    ).rejects.toThrow(/active session/);
   });
 });
 

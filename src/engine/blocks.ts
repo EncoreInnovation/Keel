@@ -19,6 +19,8 @@ import type {
   Block,
   DayTemplate,
   Exercise,
+  Gym,
+  MuscleMap,
   PrescribedExercise,
   PrescribedSession,
   PrescribedSet,
@@ -257,6 +259,107 @@ function buildSets(
 }
 
 /**
+ * Turn a fixed exercise into its full prescription for a slot — load, reps,
+ * sides, deload scaling, the recovery guard, ghost values. Shared by fresh
+ * session generation (after the selector and ladder decide *which* exercise)
+ * and by a manual swap (which already knows which exercise and skips both).
+ */
+function prescribeExercise(
+  slotDef: Slot,
+  exercise: Exercise,
+  gym: Gym,
+  profile: UserProfile,
+  history: SetLog[],
+  recovery: MuscleMap,
+  deload: boolean,
+  volumeMultiplier: number,
+): PrescribedExercise {
+  const loadable = exercise.loadType === 'external';
+  const lastAttempt = attemptsFor(history, exercise.id)[0]?.sets ?? [];
+  // The single gate that keeps prescriptions physically loadable: every
+  // weight downstream of here is snapped to something this gym actually has.
+  const achievable = achievableLoads(exercise, gym);
+  const progression = nextPrescription({ slot: slotDef, lastAttempt, profile, loadable, achievable });
+
+  const reading = exercise.unilateral ? asymmetryFor(history, exercise.id) : undefined;
+  const sides: PrescribedSet['side'][] = exercise.unilateral ? sideOrder(reading) : ['both'];
+
+  let sets = buildSets(
+    slotDef,
+    resolveLoad(progression.weight, achievable),
+    progression.repTarget,
+    sides,
+    deload ? 1 : volumeMultiplier,
+  );
+  if (deload) sets = applyDeload(sets, achievable);
+
+  // Recovery guard.
+  //
+  // Locking primaries is what makes progress measurable, and it is also what
+  // takes away the selector's ability to route around a fatigued muscle. So
+  // the schedule is normally the only thing protecting you — and schedules
+  // break the moment someone trains four days in a row, or comes back from a
+  // long run and trains anyway. Rather than abandon the lock (which would
+  // cost the whole point of the block) we keep the movement and cut the
+  // dose: fewer sets, capped RPE.
+  const underRecovered = primaryRecovery(recovery, exercise) < RECOVERY_GUARD_THRESHOLD;
+  if (underRecovered && !deload) {
+    sets = sets.slice(0, Math.max(1, Math.floor(sets.length * 0.5))).map((s) => ({
+      ...s,
+      targetRpe: Math.min(s.targetRpe, 7),
+    }));
+  }
+
+  const last = lastAttempt[lastAttempt.length - 1];
+  const priorBest = bestE1RM(history.filter((s) => s.exerciseId === exercise.id));
+
+  return {
+    slotId: slotDef.id,
+    role: slotDef.role,
+    exercise,
+    sets,
+    restSec: slotDef.restSec,
+    lastPerformance: last
+      ? { weight: last.weight, reps: last.reps, rpe: last.rpe, at: last.completedAt }
+      : undefined,
+    bestE1RM: priorBest > 0 ? priorBest : undefined,
+    reducedForRecovery: underRecovered && !deload,
+  };
+}
+
+/**
+ * Rebuild one slot's prescription around a manually chosen exercise,
+ * bypassing the selector and ladder entirely — this is what a manual swap
+ * calls, not what a fresh session generation calls.
+ *
+ * Refuses for a locked primary slot: swapping it would break the
+ * whole-block measurability the lock exists to guarantee. Only
+ * secondary/accessory/finisher slots are open to a manual swap, same as
+ * they already are to the selector's own rotation.
+ */
+export function swapExerciseInSlot(
+  block: Block,
+  dayId: string,
+  slotId: string,
+  exercise: Exercise,
+  gym: Gym,
+  profile: UserProfile,
+  history: SetLog[],
+  recovery: MuscleMap,
+  weekNumber: number,
+  volumeMultiplier: number,
+): PrescribedExercise {
+  const day = block.days.find((d) => d.id === dayId);
+  if (!day) throw new Error(`Unknown day "${dayId}" in block "${block.id}"`);
+  const slotDef = day.slots.find((s) => s.id === slotId);
+  if (!slotDef) throw new Error(`Unknown slot "${slotId}" on day "${dayId}"`);
+  if (slotDef.locked) throw new Error(`Cannot swap the locked primary slot "${slotId}"`);
+
+  const deload = isDeloadWeek(weekNumber, block.deloadWeek);
+  return prescribeExercise(slotDef, exercise, gym, profile, history, recovery, deload, volumeMultiplier);
+}
+
+/**
  * Build the session the player will render.
  *
  * Order of operations matters: ladder verdict first (which exercise), then
@@ -335,58 +438,9 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     }
 
     chosenThisSession.add(exercise.id);
-
-    const loadable = exercise.loadType === 'external';
-    const lastAttempt = attemptsFor(history, exercise.id)[0]?.sets ?? [];
-    // The single gate that keeps prescriptions physically loadable: every
-    // weight downstream of here is snapped to something this gym actually has.
-    const achievable = achievableLoads(exercise, gym);
-    const progression = nextPrescription({ slot: slotDef, lastAttempt, profile, loadable, achievable });
-
-    const reading = exercise.unilateral ? asymmetryFor(history, exercise.id) : undefined;
-    const sides: PrescribedSet['side'][] = exercise.unilateral ? sideOrder(reading) : ['both'];
-
-    let sets = buildSets(
-      slotDef,
-      resolveLoad(progression.weight, achievable),
-      progression.repTarget,
-      sides,
-      deload ? 1 : volumeMultiplier,
+    exercises.push(
+      prescribeExercise(slotDef, exercise, gym, profile, history, ctx.recovery, deload, volumeMultiplier),
     );
-    if (deload) sets = applyDeload(sets, achievable);
-
-    // Recovery guard.
-    //
-    // Locking primaries is what makes progress measurable, and it is also what
-    // takes away the selector's ability to route around a fatigued muscle. So
-    // the schedule is normally the only thing protecting you — and schedules
-    // break the moment someone trains four days in a row, or comes back from a
-    // long run and trains anyway. Rather than abandon the lock (which would
-    // cost the whole point of the block) we keep the movement and cut the
-    // dose: fewer sets, capped RPE.
-    const underRecovered = primaryRecovery(ctx.recovery, exercise) < RECOVERY_GUARD_THRESHOLD;
-    if (underRecovered && !deload) {
-      sets = sets.slice(0, Math.max(1, Math.floor(sets.length * 0.5))).map((s) => ({
-        ...s,
-        targetRpe: Math.min(s.targetRpe, 7),
-      }));
-    }
-
-    const last = lastAttempt[lastAttempt.length - 1];
-    const priorBest = bestE1RM(history.filter((s) => s.exerciseId === exercise.id));
-
-    exercises.push({
-      slotId: slotDef.id,
-      role: slotDef.role,
-      exercise,
-      sets,
-      restSec: slotDef.restSec,
-      lastPerformance: last
-        ? { weight: last.weight, reps: last.reps, rpe: last.rpe, at: last.completedAt }
-        : undefined,
-      bestE1RM: priorBest > 0 ? priorBest : undefined,
-      reducedForRecovery: underRecovered && !deload,
-    });
   }
 
   return {
