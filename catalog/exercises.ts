@@ -1260,6 +1260,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return slowly until you feel a stretch across the chest, not the shoulders.',
     ],
     videoSearch: 'cable fly form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=ovFc-5YdcXw',
   }),
   ex({
     id: 'cable-face-pull',
@@ -1326,6 +1327,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Let it rise back under control without leaning back to cheat it.',
     ],
     videoSearch: 'cable lat pulldown form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=a9Yn233ZoWs',
   }),
   ex({
     id: 'cable-seated-row',
@@ -1370,6 +1372,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower under control. Constant tension the whole set.',
     ],
     videoSearch: 'cable lateral raise form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=zpbm-xRHB6k',
   }),
   ex({
     id: 'cable-crunch',
@@ -1392,6 +1395,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Return only to the start position, keeping tension on.',
     ],
     videoSearch: 'cable crunch form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=0KEP6A1deBE',
   }),
 
   /* ---- Leg press (apartment) ---- */
@@ -1462,6 +1466,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Lower fully under control, then switch sides.',
     ],
     videoSearch: 'kettlebell single arm row form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=uQZZdGF16KQ',
   }),
 
   /* ---- Medicine ball (apartment) ---- */
@@ -1508,6 +1513,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Catch the rebound and reset. Do both sides.',
     ],
     videoSearch: 'medicine ball rotational throw form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=o9BC7lgN1bo',
   }),
 
   /* ---- Battle ropes (apartment) ---- */
@@ -1532,6 +1538,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Keep the core braced the whole interval.',
     ],
     videoSearch: 'battle ropes waves form tutorial',
+    videoUrl: 'https://www.youtube.com/watch?v=WwojJ5IQVxU',
   }),
 
   /* ---- Ab roller (home) ---- */
@@ -1979,6 +1986,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
       'Press back up without shrugging the shoulders to the ears.',
     ],
     videoSearch: 'bench dip form tutorial shoulder safe',
+    videoUrl: 'https://www.youtube.com/watch?v=0326dy_-CzM',
   }),
 
   /* ---- L-sit ladder ---- */
