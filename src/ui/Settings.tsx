@@ -9,10 +9,10 @@
  * the plan, not a preference, so it's shown read-only rather than editable.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { EQUIPMENT, JOINTS } from '../engine/types';
 import { IMPACT_ORDER } from '../engine/recovery';
-import { saveProfile } from '../storage/repository';
+import { exportAll, importAll, saveProfile } from '../storage/repository';
 import type { Equipment, ExperienceLevel, ImpactLevel, Joint, UserProfile } from '../engine/types';
 
 const EQUIPMENT_LABEL: Record<Equipment, string> = {
@@ -70,11 +70,40 @@ function parseWeightList(raw: string): number[] {
 export function Settings({ profile, onSaved, onBack }: SettingsProps) {
   const [draft, setDraft] = useState<UserProfile>(profile);
   const [saved, setSaved] = useState(false);
+  const [restoreArmed, setRestoreArmed] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | undefined>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSave = async () => {
     await saveProfile(draft);
     onSaved(draft);
     setSaved(true);
+  };
+
+  const handleExport = async () => {
+    const snapshot = await exportAll(Date.now());
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `colossus-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleRestoreFile = async (file: File) => {
+    setRestoreError(undefined);
+    try {
+      const parsed = JSON.parse(await file.text());
+      await importAll(parsed);
+      // A full reload is the simplest correct way to get every screen's
+      // in-memory state (profile, today's session, etc.) back in sync with
+      // what was just written straight into IndexedDB underneath it.
+      window.location.reload();
+    } catch (err) {
+      setRestoreError(err instanceof Error ? err.message : 'Could not read that backup file.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -217,9 +246,58 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
       <section className="settings-section settings-section--locked">
         <h2 className="settings-section__title">Program schedule</h2>
         <p className="settings-section__hint">
-          {draft.daysPerWeek} days/week, {draft.sessionMinutes} min sessions — fixed for the Cruise
-          Block.
+          {draft.daysPerWeek} days/week, {draft.sessionMinutes} min sessions — fixed for the
+          Hypertrophy Block.
         </p>
+      </section>
+
+      <section className="settings-section">
+        <h2 className="settings-section__title">Backup</h2>
+        <p className="settings-section__hint">
+          Training history, PRs, and posture measurements live only on this device. Export a
+          backup before switching phones, clearing browser data, or reinstalling. Scan photos
+          are on-device binaries and don&rsquo;t round-trip through this file — only the
+          measurements do.
+        </p>
+        <button type="button" className="btn btn--ghost" onClick={() => void handleExport()}>
+          Export backup
+        </button>
+
+        {!restoreArmed ? (
+          <button
+            type="button"
+            className="btn btn--text"
+            onClick={() => {
+              setRestoreArmed(true);
+              setRestoreError(undefined);
+            }}
+          >
+            Restore from backup…
+          </button>
+        ) : (
+          <div className="settings-restore">
+            <p className="settings-section__hint settings-section__hint--warn">
+              This replaces everything on this device with the backup file — there&rsquo;s no
+              undo.
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json"
+              className="settings-file-input"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void handleRestoreFile(file);
+              }}
+            />
+            {restoreError && (
+              <p className="settings-section__hint settings-section__hint--warn">{restoreError}</p>
+            )}
+            <button type="button" className="btn btn--text" onClick={() => setRestoreArmed(false)}>
+              Cancel
+            </button>
+          </div>
+        )}
       </section>
 
       <button className="btn btn--hero" onClick={() => void handleSave()}>

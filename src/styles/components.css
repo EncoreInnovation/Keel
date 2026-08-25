@@ -1265,6 +1265,24 @@
   padding: 0 var(--s4);
 }
 
+.settings-section__hint--warn {
+  color: var(--warn);
+}
+
+.settings-restore {
+  margin-top: var(--s3);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--line);
+}
+
+.settings-file-input {
+  display: block;
+  width: 100%;
+  margin: var(--s3) 0;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
 .baseline-test {
   width: 100%;
   display: flex;
