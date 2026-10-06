@@ -185,6 +185,10 @@ export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysiqu
   return (
     <div className="phase-screen progress-screen">
       <div className="phase-screen__eyebrow">Progress</div>
+      <p className="screen-explainer">
+        Is it working? Strength should climb and waist should shrink. Check once a week, right
+        after the weekly weigh-in — day-to-day numbers are noise.
+      </p>
 
       <div className="progress-stats">
         <div className="progress-stat">

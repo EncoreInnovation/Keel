@@ -101,6 +101,10 @@ export function RecoveryMap({ onBack }: RecoveryMapProps) {
   return (
     <div className="phase-screen recovery-map">
       <div className="phase-screen__eyebrow">Recovery</div>
+      <p className="screen-explainer">
+        How rested each muscle is, from what you've trained. Green = ready to train hard; amber =
+        go lighter or train something else. The app already uses this to build your session.
+      </p>
 
       <div className="recovery-map__figures">
         <BodySilhouette label="Front" hotspots={FRONT_HOTSPOTS} fillFor={(m) => colorForRecovery(recovery[m])} />

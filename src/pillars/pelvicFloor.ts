@@ -71,6 +71,8 @@ export function pelvicFloorSession(completedSessions: number): PillarSession {
     kind: 'pelvic',
     name: 'Pelvic Floor',
     minutes: 6,
+    purpose: 'Squeeze-and-relax training for the pelvic floor — better erections and ejaculatory control. Gets harder as you practise.',
+    when: 'Once a day, any time — lying or seated, no equipment.',
     steps: [
       {
         type: 'move',

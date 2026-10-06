@@ -58,6 +58,10 @@ export function Roadmap({ onBack }: RoadmapProps) {
   return (
     <div className="phase-screen roadmap">
       <div className="phase-screen__eyebrow">Q4 roadmap</div>
+      <p className="screen-explainer">
+        Your 12 weeks to year-end, phase by phase. The app adjusts training for you — glance here
+        weekly to see where you are and what's next.
+      </p>
 
       <div className="roadmap__hero">
         <div className="roadmap__hero-value">Week {Math.min(currentIndex + 1, 12)}</div>

@@ -1,11 +1,12 @@
 /**
- * App shell — a plain state machine, no router. The whole app is one linear
- * path most days: Today → Arrive → Session → Downshift → back to Today. That
- * matches the zero-decision philosophy better than a navigable multi-screen
- * structure would.
+ * App shell — a plain state machine, no router. Four tab screens (Today,
+ * Recover, Progress, More) sit behind a bottom bar; everything else is a
+ * sub-screen that returns to the tab it was opened from. The workout itself
+ * stays one linear path: Today → Arrive → Session → Downshift → back to Today,
+ * with the tab bar hidden so nothing competes with the set in front of you.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { CATALOG } from '../catalog/exercises';
 import { AskCoach } from './ui/AskCoach';
 import { BaselineTest } from './ui/BaselineTest';
@@ -27,6 +28,10 @@ import { SessionPlayer } from './ui/SessionPlayer';
 import { Settings } from './ui/Settings';
 import { Setup } from './ui/Setup';
 import { Today } from './ui/Today';
+import { TabBar, type Tab } from './ui/TabBar';
+import { RecoverHub } from './ui/RecoverHub';
+import { ProgressHub } from './ui/ProgressHub';
+import { MoreHub } from './ui/MoreHub';
 import { primeAudio } from './ui/audio';
 import { acquireWakeLock, type WakeLockHandle } from './ui/wakeLock';
 import { askCoach } from './ai/client';
@@ -55,6 +60,9 @@ type Screen =
   | 'baseline'
   | 'readiness'
   | 'today'
+  | 'recover'
+  | 'progressHub'
+  | 'more'
   | 'arrive'
   | 'session'
   | 'downshift'
@@ -78,6 +86,7 @@ export default function App() {
   const [today, setToday] = useState<TodayState | undefined>();
   const [pillar, setPillar] = useState<PillarKind>('reset');
   const [pillarSession, setPillarSession] = useState<PillarSession | undefined>();
+  const [lastTab, setLastTab] = useState<Tab>('today');
   const [error, setError] = useState<string | undefined>();
   const [coachNote, setCoachNote] = useState<string | undefined>();
   const [cueWord, setCueWord] = useState<string | undefined>();
@@ -106,6 +115,7 @@ export default function App() {
     try {
       const state = await loadToday(catalog, p, Date.now(), readiness);
       setToday(state);
+      setLastTab('today');
       setScreen('today');
       return state;
     } catch (err) {
@@ -296,8 +306,31 @@ export default function App() {
     return <div className="today today--loading">Loading…</div>;
   }
 
+  const goTab = (tab: Tab) => {
+    setLastTab(tab);
+    setScreen(tab);
+  };
+  const back = () => setScreen(lastTab);
+  const openPillar = (kind: PillarKind) => {
+    setPillar(kind);
+    setPillarSession(undefined);
+    if (kind === 'pelvic') {
+      void getPillarLogs().then((logs) =>
+        setPillarSession(pelvicFloorSession(logs.filter((l) => l.kind === 'pelvic' && l.completedAt).length)),
+      );
+    }
+    setScreen('pillar');
+  };
+  const withTabs = (tab: Tab, content: ReactNode) => (
+    <div className="with-tabs">
+      {content}
+      <TabBar active={tab} onSelect={goTab} />
+    </div>
+  );
+
   if (screen === 'today') {
-    return (
+    return withTabs(
+      'today',
       <Today
         prescription={today.prescription}
         weeksTotal={today.block.weeks}
@@ -307,49 +340,71 @@ export default function App() {
         activeGymId={profile.activeGymId}
         onSwitchGym={(gymId) => void handleSwitchGym(gymId)}
         onStart={handleStart}
-        onOpenPillar={(kind) => {
-          setPillar(kind);
-          setPillarSession(undefined);
-          if (kind === 'pelvic') {
-            void getPillarLogs().then((logs) =>
-              setPillarSession(pelvicFloorSession(logs.filter((l) => l.kind === 'pelvic' && l.completedAt).length)),
-            );
-          }
-          setScreen('pillar');
-        }}
-        onOpenAsymmetry={() => setScreen('asymmetry')}
-        onOpenRecovery={() => setScreen('recovery')}
-        onOpenProgress={() => setScreen('progress')}
-        onOpenPosture={() => setScreen('postureHistory')}
+        onOpenPillar={openPillar}
         onOpenConditioning={() => setScreen('conditioning')}
-        onOpenSettings={() => setScreen('settings')}
-        onOpenAskCoach={() => setScreen('askCoach')}
         onOpenRoadmap={() => setScreen('roadmap')}
         onToggleExpress={() => void handleToggleExpress()}
         onOpenPhysiqueCheckin={() => setScreen('physiqueCheckin')}
         onSwapExercise={(slotId, exerciseId) => void handleSwapExercise(slotId, exerciseId)}
         loadSwapCandidates={handleLoadSwapCandidates}
-      />
+      />,
+    );
+  }
+
+  if (screen === 'recover') {
+    return withTabs(
+      'recover',
+      <RecoverHub
+        prescription={today.prescription}
+        onOpenPillar={openPillar}
+        onOpenRecovery={() => setScreen('recovery')}
+      />,
+    );
+  }
+
+  if (screen === 'progressHub') {
+    return withTabs(
+      'progressHub',
+      <ProgressHub
+        onOpenRoadmap={() => setScreen('roadmap')}
+        onOpenProgress={() => setScreen('progress')}
+        onOpenPhysique={() => setScreen('physiqueCompare')}
+        onNewPhysique={() => setScreen('physiqueCheckin')}
+        onOpenPosture={() => setScreen('postureHistory')}
+        onOpenAsymmetry={() => setScreen('asymmetry')}
+        onOpenPillar={openPillar}
+      />,
+    );
+  }
+
+  if (screen === 'more') {
+    return withTabs(
+      'more',
+      <MoreHub
+        onOpenConditioning={() => setScreen('conditioning')}
+        onOpenAskCoach={() => setScreen('askCoach')}
+        onOpenSettings={() => setScreen('settings')}
+      />,
     );
   }
 
   if (screen === 'pillar') {
     if (pillar === 'pelvic' && !pillarSession) return <div className="today today--loading">Loading…</div>;
-    return <PillarPlayer session={pillarSession ?? PILLAR_SESSIONS[pillar]} onComplete={() => setScreen('today')} />;
+    return <PillarPlayer session={pillarSession ?? PILLAR_SESSIONS[pillar]} onComplete={back} />;
   }
 
   if (screen === 'asymmetry') {
-    return <Asymmetry onBack={() => setScreen('today')} />;
+    return <Asymmetry onBack={back} />;
   }
 
   if (screen === 'recovery') {
-    return <RecoveryMap onBack={() => setScreen('today')} />;
+    return <RecoveryMap onBack={back} />;
   }
 
   if (screen === 'progress') {
     return (
       <Progress
-        onBack={() => setScreen('today')}
+        onBack={back}
         onOpenAsymmetry={() => setScreen('asymmetry')}
         onOpenPhysique={() => setScreen('physiqueCompare')}
         onNewPhysique={() => setScreen('physiqueCheckin')}
@@ -360,7 +415,7 @@ export default function App() {
   if (screen === 'postureHistory') {
     return (
       <PostureHistory
-        onBack={() => setScreen('today')}
+        onBack={back}
         onNewScan={() => setScreen('postureScan')}
         onCompare={() => setScreen('postureCompare')}
       />
@@ -382,24 +437,24 @@ export default function App() {
 
   if (screen === 'conditioning') {
     return (
-      <ConditioningLogForm onSaved={() => setScreen('today')} onCancel={() => setScreen('today')} />
+      <ConditioningLogForm onSaved={back} onCancel={back} />
     );
   }
 
   if (screen === 'physiqueCheckin') {
-    return <PhysiqueCheckin onSaved={() => setScreen('physiqueCompare')} onCancel={() => setScreen('today')} />;
+    return <PhysiqueCheckin onSaved={() => setScreen('physiqueCompare')} onCancel={back} />;
   }
 
   if (screen === 'physiqueCompare') {
-    return <PhysiqueCompare onBack={() => setScreen('today')} />;
+    return <PhysiqueCompare onBack={back} />;
   }
 
   if (screen === 'roadmap') {
-    return <Roadmap onBack={() => setScreen('today')} />;
+    return <Roadmap onBack={back} />;
   }
 
   if (screen === 'askCoach') {
-    return <AskCoach onBack={() => setScreen('today')} />;
+    return <AskCoach onBack={back} />;
   }
 
   if (screen === 'settings') {
@@ -407,7 +462,7 @@ export default function App() {
       <Settings
         profile={profile}
         onSaved={(updated) => setProfile(updated)}
-        onBack={() => setScreen('today')}
+        onBack={back}
       />
     );
   }

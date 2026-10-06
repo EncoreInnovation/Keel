@@ -19,7 +19,7 @@ function exerciseName(exerciseId: string): string {
   return CATALOG_BY_ID.get(exerciseId)?.name ?? exerciseId;
 }
 
-function describeGap(gap: number): string {
+export function describeGap(gap: number): string {
   if (Math.abs(gap) < SIGNIFICANT_GAP) return 'Balanced';
   const side = gap > 0 ? 'Right' : 'Left';
   return `${side} ahead by ${Math.round(Math.abs(gap) * 100)}%`;
@@ -46,6 +46,10 @@ export function Asymmetry({ onBack }: AsymmetryProps) {
     return (
       <div className="phase-screen">
         <div className="phase-screen__eyebrow">Left / Right Balance</div>
+        <p className="screen-explainer">
+          Built automatically from your one-sided lifts. A gap over 10% means the weaker side gets
+          worked first. Check monthly — nothing to do here but read it.
+        </p>
         <p className="placeholder__body">
           No unilateral sets logged yet. Once you've trained a few single-arm or single-leg
           movements, the gap between sides shows up here.
@@ -62,6 +66,10 @@ export function Asymmetry({ onBack }: AsymmetryProps) {
   return (
     <div className="phase-screen asymmetry">
       <div className="phase-screen__eyebrow">Left / Right Balance</div>
+      <p className="screen-explainer">
+        Built automatically from your one-sided lifts. A gap over 10% means the weaker side gets
+        worked first. Check monthly — nothing to do here but read it.
+      </p>
       <div className="asymmetry__overall">{describeGap(overall)}</div>
       <div className="asymmetry__overall-sub">Averaged across every unilateral exercise logged</div>
 

@@ -11,17 +11,16 @@
  */
 
 import { useEffect, useState } from 'react';
-import { PILLAR_KINDS, type Gym, type GymId, type PillarKind, type PrescribedSession } from '../engine/types';
-import { PILLAR_SESSIONS } from '../pillars/library';
-import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
+import type { Exercise, Gym, GymId, PillarKind, PrescribedSession } from '../engine/types';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
-import { appendBodyMetric, getBodyMetrics, getCompletedSessions, getPhysiqueLogs, getPillarLogs, getPostureLogs } from '../storage/repository';
-import { isSameCalendarDay } from '../engine/time';
+import { CATALOG } from '../../catalog/exercises';
+import type { Recommendation } from '../pillars/recommend';
+import { loadRecommendations } from '../state/recommendations';
+import { RecommendationCard } from './RecommendationCard';
+import { appendBodyMetric, getBodyMetrics, getCompletedSessions, getPhysiqueLogs } from '../storage/repository';
 import { physiqueDue, weighInDue } from '../engine/checkins';
 import type { SwapCandidate } from '../state/sessionController';
-import { RecoveryPreview } from './RecoveryPreview';
 import { SessionPreview } from './SessionPreview';
-import { VolumeReadout } from './VolumeReadout';
 
 export interface TodayProps {
   prescription: PrescribedSession;
@@ -34,13 +33,7 @@ export interface TodayProps {
   onSwitchGym: (id: GymId) => void;
   onStart: () => void;
   onOpenPillar: (kind: PillarKind) => void;
-  onOpenAsymmetry: () => void;
-  onOpenRecovery: () => void;
-  onOpenProgress: () => void;
-  onOpenPosture: () => void;
   onOpenConditioning: () => void;
-  onOpenSettings: () => void;
-  onOpenAskCoach: () => void;
   onOpenRoadmap: () => void;
   /** Toggle the 20–25 min version; only offered before the session starts. */
   onToggleExpress: () => void;
@@ -59,13 +52,7 @@ export function Today({
   onSwitchGym,
   onStart,
   onOpenPillar,
-  onOpenAsymmetry,
-  onOpenRecovery,
-  onOpenProgress,
-  onOpenPosture,
   onOpenConditioning,
-  onOpenSettings,
-  onOpenAskCoach,
   onOpenRoadmap,
   onToggleExpress,
   onOpenPhysiqueCheckin,
@@ -74,31 +61,20 @@ export function Today({
 }: TodayProps) {
   const label = prescription.dayName;
 
-  const [alignment, setAlignment] = useState<AlignmentSummary | undefined>();
-  const [alignmentLoaded, setAlignmentLoaded] = useState(false);
   const [streak, setStreak] = useState(0);
   const [weekCount, setWeekCount] = useState(0);
   const [showWeighIn, setShowWeighIn] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
-  const [pelvicDoneToday, setPelvicDoneToday] = useState(true);
+  const [recommendation, setRecommendation] = useState<Recommendation | undefined>();
   const [weightIn, setWeightIn] = useState('');
   const [waistIn, setWaistIn] = useState('');
 
   useEffect(() => {
     let cancelled = false;
     const now = Date.now();
-    void getPostureLogs().then((logs) => {
-      if (cancelled) return;
-      setAlignment(alignmentSummary(logs, now));
-      setAlignmentLoaded(true);
-    });
     void getBodyMetrics().then((m) => !cancelled && setShowWeighIn(weighInDue(m, now)));
     void getPhysiqueLogs().then((l) => !cancelled && setShowPhotos(physiqueDue(l, now)));
-    void getPillarLogs().then(
-      (logs) =>
-        !cancelled &&
-        setPelvicDoneToday(logs.some((l) => l.kind === 'pelvic' && l.completedAt && isSameCalendarDay(l.completedAt, now))),
-    );
+    void loadRecommendations(CATALOG as Exercise[], prescription, now).then((r) => !cancelled && setRecommendation(r[0]));
     void getCompletedSessions().then((sessions) => {
       if (cancelled) return;
       const dates = sessions.map((s) => s.completedAt ?? s.startedAt);
@@ -112,39 +88,6 @@ export function Today({
 
   return (
     <div className="today">
-      {alignment && (
-        <div className={`alignment-strip alignment-strip--${alignment.side}`}>
-          <button
-            className="alignment-strip__main"
-            onClick={onOpenPosture}
-            aria-label="Open alignment details"
-          >
-            <span className="alignment-strip__text">{alignment.headline}</span>
-            <span className="alignment-strip__chevron">›</span>
-          </button>
-          {alignment.side !== 'level' && (
-            <button
-              className="alignment-strip__action"
-              onClick={() => onOpenPillar('realign')}
-            >
-              Realign routine
-            </button>
-          )}
-        </div>
-      )}
-      {alignmentLoaded && !alignment && (
-        <div className="alignment-strip alignment-strip--empty">
-          <button
-            className="alignment-strip__main"
-            onClick={onOpenPosture}
-            aria-label="Take your first posture scan"
-          >
-            <span className="alignment-strip__text">No posture scan yet — take one to see which side is off.</span>
-            <span className="alignment-strip__chevron">›</span>
-          </button>
-        </div>
-      )}
-
       {showWeighIn && (
         <div className="checkin-card">
           <div className="checkin-card__title">Weekly check-in — weight and waist</div>
@@ -174,17 +117,8 @@ export function Today({
         </button>
       )}
 
-      {!pelvicDoneToday && (
-        <button className="checkin-card checkin-card--button" onClick={() => onOpenPillar('pelvic')}>
-          <div className="checkin-card__title">Pelvic floor · 6 min ›</div>
-          <div className="placeholder__body">Daily. Builds control and erection quality — anywhere, no equipment.</div>
-        </button>
-      )}
-
-      <RecoveryPreview onOpenRecovery={onOpenRecovery} />
-
       <button className="today__meta today__meta--link" onClick={onOpenRoadmap} aria-label="Open the Q4 roadmap">
-        Week {prescription.weekNumber} of {weeksTotal}
+        Block week {prescription.weekNumber} of {weeksTotal}
         {prescription.isDeload ? ' · Deload' : ''} · Q4 plan ›
       </button>
       <h1 className="today__day">{label}</h1>
@@ -219,6 +153,11 @@ export function Today({
           {prescription.express ? 'Back to the full session' : 'Short on time? 25-min version'}
         </button>
       )}
+      <button className="btn btn--text" onClick={onOpenConditioning}>
+        Did Insanity or a run? Log it
+      </button>
+
+      {recommendation && <RecommendationCard rec={recommendation} onOpen={onOpenPillar} />}
 
       {(streak > 0 || weekCount > 0) && (
         <div className="today__streak">
@@ -244,42 +183,6 @@ export function Today({
         loadSwapCandidates={resumed ? undefined : loadSwapCandidates}
       />
 
-      <VolumeReadout />
-
-      <div className="today__section">
-        <div className="today__section-title">Mobility, breath & mind</div>
-        <div className="today__chips">
-          {PILLAR_KINDS.map((kind) => (
-            <button key={kind} className="chip" onClick={() => onOpenPillar(kind)}>
-              {PILLAR_SESSIONS[kind].name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="today__links">
-        <button className="btn btn--text" onClick={onOpenRecovery}>
-          Recovery
-        </button>
-        <button className="btn btn--text" onClick={onOpenProgress}>
-          Progress
-        </button>
-        <button className="btn btn--text" onClick={onOpenAsymmetry}>
-          Left / right balance
-        </button>
-        <button className="btn btn--text" onClick={onOpenPosture}>
-          Posture
-        </button>
-        <button className="btn btn--text" onClick={onOpenConditioning}>
-          Log activity
-        </button>
-        <button className="btn btn--text" onClick={onOpenSettings}>
-          Settings
-        </button>
-        <button className="btn btn--text" onClick={onOpenAskCoach}>
-          Ask the coach
-        </button>
-      </div>
     </div>
   );
 }

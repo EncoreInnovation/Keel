@@ -1864,3 +1864,143 @@
   color: var(--text-faint);
   font-size: var(--fs-micro);
 }
+
+/* ---------------- Tabs & hubs ---------------- */
+
+.with-tabs {
+  padding-bottom: calc(64px + var(--safe-bottom));
+}
+
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding-bottom: var(--safe-bottom);
+}
+
+.tab-bar__tab {
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.tab-bar__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.tab-bar__tab--active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.hub {
+  justify-content: flex-start;
+  gap: var(--s3);
+}
+
+.hub__intro,
+.hub__caption {
+  max-width: 24rem;
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.hub__group {
+  width: 100%;
+  max-width: 24rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  text-align: left;
+}
+
+.hub-card {
+  width: 100%;
+  max-width: 24rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--s3) var(--s4);
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hub-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.hub-card__title {
+  font-weight: 600;
+  font-size: var(--fs-body);
+}
+
+.hub-card__meta {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.hub-card__status {
+  margin-top: var(--s1);
+  font-size: var(--fs-sm);
+  color: var(--text);
+}
+
+.hub-card__body {
+  margin-top: var(--s1);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.hub-card__when {
+  margin-top: var(--s1);
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}
+
+.hub__help .hub-card__body {
+  margin: 0 0 var(--s2);
+}
+
+.rec-card {
+  border-color: var(--accent);
+}
+
+.rec-card__eyebrow {
+  font-size: var(--fs-micro);
+  color: var(--accent);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  margin-bottom: var(--s1);
+}
+
+.screen-explainer {
+  max-width: 24rem;
+  margin: 0 0 var(--s3);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}

@@ -31,5 +31,9 @@ export interface PillarSession {
   name: string;
   /** Approximate — shown on the entry chip before starting. */
   minutes: number;
+  /** What it does, in one line. */
+  purpose: string;
+  /** When to reach for it, in one line. */
+  when: string;
   steps: PillarStep[];
 }

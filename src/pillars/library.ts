@@ -29,6 +29,8 @@ const ACTIVATE: PillarSession = {
   kind: 'activate',
   name: 'Activate',
   minutes: 4,
+  purpose: 'Wakes the body and brain up: daylight, brisk breathing, light movement.',
+  when: 'Early mornings, or when you feel groggy before training.',
   steps: [
     {
       type: 'move',
@@ -58,6 +60,8 @@ const SIGH: PillarSession = {
   kind: 'sigh',
   name: 'Cyclic Sigh',
   minutes: 5,
+  purpose: 'Five minutes of double-inhale, long-exhale breathing that lowers stress and lifts mood.',
+  when: 'Once a day, any time — the easiest daily habit here.',
   steps: [{ type: 'breath', protocol: PROTOCOLS.cyclicSigh, cycles: 26 }],
 };
 
@@ -71,6 +75,8 @@ const RESONANCE: PillarSession = {
   kind: 'resonance',
   name: 'Resonance',
   minutes: 6,
+  purpose: 'Slow, even breathing at about 6 breaths a minute that calms the nervous system. Opens with a breath-hold check you can track.',
+  when: 'Evenings to wind down, or any time you feel tense.',
   steps: [
     {
       type: 'move',
@@ -92,6 +98,8 @@ const NSDR: PillarSession = {
   kind: 'nsdr',
   name: 'Deep Rest',
   minutes: 10,
+  purpose: 'A 10-minute lying-down body scan — the deepest rest short of sleep.',
+  when: 'Afternoon slump, after a bad night, or right before bed.',
   steps: [
     { type: 'breath', protocol: PROTOCOLS.extendedExhale, cycles: 5 },
     { type: 'move', title: 'Feet and calves', cue: 'Lying down, eyes closed. Notice the feet, then the calves. Let them get heavy.', seconds: 75 },
@@ -112,6 +120,8 @@ const FOCUS: PillarSession = {
   kind: 'focus',
   name: 'Focus',
   minutes: 6,
+  purpose: 'Breath counting, rehearsing your main lift, and an if-then plan.',
+  when: 'Before a big lift, a hard day at work, or anything that needs your full attention.',
   steps: [
     { type: 'breath', protocol: PROTOCOLS.box, cycles: 6 },
     {
@@ -140,6 +150,8 @@ const RESET: PillarSession = {
   kind: 'reset',
   name: 'Reset',
   minutes: 6,
+  purpose: 'A fast mix of calming breaths that brings you down quickly.',
+  when: "When you're stressed, wired, or angry and need to settle in a few minutes.",
   steps: [
     { type: 'breath', protocol: PROTOCOLS.physiologicalSigh, cycles: 5 },
     { type: 'breath', protocol: PROTOCOLS.box, cycles: 6 },
@@ -158,6 +170,8 @@ const REALIGN: PillarSession = {
   kind: 'realign',
   name: 'Realign',
   minutes: 7,
+  purpose: 'Corrective moves for the hip tilt and rolled shoulders.',
+  when: 'When your posture scan shows a tilt, or about 3 times a week.',
   steps: [
     {
       type: 'move',
@@ -191,6 +205,8 @@ const UNLOCK: PillarSession = {
   kind: 'unlock',
   name: 'Unlock',
   minutes: 7,
+  purpose: 'Joint circles and stretches for hips, spine, shoulders and ankles.',
+  when: "When you're stiff, on rest days, or as a warm-up before a home session.",
   steps: [
     { type: 'move', title: 'CARs — Neck', cue: 'Slow controlled circles, both directions.', seconds: 30 },
     {
@@ -237,6 +253,8 @@ const GROUND: PillarSession = {
   kind: 'ground',
   name: 'Ground',
   minutes: 5,
+  purpose: 'Five gentle minutes on the floor.',
+  when: "On a day you can't train — it keeps the habit alive without adding fatigue.",
   steps: [
     { type: 'breath', protocol: PROTOCOLS.coherent, cycles: 3 },
     { type: 'move', title: 'Cat-Cow', cue: 'Follow the breath, not the clock. Inhale arch, exhale round.', seconds: 45 },
@@ -251,6 +269,17 @@ const GROUND: PillarSession = {
     { type: 'breath', protocol: PROTOCOLS.extendedExhale, cycles: 2 },
   ],
 };
+
+/** Sessions grouped by when you'd reach for them — the Recover tab's layout. */
+export const PILLAR_GROUPS: { title: string; kinds: PillarSession['kind'][] }[] = [
+  { title: 'Daily', kinds: ['pelvic', 'sigh'] },
+  { title: 'Before you train', kinds: ['activate', 'unlock'] },
+  { title: 'Fix your posture', kinds: ['realign'] },
+  { title: 'Calm down', kinds: ['reset', 'resonance'] },
+  { title: 'Recover deeper', kinds: ['nsdr'] },
+  { title: 'Mind', kinds: ['focus'] },
+  { title: 'No energy to train', kinds: ['ground'] },
+];
 
 export const PILLAR_SESSIONS: Record<PillarSession['kind'], PillarSession> = {
   activate: ACTIVATE,

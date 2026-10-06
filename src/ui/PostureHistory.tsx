@@ -53,6 +53,10 @@ export function PostureHistory({ onBack, onNewScan, onCompare }: PostureHistoryP
   return (
     <div className="phase-screen posture-history">
       <div className="phase-screen__eyebrow">Posture</div>
+      <p className="screen-explainer">
+        Scan every 2–4 weeks. If a hip or shoulder sits higher, do the Realign routine (Recover
+        tab) about 3× a week until the next scan.
+      </p>
       <p className="placeholder__body">
         A tracker, not a diagnosis. These numbers move with real change and with camera angle
         alike — same spot, same lighting, same stance each time is what makes the trend mean
