@@ -86,6 +86,34 @@ export const PROTOCOLS = {
       { kind: 'out', seconds: 8, label: 'Breathe out, slowly' },
     ],
   },
+  /**
+   * Cyclic sighing, the protocol from Balban et al. (Cell Reports Medicine,
+   * 2023): a nasal inhale, a second sip to top up, then a long slow mouth
+   * exhale with the exhale longer than both inhales. Five minutes a day
+   * improved mood and lowered resting breathing rate more than mindfulness
+   * meditation did.
+   */
+  cyclicSigh: {
+    name: 'Cyclic sighing',
+    phases: [
+      { kind: 'in', seconds: 3, label: 'Inhale through the nose' },
+      { kind: 'in', seconds: 1.5, label: 'Second sip' },
+      { kind: 'out', seconds: 7, label: 'Long exhale through the mouth' },
+    ],
+  },
+  /**
+   * Brisk, even breathing to raise arousal before an early session. Kept
+   * short and without breath holds on purpose: hyperventilation-style
+   * methods can cause light-headedness, so this is done seated or standing
+   * still and never in water or while driving.
+   */
+  energize: {
+    name: 'Energize',
+    phases: [
+      { kind: 'in', seconds: 1, label: 'In' },
+      { kind: 'out', seconds: 1, label: 'Out' },
+    ],
+  },
 } as const satisfies Record<string, BreathProtocol>;
 
 export interface BreathPacerProps {

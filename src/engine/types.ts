@@ -78,6 +78,8 @@ export const MOVEMENT_PATTERNS = [
   'coreFlexion',
   /** Explosive intent — jumps, throws, slams, swings. Programmed first, fresh. */
   'power',
+  /** Hamstring curls — the only direct hamstring isolation pattern. */
+  'kneeFlexion',
 ] as const;
 
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
@@ -150,6 +152,13 @@ export interface Exercise {
   unilateral: boolean;
 
   /**
+   * Isolation or skill work that shares a compound pattern (a fly fills a
+   * push slot, a face pull a row slot) but can't anchor a block. Never chosen
+   * as a locked primary; still free to rotate through open slots.
+   */
+  isolation?: boolean;
+
+  /**
    * 0..1 fit for the wrestler-build goal: thick upper back, traps, delts,
    * posterior chain, and the compound patterns that carry them.
    */
@@ -219,14 +228,17 @@ export interface SessionLog {
   sets: SetLog[];
   /** Pre-session readiness, 1..5. Feeds systemic fatigue. */
   readiness?: number;
+  /** One-line post-session reflection, captured in Downshift. */
   notes?: string;
+  /** The cue word chosen in Arrive, repeated back during rests. */
+  cueWord?: string;
 }
 
 /* ------------------------------------------------------------------ *
  * Pillar micro-sessions — breath, nervous-system, mobility, corrective
  * ------------------------------------------------------------------ */
 
-export const PILLAR_KINDS = ['reset', 'realign', 'unlock', 'ground'] as const;
+export const PILLAR_KINDS = ['activate', 'reset', 'sigh', 'resonance', 'nsdr', 'focus', 'realign', 'unlock', 'ground'] as const;
 export type PillarKind = (typeof PILLAR_KINDS)[number];
 
 export interface PillarLog {

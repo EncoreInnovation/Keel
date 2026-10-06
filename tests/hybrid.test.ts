@@ -57,6 +57,11 @@ describe('phase copy', () => {
   });
 });
 
+/** Set count per side — a unilateral exercise logs each set once per side. */
+function rounds(sets: { side: string }[]): number {
+  return sets.filter((s) => s.side === sets[0]!.side).length;
+}
+
 describe('power slot vs Insanity', () => {
   function athletic(powerCovered: boolean) {
     const block = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctx(), T0);
@@ -74,8 +79,8 @@ describe('power slot vs Insanity', () => {
   it('drops power work to one skill set when Insanity already covered the jumping', () => {
     const normal = athletic(false).exercises.find((e) => e.slotId === 'd-power')!;
     const covered = athletic(true).exercises.find((e) => e.slotId === 'd-power')!;
-    expect(normal.sets.length).toBeGreaterThan(1);
-    expect(covered.sets.length).toBe(1);
+    expect(rounds(normal.sets)).toBeGreaterThan(1);
+    expect(rounds(covered.sets)).toBe(1);
   });
 
   it('loadToday sees an Insanity log from yesterday and covers the power slot', async () => {
@@ -94,7 +99,8 @@ describe('power slot vs Insanity', () => {
     const today = await loadToday(catalog, profile, at);
     expect(today.prescription.dayId).toBe('athletic');
     const power = today.prescription.exercises.find((e) => e.slotId === 'd-power');
-    expect(power?.sets.length).toBe(1);
+    expect(power).toBeDefined();
+    expect(rounds(power!.sets)).toBe(1);
   });
 });
 

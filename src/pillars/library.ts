@@ -1,5 +1,8 @@
 /**
- * The four standalone micro-sessions, always one tap from Today.
+ * The standalone micro-sessions, always one tap from Today: down-regulation
+ * (Reset, Cyclic Sigh, Resonance, Deep Rest), up-regulation (Activate),
+ * mental skills (Focus), corrective work (Realign), mobility (Unlock), and the
+ * no-capacity day (Ground).
  *
  * Content follows the plan's pillar library directly: Reset draws from the
  * nervous-system-down protocols (physiological sigh, 4-7-8, box, coherent,
@@ -12,6 +15,125 @@
 
 import { PROTOCOLS } from '../ui/BreathPacer';
 import type { PillarSession } from './types';
+
+/**
+ * Morning up-regulation, for early sessions. Daylight in the first hour after
+ * waking anchors the circadian clock and raises alertness (Wright et al.,
+ * Curr Biol 2013; Huberman lab summaries of the light literature). A few
+ * rounds of brisk breathing raise adrenaline acutely (Kox et al., PNAS 2014),
+ * kept short, hold-free and seated: hyperventilation can cause
+ * light-headedness, so never in water or while driving.
+ */
+const ACTIVATE: PillarSession = {
+  kind: 'activate',
+  name: 'Activate',
+  minutes: 4,
+  steps: [
+    {
+      type: 'move',
+      title: 'Get light in your eyes',
+      cue: 'Outside or at a bright window, no sunglasses. Stand tall, slow nasal breaths. Never stare at the sun.',
+      seconds: 60,
+    },
+    { type: 'breath', protocol: PROTOCOLS.energize, cycles: 20 },
+    {
+      type: 'move',
+      title: 'Recover',
+      cue: 'Normal breathing through the nose. Light-headed? Stop the fast breathing for today.',
+      seconds: 20,
+    },
+    { type: 'breath', protocol: PROTOCOLS.energize, cycles: 20 },
+    {
+      type: 'move',
+      title: 'Wake the body',
+      cue: 'Ten bodyweight squats, ten arm swings, ten hip hinges. Easy, not hard.',
+      seconds: 60,
+    },
+  ],
+};
+
+/** Five minutes of cyclic sighing — see `PROTOCOLS.cyclicSigh`. */
+const SIGH: PillarSession = {
+  kind: 'sigh',
+  name: 'Cyclic Sigh',
+  minutes: 5,
+  steps: [{ type: 'breath', protocol: PROTOCOLS.cyclicSigh, cycles: 26 }],
+};
+
+/**
+ * Resonance breathing: about 5.5 breaths a minute, close to the rate that
+ * maximises heart-rate variability for most adults (Lehrer & Gevirtz, Front
+ * Psychol 2014). Opens with a BOLT check (Patrick McKeown's Body Oxygen Level
+ * Test) as a simple CO₂-tolerance gauge you can retest week to week.
+ */
+const RESONANCE: PillarSession = {
+  kind: 'resonance',
+  name: 'Resonance',
+  minutes: 6,
+  steps: [
+    {
+      type: 'move',
+      title: 'BOLT check',
+      cue: 'Breathe normally, exhale normally, pinch your nose and count seconds until the FIRST urge to breathe. Under 20 s: work on slow nasal breathing; 40 s is the goal.',
+      seconds: 60,
+    },
+    { type: 'breath', protocol: PROTOCOLS.coherent, cycles: 27 },
+  ],
+};
+
+/**
+ * Non-sleep deep rest / yoga nidra: a guided body scan on a long exhale.
+ * Yoga nidra practice improves sleep quality and lowers perceived stress
+ * (e.g. Datta et al., Sleep Med 2017; Moszeik et al., Front Psychol 2022).
+ * Ten minutes, lying down — the deepest down-regulation in the library.
+ */
+const NSDR: PillarSession = {
+  kind: 'nsdr',
+  name: 'Deep Rest',
+  minutes: 10,
+  steps: [
+    { type: 'breath', protocol: PROTOCOLS.extendedExhale, cycles: 5 },
+    { type: 'move', title: 'Feet and calves', cue: 'Lying down, eyes closed. Notice the feet, then the calves. Let them get heavy.', seconds: 75 },
+    { type: 'move', title: 'Knees, thighs, hips', cue: 'Move attention slowly upward. Nothing to fix — just notice, and let go.', seconds: 75 },
+    { type: 'move', title: 'Belly and low back', cue: 'Feel the belly rise and fall. Let the low back melt into the floor.', seconds: 75 },
+    { type: 'move', title: 'Chest, shoulders, arms', cue: 'Shoulders drop away from the ears. Hands soft and heavy.', seconds: 75 },
+    { type: 'move', title: 'Jaw, face, eyes', cue: 'Unclench the jaw. Soften the space between the eyebrows.', seconds: 60 },
+    { type: 'move', title: 'Whole body', cue: 'Feel the whole body at once, breathing by itself. Rest here.', seconds: 90 },
+  ],
+};
+
+/**
+ * Mental skills: focus, rehearsal, and an if-then plan. Attention training on
+ * the breath plus imagery of a perfect rep (Ranganathan et al. 2004) and an
+ * implementation intention (Gollwitzer & Sheeran 2006). See `src/mind/cues.ts`.
+ */
+const FOCUS: PillarSession = {
+  kind: 'focus',
+  name: 'Focus',
+  minutes: 6,
+  steps: [
+    { type: 'breath', protocol: PROTOCOLS.box, cycles: 6 },
+    {
+      type: 'move',
+      title: 'Count to ten',
+      cue: 'Count each exhale, 1 to 10. Lost count? No judgment — start again at 1. That return IS the rep.',
+      seconds: 90,
+    },
+    {
+      type: 'move',
+      title: 'Rehearse a perfect rep',
+      cue: 'Eyes closed. See your main lift from your own eyes: set-up, brace, the bar moving fast, the lockout. Feel it.',
+      seconds: 90,
+    },
+    {
+      type: 'move',
+      title: 'If–then plan',
+      cue: 'Name the one thing most likely to derail today. Finish the sentence: “If that happens, then I will…”',
+      seconds: 45,
+    },
+  ],
+};
+
 
 const RESET: PillarSession = {
   kind: 'reset',
@@ -67,7 +189,7 @@ const REALIGN: PillarSession = {
 const UNLOCK: PillarSession = {
   kind: 'unlock',
   name: 'Unlock',
-  minutes: 5,
+  minutes: 7,
   steps: [
     { type: 'move', title: 'CARs — Neck', cue: 'Slow controlled circles, both directions.', seconds: 30 },
     {
@@ -95,6 +217,18 @@ const UNLOCK: PillarSession = {
       seconds: 60,
     },
     { type: 'move', title: 'Hip CARs', cue: 'Slow controlled circles at the hip, both sides.', seconds: 60 },
+    {
+      type: 'move',
+      title: 'Couch Stretch',
+      cue: 'Back knee against a wall or couch, squeeze that glute, ribs down. Front of the hip opens — the direct answer to a forward-tilted pelvis. Both sides.',
+      seconds: 90,
+    },
+    {
+      type: 'move',
+      title: 'Deep Squat Hold',
+      cue: 'Hold something for balance, sink as low as feels good, breathe into the back. Hold, don’t bounce.',
+      seconds: 45,
+    },
   ],
 };
 
@@ -118,7 +252,12 @@ const GROUND: PillarSession = {
 };
 
 export const PILLAR_SESSIONS: Record<PillarSession['kind'], PillarSession> = {
+  activate: ACTIVATE,
   reset: RESET,
+  sigh: SIGH,
+  resonance: RESONANCE,
+  nsdr: NSDR,
+  focus: FOCUS,
   realign: REALIGN,
   unlock: UNLOCK,
   ground: GROUND,

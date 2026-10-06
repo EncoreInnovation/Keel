@@ -178,3 +178,23 @@ describe('per-gym primary locks', () => {
     }
   });
 });
+
+describe('what each gym locks', () => {
+  it('anchors Fitness Connection blocks on the heavy barbell lifts', () => {
+    for (const gymId of ['fc-north-hills', 'fc-rtp'] as const) {
+      const locks = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctxAt(gymId), T0).lockedAssignments[gymId]!;
+      expect(locks['a-primary-squat']).toBe('barbell-back-squat');
+      expect(locks['a-primary-push']).toBe('barbell-bench-press');
+      expect(locks['b-primary-hinge']).toBe('barbell-deadlift');
+    }
+  });
+
+  it('never locks an isolation or skill exercise as a primary, in any gym', () => {
+    for (const gym of DEFAULT_GYMS) {
+      const locks = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctxAt(gym.id), T0).lockedAssignments[gym.id]!;
+      for (const id of Object.values(locks)) {
+        expect(catalog.find((e) => e.id === id)!.isolation, `${gym.name} locked ${id}`).toBeFalsy();
+      }
+    }
+  });
+});

@@ -85,10 +85,10 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
     id: 'strength-a',
     name: 'Strength A',
     slots: [
-      slot('a-primary-squat', 'primary', 'squat', 4, 4, 8, 8, 180),
-      slot('a-primary-push', 'primary', 'horizontalPush', 4, 5, 8, 8, 150),
+      slot('a-primary-squat', 'primary', 'squat', 4, 4, 8, 8, 150),
+      slot('a-primary-push', 'primary', 'horizontalPush', 4, 5, 8, 8, 120),
       slot('a-sec-row', 'secondary', 'horizontalPull', 3, 8, 12, 7.5, 90, { preferCorrective: true }),
-      slot('a-sec-hinge', 'secondary', 'hinge', 3, 8, 12, 7.5, 120),
+      slot('a-sec-hinge', 'secondary', 'hinge', 3, 8, 12, 7.5, 90),
       slot('a-acc-delts', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
       slot('a-fin-core', 'finisher', 'antiRotation', 2, 8, 12, 7, 60, { preferCorrective: true }),
     ],
@@ -97,10 +97,10 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
     id: 'strength-b',
     name: 'Strength B',
     slots: [
-      slot('b-primary-hinge', 'primary', 'hinge', 4, 4, 8, 8, 180),
-      slot('b-primary-pull', 'primary', 'verticalPull', 4, 5, 8, 8, 150),
-      slot('b-sec-press', 'secondary', 'verticalPush', 3, 8, 12, 7.5, 120),
-      slot('b-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
+      slot('b-primary-hinge', 'primary', 'hinge', 4, 4, 8, 8, 150),
+      slot('b-primary-pull', 'primary', 'verticalPull', 4, 5, 8, 8, 120),
+      slot('b-sec-press', 'secondary', 'verticalPush', 3, 8, 12, 7.5, 90),
+      slot('b-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7.5, 90, { preferCorrective: true }),
       slot('b-acc-arms', 'accessory', 'elbowFlexion', 3, 10, 15, 7, 60),
       slot('b-fin-carry', 'finisher', 'carry', 2, 30, 45, 7, 60),
     ],
@@ -109,13 +109,16 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
     id: 'build',
     name: 'Build',
     slots: [
-      slot('c-sec-push', 'secondary', 'horizontalPush', 3, 8, 15, 7.5, 90),
-      slot('c-sec-pull', 'secondary', 'horizontalPull', 3, 10, 15, 7.5, 90),
-      slot('c-sec-legs', 'secondary', 'squat', 3, 10, 15, 7.5, 90),
-      slot('c-acc-triceps', 'accessory', 'elbowExtension', 4, 10, 15, 7, 60),
-      slot('c-acc-biceps', 'accessory', 'elbowFlexion', 3, 10, 15, 7, 60),
-      slot('c-acc-delts', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
-      slot('c-acc-calves', 'accessory', 'calfRaise', 5, 12, 20, 7, 45),
+      slot('c-sec-push', 'secondary', 'horizontalPush', 3, 8, 15, 7.5, 75),
+      slot('c-sec-pull', 'secondary', 'horizontalPull', 3, 10, 15, 7.5, 75),
+      slot('c-sec-legs', 'secondary', 'squat', 3, 10, 15, 7.5, 75),
+      slot('c-acc-triceps', 'accessory', 'elbowExtension', 4, 10, 15, 7, 45),
+      slot('c-acc-biceps', 'accessory', 'elbowFlexion', 2, 10, 15, 7, 45),
+      slot('c-acc-delts', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 45),
+      // Direct hamstring work: hinges load hamstrings at long length, curls
+      // train knee flexion, and both are needed for full development.
+      slot('c-acc-hams', 'accessory', 'kneeFlexion', 3, 10, 15, 7, 45),
+      slot('c-acc-calves', 'accessory', 'calfRaise', 4, 12, 20, 7, 45),
       slot('c-fin-neck', 'finisher', 'neck', 2, 10, 15, 6.5, 60, { preferCorrective: true }),
     ],
   },
@@ -126,9 +129,9 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
       // Explosive work first, fresh, low reps, full rest — power is a
       // quality, and fatigue turns it into sloppy conditioning.
       slot('d-power', 'secondary', 'power', 3, 3, 5, 6.5, 90),
-      slot('d-sec-hinge', 'secondary', 'hinge', 3, 10, 15, 7, 75),
-      slot('d-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7, 90, { preferCorrective: true }),
-      slot('d-sec-push', 'secondary', 'horizontalPush', 3, 10, 15, 7, 75),
+      slot('d-sec-hinge', 'secondary', 'hinge', 3, 10, 15, 7, 60),
+      slot('d-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7, 60, { preferCorrective: true }),
+      slot('d-sec-push', 'secondary', 'horizontalPush', 3, 10, 15, 7, 60),
       slot('d-acc-rotation', 'accessory', 'rotation', 3, 6, 10, 7, 60, { preferCorrective: true }),
       slot('d-acc-calves', 'accessory', 'calfRaise', 5, 12, 20, 7, 45),
       slot('d-fin-carry', 'finisher', 'carry', 2, 40, 60, 7.5, 60),
@@ -158,18 +161,38 @@ export const RECOVERY_GUARD_THRESHOLD = 0.4;
  * preference, a locked bilateral primary would let the strong side carry the
  * whole block without ever showing up in the numbers.
  */
+/**
+ * How far a lift can be progressed by load in this gym, 0..1. A locked
+ * primary has to carry six weeks of progression, so a goblet squat capped at
+ * a 30 lb dumbbell is a poor lock for a 285 lb lifter when a rack and 700 lb
+ * of plates are available. Ladder movements score zero: a locked primary
+ * never changes rung mid-block, so its only progression would be reps.
+ */
+function loadHeadroom(exercise: Exercise, gym: Gym, bodyweight: number): number {
+  if (exercise.loadType !== 'external') return 0;
+  const loads = achievableLoads(exercise, gym);
+  if (loads.length === 0) return 0;
+  return Math.min(1, loads.at(-1)! / Math.max(1, bodyweight));
+}
+
+/** Weight of the headroom term when choosing a locked primary. */
+const PRIMARY_HEADROOM_WEIGHT = 0.15;
+
 function chooseLocks(days: DayTemplate[], catalog: Exercise[], ctx: SelectionContext): Record<string, string> {
   const locks: Record<string, string> = {};
   const used = new Set<string>();
+  const gym = activeGym(ctx.profile);
+  const lockScore = (e: Exercise, score: number) =>
+    score + PRIMARY_HEADROOM_WEIGHT * loadHeadroom(e, gym, ctx.profile.bodyweight);
 
   for (const day of days) {
     for (const s of day.slots) {
       if (!s.locked) continue;
       const ranked = rankCandidates(catalog, s, ctx)
-        .filter((r) => !used.has(r.exercise.id))
+        .filter((r) => !used.has(r.exercise.id) && !r.exercise.isolation)
         .sort(
           (a, b) =>
-            b.score - a.score ||
+            lockScore(b.exercise, b.score) - lockScore(a.exercise, a.score) ||
             unilateralPreference(a.exercise, b.exercise) ||
             a.exercise.id.localeCompare(b.exercise.id),
         );
@@ -423,10 +446,18 @@ export function generateSession(input: GenerationInput): PrescribedSession {
   }
 
   const gymLocks = block.lockedAssignments[gym.id] ?? {};
+  // A locked primary belongs to its own slot. Letting the scorer also pick it
+  // for other days' open slots would put the same lift in the week three
+  // times — so locked lifts are kept out of the open slots unless nothing
+  // else can fill them.
+  const lockedIds = new Set(Object.values(gymLocks));
 
   for (const slotDef of slots) {
     const lockedId = gymLocks[slotDef.id];
-    let exercise = selectForSlot(catalog, slotDef, ctx, lockedId, chosenThisSession);
+    let exercise = slotDef.locked
+      ? selectForSlot(catalog, slotDef, ctx, lockedId, chosenThisSession)
+      : (selectForSlot(catalog, slotDef, ctx, undefined, new Set([...chosenThisSession, ...lockedIds])) ??
+        selectForSlot(catalog, slotDef, ctx, undefined, chosenThisSession));
     if (!exercise) continue;
 
     // A locked primary's whole point is that its *identity* holds for the
@@ -469,12 +500,17 @@ export function generateSession(input: GenerationInput): PrescribedSession {
   };
 }
 
-/** Working time plus rest, rounded to something a human would say out loud. */
+/**
+ * Working time plus rest, rounded to something a human would say out loud.
+ * A unilateral set is both sides back to back with one rest after the pair,
+ * so rest is counted per round, not per side.
+ */
 export function estimateMinutes(exercises: PrescribedExercise[]): number {
   let seconds = 0;
   for (const ex of exercises) {
+    const sides = new Set(ex.sets.map((s) => s.side)).size || 1;
     for (const set of ex.sets) {
-      seconds += set.repTarget * SECONDS_PER_REP + ex.restSec;
+      seconds += set.repTarget * SECONDS_PER_REP + ex.restSec / sides;
     }
   }
   // Arrive and Downshift are fixed overhead on every session.

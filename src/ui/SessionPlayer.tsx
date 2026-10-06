@@ -17,6 +17,7 @@ import { RestTimer } from './RestTimer';
 import { primeAudio, playSetComplete } from './audio';
 import { haptics } from './haptics';
 import { rpeLabel } from './rpe';
+import { FINISHER_FRAME, restPrompt } from '../mind/cues';
 import type { Block, PrescribedSession, SkipReason, Slot, UserProfile } from '../engine/types';
 
 type Phase = 'loading' | 'set' | 'resting' | 'done';
@@ -31,6 +32,8 @@ export interface SessionPlayerProps {
   onFinishEarly: () => void;
   /** Leave the session running — it stays "active" and resumes exactly here next time. */
   onPause: () => void;
+  /** Cue word chosen in Arrive, echoed during rests. */
+  cueWord?: string;
 }
 
 function findSlot(block: Block, dayId: string, slotId: string): Slot | undefined {
@@ -45,6 +48,7 @@ export function SessionPlayer({
   onSessionComplete,
   onFinishEarly,
   onPause,
+  cueWord,
 }: SessionPlayerProps) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [prescription, setPrescription] = useState(initialPrescription);
@@ -215,6 +219,10 @@ export function SessionPlayer({
       <RestTimer
         seconds={restSecondsRef.current}
         achievement={achievement}
+        prompt={restPrompt(
+          setPos + 1 >= exercise.sets.length ? prescription.exercises[exerciseIndex + 1]?.role : exercise.role,
+          cueWord,
+        )}
         onComplete={() => {
           afterRest();
         }}
@@ -241,6 +249,7 @@ export function SessionPlayer({
         {exercise.exercise.breathCue && (
           <div className="session-player__cue">{exercise.exercise.breathCue}</div>
         )}
+        {exercise.role === 'finisher' && <div className="session-player__frame">{FINISHER_FRAME}</div>}
 
         {exercise.exercise.instructions.length > 0 && (
           <div className="session-player__howto">

@@ -38,7 +38,7 @@ import {
   swapExercise,
   type TodayState,
 } from './state/sessionController';
-import { getProfile, saveProfile } from './storage/repository';
+import { getProfile, saveProfile, updateActiveSessionMeta } from './storage/repository';
 import type { Exercise, GymId, PillarKind, UserProfile } from './engine/types';
 
 const catalog = CATALOG as Exercise[];
@@ -70,6 +70,7 @@ export default function App() {
   const [pillar, setPillar] = useState<PillarKind>('reset');
   const [error, setError] = useState<string | undefined>();
   const [coachNote, setCoachNote] = useState<string | undefined>();
+  const [cueWord, setCueWord] = useState<string | undefined>();
 
   useEffect(() => {
     (async () => {
@@ -355,7 +356,16 @@ export default function App() {
   }
 
   if (screen === 'arrive') {
-    return <ArrivePhase dayId={today.prescription.dayId} onComplete={() => setScreen('session')} />;
+    return (
+      <ArrivePhase
+        dayId={today.prescription.dayId}
+        onComplete={(cue) => {
+          setCueWord(cue);
+          void updateActiveSessionMeta({ cueWord: cue });
+          setScreen('session');
+        }}
+      />
+    );
   }
 
   if (screen === 'session') {
@@ -365,6 +375,7 @@ export default function App() {
         block={today.block}
         profile={profile}
         initialPrescription={today.prescription}
+        cueWord={cueWord}
         onSessionComplete={() => setScreen('downshift')}
         onFinishEarly={() => {
           void (async () => {
@@ -388,7 +399,8 @@ export default function App() {
     return (
       <DownshiftPhase
         dayId={today.prescription.dayId}
-        onComplete={async () => {
+        onComplete={async (reflection) => {
+          if (reflection) await updateActiveSessionMeta({ notes: reflection });
           await completeSession(Date.now());
           await goToTodayOrReadiness(profile);
         }}

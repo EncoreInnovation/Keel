@@ -185,7 +185,7 @@ export function Today({
       <VolumeReadout />
 
       <div className="today__section">
-        <div className="today__section-title">Mobility & recovery</div>
+        <div className="today__section-title">Mobility, breath & mind</div>
         <div className="today__chips">
           {PILLAR_KINDS.map((kind) => (
             <button key={kind} className="chip" onClick={() => onOpenPillar(kind)}>

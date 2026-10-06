@@ -1368,3 +1368,51 @@
 .ask-coach__answer {
   margin-top: var(--s3);
 }
+
+/* ---------------- Mental skills ---------------- */
+
+.arrive-intent,
+.downshift-reflect {
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s4);
+}
+
+.arrive-intent__plan {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+
+.arrive-intent__cues {
+  justify-content: center;
+}
+
+.downshift-reflect__input {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  padding: var(--s3);
+  resize: none;
+}
+
+.rest-timer__prompt {
+  max-width: 20rem;
+  margin: var(--s3) auto 0;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.session-player__frame {
+  margin-top: var(--s2);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  font-style: italic;
+}

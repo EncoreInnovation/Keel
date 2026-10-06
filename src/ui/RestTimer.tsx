@@ -17,12 +17,14 @@ export interface RestTimerProps {
   onComplete: () => void;
   /** A PR or other achievement to celebrate during this rest, if one happened. */
   achievement?: string;
+  /** Mental-rehearsal or settling prompt for the rest period. */
+  prompt?: string;
 }
 
 const EXTEND_SECONDS = 30;
 const SHORTEN_SECONDS = 30;
 
-export function RestTimer({ seconds, onComplete, achievement }: RestTimerProps) {
+export function RestTimer({ seconds, onComplete, achievement, prompt }: RestTimerProps) {
   const [remaining, setRemaining] = useState(seconds);
   const tickedRef = useRef(new Set<number>());
   const startedRef = useRef(false);
@@ -64,6 +66,7 @@ export function RestTimer({ seconds, onComplete, achievement }: RestTimerProps) 
         {mm}:{ss.toString().padStart(2, '0')}
       </div>
       <BreathPacer protocol={PROTOCOLS.coherent} />
+      {prompt && <p className="rest-timer__prompt">{prompt}</p>}
       <div className="rest-timer__actions">
         <button
           className="btn btn--ghost"

@@ -179,7 +179,7 @@ export function startSession(record: SessionRecord, prescription: PrescribedSess
 }
 
 export async function updateActiveSessionMeta(
-  patch: Partial<Pick<SessionRecord, 'readiness' | 'notes'>>,
+  patch: Partial<Pick<SessionRecord, 'readiness' | 'notes' | 'cueWord'>>,
 ): Promise<void> {
   return runExclusive('session', async () => {
     const record = await readKey<SessionRecord>(STORAGE_KEYS.activeSession);

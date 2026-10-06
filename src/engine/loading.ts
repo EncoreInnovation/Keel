@@ -76,6 +76,21 @@ export function achievableLoads(exercise: Exercise, gym: Gym): number[] {
     return normalize(Array.from({ length: 40 }, (_, i) => (i + 1) * 10));
   }
 
+  // Pin-stack stations step in 5s across a deep stack.
+  if (uses('machine') && gym.equipment.includes('machine')) {
+    return normalize(Array.from({ length: 60 }, (_, i) => (i + 1) * 5));
+  }
+  // A Smith bar is lighter than an Olympic bar (often counterbalanced) and
+  // varies by brand; 20 lb is a conservative assumption for the starting load,
+  // loaded with the same plates the barbell uses.
+  if (uses('smithMachine') && gym.equipment.includes('smithMachine') && gym.barbell) {
+    return barLoads({ ...gym.barbell, barWeight: 20 });
+  }
+  // A sled is loaded with the same plates; its own weight isn't counted.
+  if (uses('sled') && gym.equipment.includes('sled') && gym.barbell) {
+    return barLoads({ ...gym.barbell, barWeight: 0 });
+  }
+
   if (uses('barbell') && gym.barbell) return barLoads(gym.barbell);
   if (uses('ezBar') && gym.ezBar) return barLoads(gym.ezBar);
   if (uses('kettlebell')) return normalize(gym.kettlebells);

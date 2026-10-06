@@ -1,0 +1,23 @@
+import { describe, expect, it } from 'vitest';
+import { CUE_WORDS, FINISHER_FRAME, restPrompt } from '../src/mind/cues';
+
+describe('mental-skills cues', () => {
+  it('turns rest before a primary lift into a rehearsal', () => {
+    expect(restPrompt('primary', 'Brace')).toMatch(/Rehearse/);
+    expect(restPrompt('primary', 'Brace')).toContain('Brace');
+  });
+
+  it('frames the last block of work differently from an ordinary rest', () => {
+    expect(restPrompt('finisher')).not.toBe(restPrompt('secondary'));
+    expect(FINISHER_FRAME).toMatch(/Discomfort/);
+  });
+
+  it('works with no cue word chosen', () => {
+    expect(restPrompt('accessory')).not.toContain('Cue');
+    expect(restPrompt(undefined)).toBeTruthy();
+  });
+
+  it('offers a short list of one- or two-word cues', () => {
+    for (const cue of CUE_WORDS) expect(cue.split(' ').length).toBeLessThanOrEqual(2);
+  });
+});

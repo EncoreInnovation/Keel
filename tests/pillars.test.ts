@@ -14,7 +14,7 @@ function stepSeconds(step: (typeof PILLAR_SESSIONS)['reset']['steps'][number]): 
 }
 
 describe('pillar library', () => {
-  it('defines all four kinds', () => {
+  it('defines every kind', () => {
     expect(Object.keys(PILLAR_SESSIONS).sort()).toEqual([...PILLAR_KINDS].sort());
   });
 
