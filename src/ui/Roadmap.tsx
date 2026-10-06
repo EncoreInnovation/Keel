@@ -10,6 +10,7 @@ import { buildRoadmap, currentWeekIndex, daysUntil, type RoadmapWeek } from '../
 import { getActiveBlock, getBlockHistory, getBodyMetrics, getCompletedSessions } from '../storage/repository';
 import type { BodyMetricLog } from '../engine/types';
 import { TrendChart } from './charts/TrendChart';
+import { COACHING_TIPS } from '../mind/guidance';
 
 export interface RoadmapProps {
   onBack: () => void;
@@ -125,6 +126,20 @@ export function Roadmap({ onBack }: RoadmapProps) {
             <TrendChart title="Waist" points={waist} unit="in" lowerIsBetter />
           </>
         )}
+      </section>
+
+      <section className="roadmap__section">
+        <h2 className="settings-section__title">Coach’s notes</h2>
+        <ul className="guidance-list">
+          {COACHING_TIPS.map((tip) => (
+            <li key={tip.id} className="guidance-list__item">
+              <div className="guidance-list__title">{tip.title}</div>
+              <div className="guidance-list__body">{tip.body}</div>
+              <div className="guidance-list__source">{tip.source}</div>
+            </li>
+          ))}
+        </ul>
+        <p className="guidance-list__disclaimer">General guidance, not medical advice.</p>
       </section>
 
       <button className="btn btn--ghost" onClick={onBack}>

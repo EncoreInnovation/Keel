@@ -15,7 +15,8 @@ import { PILLAR_KINDS, type Gym, type GymId, type PillarKind, type PrescribedSes
 import { PILLAR_SESSIONS } from '../pillars/library';
 import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
-import { getCompletedSessions, getPostureLogs } from '../storage/repository';
+import { appendBodyMetric, getBodyMetrics, getCompletedSessions, getPhysiqueLogs, getPostureLogs } from '../storage/repository';
+import { physiqueDue, weighInDue } from '../engine/checkins';
 import type { SwapCandidate } from '../state/sessionController';
 import { RecoveryPreview } from './RecoveryPreview';
 import { SessionPreview } from './SessionPreview';
@@ -40,6 +41,9 @@ export interface TodayProps {
   onOpenSettings: () => void;
   onOpenAskCoach: () => void;
   onOpenRoadmap: () => void;
+  /** Toggle the 20–25 min version; only offered before the session starts. */
+  onToggleExpress: () => void;
+  onOpenPhysiqueCheckin: () => void;
   onSwapExercise: (slotId: string, newExerciseId: string) => void;
   loadSwapCandidates: (slotId: string) => Promise<SwapCandidate[]>;
 }
@@ -62,6 +66,8 @@ export function Today({
   onOpenSettings,
   onOpenAskCoach,
   onOpenRoadmap,
+  onToggleExpress,
+  onOpenPhysiqueCheckin,
   onSwapExercise,
   loadSwapCandidates,
 }: TodayProps) {
@@ -71,6 +77,10 @@ export function Today({
   const [alignmentLoaded, setAlignmentLoaded] = useState(false);
   const [streak, setStreak] = useState(0);
   const [weekCount, setWeekCount] = useState(0);
+  const [showWeighIn, setShowWeighIn] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
+  const [weightIn, setWeightIn] = useState('');
+  const [waistIn, setWaistIn] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +90,8 @@ export function Today({
       setAlignment(alignmentSummary(logs, now));
       setAlignmentLoaded(true);
     });
+    void getBodyMetrics().then((m) => !cancelled && setShowWeighIn(weighInDue(m, now)));
+    void getPhysiqueLogs().then((l) => !cancelled && setShowPhotos(physiqueDue(l, now)));
     void getCompletedSessions().then((sessions) => {
       if (cancelled) return;
       const dates = sessions.map((s) => s.completedAt ?? s.startedAt);
@@ -126,6 +138,35 @@ export function Today({
         </div>
       )}
 
+      {showWeighIn && (
+        <div className="checkin-card">
+          <div className="checkin-card__title">Weekly check-in — weight and waist</div>
+          <div className="checkin-card__row">
+            <input type="number" inputMode="decimal" placeholder="Weight (lb)" value={weightIn} onChange={(e) => setWeightIn(e.target.value)} aria-label="Weight in pounds" />
+            <input type="number" inputMode="decimal" placeholder="Waist (in)" value={waistIn} onChange={(e) => setWaistIn(e.target.value)} aria-label="Waist in inches" />
+            <button
+              className="btn btn--ghost"
+              onClick={() => {
+                const weight = Number(weightIn) || undefined;
+                const waist = Number(waistIn) || undefined;
+                if (!weight && !waist) return;
+                void appendBodyMetric({ id: `bm-${Date.now()}`, at: Date.now(), weight, measurements: waist ? { waist } : undefined }).then(
+                  () => setShowWeighIn(false),
+                );
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      )}
+      {showPhotos && (
+        <button className="checkin-card checkin-card--button" onClick={onOpenPhysiqueCheckin}>
+          <div className="checkin-card__title">Monthly physique photos ›</div>
+          <div className="placeholder__body">Front, side, back — the change the mirror hides week to week.</div>
+        </button>
+      )}
+
       <RecoveryPreview onOpenRecovery={onOpenRecovery} />
 
       <button className="today__meta today__meta--link" onClick={onOpenRoadmap} aria-label="Open the Q4 roadmap">
@@ -159,6 +200,11 @@ export function Today({
       <button className="btn btn--hero" onClick={onStart}>
         {resumed ? 'Continue' : 'Start'}
       </button>
+      {!resumed && (
+        <button className="btn btn--text today__express" onClick={onToggleExpress}>
+          {prescription.express ? 'Back to the full session' : 'Short on time? 25-min version'}
+        </button>
+      )}
 
       {(streak > 0 || weekCount > 0) && (
         <div className="today__streak">

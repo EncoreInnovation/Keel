@@ -42,7 +42,7 @@ function slot(
   repMax: number,
   targetRpe: number,
   restSec: number,
-  opts: { preferCorrective?: boolean } = {},
+  opts: { preferCorrective?: boolean; guaranteed?: boolean } = {},
 ): Slot {
   return {
     id,
@@ -55,6 +55,7 @@ function slot(
     restSec,
     locked: role === 'primary',
     preferCorrective: opts.preferCorrective ?? false,
+    guaranteed: opts.guaranteed ?? false,
   };
 }
 
@@ -85,11 +86,12 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
     id: 'strength-a',
     name: 'Strength A',
     slots: [
-      slot('a-primary-squat', 'primary', 'squat', 4, 4, 8, 8, 150),
+      slot('a-primary-squat', 'primary', 'squat', 3, 4, 8, 8, 150),
       slot('a-primary-push', 'primary', 'horizontalPush', 4, 5, 8, 8, 120),
       slot('a-sec-row', 'secondary', 'horizontalPull', 3, 8, 12, 7.5, 90, { preferCorrective: true }),
-      slot('a-sec-hinge', 'secondary', 'hinge', 3, 8, 12, 7.5, 90),
-      slot('a-acc-delts', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
+      slot('a-sec-hinge', 'secondary', 'hinge', 2, 8, 12, 7.5, 90),
+      slot('a-acc-delts', 'accessory', 'shoulderAbduction', 2, 12, 20, 7, 45),
+      slot('a-acc-traps', 'accessory', 'shrug', 3, 10, 15, 7, 45, { guaranteed: true }),
       slot('a-fin-core', 'finisher', 'antiRotation', 2, 8, 12, 7, 60, { preferCorrective: true }),
     ],
   },
@@ -97,11 +99,12 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
     id: 'strength-b',
     name: 'Strength B',
     slots: [
-      slot('b-primary-hinge', 'primary', 'hinge', 4, 4, 8, 8, 150),
-      slot('b-primary-pull', 'primary', 'verticalPull', 4, 5, 8, 8, 120),
+      slot('b-primary-hinge', 'primary', 'hinge', 3, 4, 8, 8, 150),
+      slot('b-primary-pull', 'primary', 'verticalPull', 3, 5, 8, 8, 120),
       slot('b-sec-press', 'secondary', 'verticalPush', 3, 8, 12, 7.5, 90),
-      slot('b-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7.5, 90, { preferCorrective: true }),
-      slot('b-acc-arms', 'accessory', 'elbowFlexion', 3, 10, 15, 7, 60),
+      slot('b-sec-lunge', 'secondary', 'lunge', 2, 8, 12, 7.5, 90, { preferCorrective: true }),
+      slot('b-acc-reardelt', 'accessory', 'rearDelt', 3, 12, 20, 7, 45, { preferCorrective: true, guaranteed: true }),
+      slot('b-acc-arms', 'accessory', 'elbowFlexion', 2, 10, 15, 7, 45),
       slot('b-fin-carry', 'finisher', 'carry', 2, 30, 45, 7, 60),
     ],
   },
@@ -112,13 +115,13 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
       slot('c-sec-push', 'secondary', 'horizontalPush', 3, 8, 15, 7.5, 75),
       slot('c-sec-pull', 'secondary', 'horizontalPull', 3, 10, 15, 7.5, 75),
       slot('c-sec-legs', 'secondary', 'squat', 3, 10, 15, 7.5, 75),
-      slot('c-acc-triceps', 'accessory', 'elbowExtension', 4, 10, 15, 7, 45),
+      slot('c-acc-triceps', 'accessory', 'elbowExtension', 3, 10, 15, 7, 45),
       slot('c-acc-biceps', 'accessory', 'elbowFlexion', 2, 10, 15, 7, 45),
-      slot('c-acc-delts', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 45),
+      slot('c-acc-delts', 'accessory', 'shoulderAbduction', 2, 12, 20, 7, 45),
       // Direct hamstring work: hinges load hamstrings at long length, curls
       // train knee flexion, and both are needed for full development.
       slot('c-acc-hams', 'accessory', 'kneeFlexion', 3, 10, 15, 7, 45),
-      slot('c-acc-calves', 'accessory', 'calfRaise', 4, 12, 20, 7, 45),
+      slot('c-acc-calves', 'accessory', 'calfRaise', 3, 12, 20, 7, 45, { guaranteed: true }),
       slot('c-fin-neck', 'finisher', 'neck', 2, 10, 15, 6.5, 60, { preferCorrective: true }),
     ],
   },
@@ -129,11 +132,13 @@ export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
       // Explosive work first, fresh, low reps, full rest — power is a
       // quality, and fatigue turns it into sloppy conditioning.
       slot('d-power', 'secondary', 'power', 3, 3, 5, 6.5, 90),
-      slot('d-sec-hinge', 'secondary', 'hinge', 3, 10, 15, 7, 60),
-      slot('d-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7, 60, { preferCorrective: true }),
+      slot('d-sec-hinge', 'secondary', 'hinge', 2, 10, 15, 7, 60),
+      slot('d-sec-lunge', 'secondary', 'lunge', 2, 8, 12, 7, 60, { preferCorrective: true }),
       slot('d-sec-push', 'secondary', 'horizontalPush', 3, 10, 15, 7, 60),
-      slot('d-acc-rotation', 'accessory', 'rotation', 3, 6, 10, 7, 60, { preferCorrective: true }),
-      slot('d-acc-calves', 'accessory', 'calfRaise', 5, 12, 20, 7, 45),
+      slot('d-acc-rotation', 'accessory', 'rotation', 2, 6, 10, 7, 60, { preferCorrective: true }),
+      slot('d-acc-glutes', 'accessory', 'bridge', 3, 10, 15, 7, 45, { preferCorrective: true, guaranteed: true }),
+      slot('d-acc-calves', 'accessory', 'calfRaise', 3, 12, 20, 7, 45, { guaranteed: true }),
+      slot('d-acc-grip', 'accessory', 'grip', 2, 20, 40, 7, 45),
       slot('d-fin-carry', 'finisher', 'carry', 2, 40, 60, 7.5, 60),
     ],
   },
@@ -422,7 +427,9 @@ export function generateSession(input: GenerationInput): PrescribedSession {
   const trimAccessories = !deload && volumeMultiplier < 0.9;
   const slots = (
     trimAccessories
-      ? day.slots.filter((s, i) => s.role !== 'accessory' || i === day.slots.findIndex((x) => x.role === 'accessory'))
+      ? day.slots.filter(
+          (s, i) => s.role !== 'accessory' || s.guaranteed || i === day.slots.findIndex((x) => x.role === 'accessory'),
+        )
       : day.slots
   ).map((s) => (input.powerCovered && s.pattern === 'power' ? { ...s, sets: 1 } : s));
 
@@ -498,6 +505,45 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     exercises,
     estimatedMinutes: estimateMinutes(exercises),
   };
+}
+
+/* ------------------------------------------------------------------ *
+ * Express — the busy-day version
+ * ------------------------------------------------------------------ */
+
+/** The first `rounds` sets, where a unilateral round is one set per side. */
+function takeRounds(sets: PrescribedSet[], rounds: number): PrescribedSet[] {
+  const sides = new Set(sets.map((s) => s.side)).size || 1;
+  return sets.slice(0, rounds * sides);
+}
+
+/**
+ * Cut a session to about 20–25 minutes without losing what matters most:
+ * the locked primary (3 sets — progress on it is the point of the block),
+ * the two highest-priority supporting lifts at short rests (secondaries first,
+ * then guaranteed accessories), and one finisher set. A missed week costs far
+ * more than a short session, so this exists to keep the streak and the lock
+ * alive on days a full session won't happen.
+ */
+export function expressSession(session: PrescribedSession): PrescribedSession {
+  if (session.express) return session;
+
+  const primary = session.exercises.find((e) => e.role === 'primary');
+  const support = [
+    ...session.exercises.filter((e) => e.role === 'secondary'),
+    ...session.exercises.filter((e) => e.role === 'accessory'),
+  ]
+    .filter((e) => e !== primary)
+    .slice(0, 2);
+  const finisher = session.exercises.find((e) => e.role === 'finisher');
+
+  const exercises: PrescribedExercise[] = [
+    ...(primary ? [{ ...primary, sets: takeRounds(primary.sets, 3), restSec: Math.min(primary.restSec, 120) }] : []),
+    ...support.map((e) => ({ ...e, sets: takeRounds(e.sets, 2), restSec: 45 })),
+    ...(finisher ? [{ ...finisher, sets: takeRounds(finisher.sets, 1), restSec: 30 }] : []),
+  ];
+
+  return { ...session, exercises, express: true, estimatedMinutes: estimateMinutes(exercises) };
 }
 
 /**

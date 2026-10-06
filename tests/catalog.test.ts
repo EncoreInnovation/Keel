@@ -84,3 +84,31 @@ describe('plyometric gating', () => {
     expect(session.exercises[0]!.exercise.impact).toBe('none');
   });
 });
+
+describe('wrestler-build weekly floor', () => {
+  const guaranteedPatterns = ['shrug', 'rearDelt', 'bridge', 'neck', 'grip'] as const;
+
+  it('has a dedicated slot every week for traps, rear delts, glutes, neck and grip', () => {
+    const patterns = new Set(HYBRID_BLOCK_DAYS.flatMap((d) => d.slots.map((s) => s.pattern)));
+    for (const p of guaranteedPatterns) expect(patterns.has(p), p).toBe(true);
+  });
+
+  it('can fill each of those slots in every gym', () => {
+    for (const gym of DEFAULT_GYMS) {
+      for (const p of guaranteedPatterns) {
+        const slot = HYBRID_BLOCK_DAYS.flatMap((d) => d.slots).find((s) => s.pattern === p)!;
+        expect(rankCandidates(catalog, slot, ctxAt(gym.id, 'low')).length, `${p} at ${gym.name}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('keeps guaranteed slots on a tired day when other accessories are trimmed', () => {
+    const ctx = ctxAt('fc-north-hills', 'low');
+    const block = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
+    for (const day of HYBRID_BLOCK_DAYS) {
+      const tired = generateSession({ block, weekNumber: 2, dayId: day.id, catalog, ctx, profile: ctx.profile, history: [], volumeMultiplier: 0.85 });
+      const kept = new Set(tired.exercises.map((e) => e.slotId));
+      for (const s of day.slots.filter((x) => x.guaranteed)) expect(kept.has(s.id), `${day.id}/${s.id}`).toBe(true);
+    }
+  });
+});

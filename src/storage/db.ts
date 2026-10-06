@@ -29,6 +29,7 @@ export const STORAGE_KEYS = {
   pillarLogs: 'pillar:logs',
   bodyMetrics: 'body:metrics',
   postureLogs: 'posture:logs',
+  physiqueLogs: 'physique:logs',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -54,6 +55,10 @@ export function deleteKey(key: StorageKey): Promise<void> {
  */
 export function posturePhotoKey(postureLogId: string, view: 'front' | 'side'): string {
   return `posture:photo:${postureLogId}:${view}`;
+}
+
+export function physiquePhotoKey(physiqueLogId: string, view: 'front' | 'side' | 'back'): string {
+  return `physique:photo:${physiqueLogId}:${view}`;
 }
 
 export function readBlob(key: string): Promise<Blob | undefined> {

@@ -16,6 +16,8 @@ import { ConditioningLogForm } from './ui/ConditioningLogForm';
 import { DownshiftPhase } from './ui/DownshiftPhase';
 import { PillarPlayer } from './ui/PillarPlayer';
 import { PostureCompare } from './ui/PostureCompare';
+import { PhysiqueCheckin } from './ui/PhysiqueCheckin';
+import { PhysiqueCompare } from './ui/PhysiqueCompare';
 import { PostureHistory } from './ui/PostureHistory';
 import { PostureScan } from './ui/PostureScan';
 import { Progress } from './ui/Progress';
@@ -35,6 +37,7 @@ import {
   discardUntouchedSession,
   hasStartedTodaySession,
   loadToday,
+  setExpress,
   swapCandidates,
   swapExercise,
   type TodayState,
@@ -63,7 +66,9 @@ type Screen =
   | 'conditioning'
   | 'settings'
   | 'askCoach'
-  | 'roadmap';
+  | 'roadmap'
+  | 'physiqueCheckin'
+  | 'physiqueCompare';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -73,6 +78,7 @@ export default function App() {
   const [error, setError] = useState<string | undefined>();
   const [coachNote, setCoachNote] = useState<string | undefined>();
   const [cueWord, setCueWord] = useState<string | undefined>();
+  const [fullPrescription, setFullPrescription] = useState<TodayState['prescription'] | undefined>();
 
   useEffect(() => {
     (async () => {
@@ -187,6 +193,23 @@ export default function App() {
     }
   }
 
+  async function handleToggleExpress() {
+    if (!today) return;
+    try {
+      if (today.prescription.express && fullPrescription) {
+        const restored = await setExpress(today.sessionId, fullPrescription);
+        setFullPrescription(undefined);
+        setToday({ ...today, prescription: restored });
+      } else {
+        setFullPrescription(today.prescription);
+        const short = await setExpress(today.sessionId);
+        setToday({ ...today, prescription: short });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not change the session.');
+    }
+  }
+
   function handleLoadSwapCandidates(slotId: string) {
     if (!profile) return Promise.resolve([]);
     return swapCandidates(catalog, profile, slotId, Date.now());
@@ -293,6 +316,8 @@ export default function App() {
         onOpenSettings={() => setScreen('settings')}
         onOpenAskCoach={() => setScreen('askCoach')}
         onOpenRoadmap={() => setScreen('roadmap')}
+        onToggleExpress={() => void handleToggleExpress()}
+        onOpenPhysiqueCheckin={() => setScreen('physiqueCheckin')}
         onSwapExercise={(slotId, exerciseId) => void handleSwapExercise(slotId, exerciseId)}
         loadSwapCandidates={handleLoadSwapCandidates}
       />
@@ -312,7 +337,14 @@ export default function App() {
   }
 
   if (screen === 'progress') {
-    return <Progress onBack={() => setScreen('today')} onOpenAsymmetry={() => setScreen('asymmetry')} />;
+    return (
+      <Progress
+        onBack={() => setScreen('today')}
+        onOpenAsymmetry={() => setScreen('asymmetry')}
+        onOpenPhysique={() => setScreen('physiqueCompare')}
+        onNewPhysique={() => setScreen('physiqueCheckin')}
+      />
+    );
   }
 
   if (screen === 'postureHistory') {
@@ -342,6 +374,14 @@ export default function App() {
     return (
       <ConditioningLogForm onSaved={() => setScreen('today')} onCancel={() => setScreen('today')} />
     );
+  }
+
+  if (screen === 'physiqueCheckin') {
+    return <PhysiqueCheckin onSaved={() => setScreen('physiqueCompare')} onCancel={() => setScreen('today')} />;
+  }
+
+  if (screen === 'physiqueCompare') {
+    return <PhysiqueCompare onBack={() => setScreen('today')} />;
   }
 
   if (screen === 'roadmap') {

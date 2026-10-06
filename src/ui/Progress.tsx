@@ -74,9 +74,11 @@ function computeE1rmSeries(sets: SetLog[]): E1rmSeries[] {
 export interface ProgressProps {
   onBack: () => void;
   onOpenAsymmetry: () => void;
+  onOpenPhysique: () => void;
+  onNewPhysique: () => void;
 }
 
-export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
+export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysique }: ProgressProps) {
   const [sets, setSets] = useState<SetLog[] | undefined>();
   const [weeksTrained, setWeeksTrained] = useState(0);
   const [pillarMinutes, setPillarMinutes] = useState(0);
@@ -266,6 +268,18 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
           />
           <button className="btn btn--ghost" onClick={() => void handleSaveWeight()}>
             Save
+          </button>
+        </div>
+      </section>
+
+      <section className="progress-section">
+        <h2 className="progress-section__title">Physique photos</h2>
+        <div className="checkin-card__row">
+          <button className="btn btn--ghost" onClick={onNewPhysique}>
+            New check-in
+          </button>
+          <button className="btn btn--ghost" onClick={onOpenPhysique}>
+            Compare
           </button>
         </div>
       </section>

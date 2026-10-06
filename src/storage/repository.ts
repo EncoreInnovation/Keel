@@ -16,6 +16,7 @@
 import {
   deleteBlob,
   deleteKey,
+  physiquePhotoKey,
   posturePhotoKey,
   readBlob,
   readKey,
@@ -28,6 +29,8 @@ import type {
   Block,
   BodyMetricLog,
   ConditioningLog,
+  PhysiqueLog,
+  PhysiqueView,
   PillarLog,
   PostureLog,
   PostureView,
@@ -333,6 +336,35 @@ export async function deletePostureLog(id: string): Promise<PostureLog[]> {
 }
 
 /* ------------------------------------------------------------------ *
+ * Physique check-ins
+ * ------------------------------------------------------------------ */
+
+export function getPhysiqueLogs(): Promise<PhysiqueLog[]> {
+  return readKey<PhysiqueLog[]>(STORAGE_KEYS.physiqueLogs).then((v) => v ?? []);
+}
+
+export async function savePhysiqueLog(
+  entry: PhysiqueLog,
+  photos: Partial<Record<PhysiqueView, Blob>>,
+): Promise<PhysiqueLog[]> {
+  await Promise.all(
+    (Object.entries(photos) as [PhysiqueView, Blob | undefined][])
+      .filter((pair): pair is [PhysiqueView, Blob] => Boolean(pair[1]))
+      .map(([view, blob]) => writeBlob(physiquePhotoKey(entry.id, view), blob)),
+  );
+  return runExclusive('physiqueLogs', async () => {
+    const logs = (await readKey<PhysiqueLog[]>(STORAGE_KEYS.physiqueLogs)) ?? [];
+    const next = [...logs, entry].sort((a, b) => a.at - b.at);
+    await writeKey(STORAGE_KEYS.physiqueLogs, next);
+    return next;
+  });
+}
+
+export function getPhysiquePhoto(physiqueLogId: string, view: PhysiqueView): Promise<Blob | undefined> {
+  return readBlob(physiquePhotoKey(physiqueLogId, view));
+}
+
+/* ------------------------------------------------------------------ *
  * Export / import — the whole point of local-first with no account
  * ------------------------------------------------------------------ */
 
@@ -351,6 +383,8 @@ export interface KeelExport {
   bodyMetrics: BodyMetricLog[];
   /** Angles only — photos are on-device binaries and never part of a JSON export. */
   postureLogs: PostureLog[];
+  /** Dates and views only; the photos stay on the device. Optional for older exports. */
+  physiqueLogs?: PhysiqueLog[];
 }
 
 export async function exportAll(now: number): Promise<KeelExport> {
@@ -379,6 +413,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     getBodyMetrics(),
     getPostureLogs(),
   ]);
+  const physiqueLogs = await getPhysiqueLogs();
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -394,6 +429,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     pillarLogs,
     bodyMetrics,
     postureLogs,
+    physiqueLogs,
   };
 }
 
@@ -429,5 +465,6 @@ export async function importAll(data: KeelExport): Promise<void> {
     writeKey(STORAGE_KEYS.pillarLogs, data.pillarLogs),
     writeKey(STORAGE_KEYS.bodyMetrics, data.bodyMetrics),
     writeKey(STORAGE_KEYS.postureLogs, data.postureLogs),
+    writeKey(STORAGE_KEYS.physiqueLogs, data.physiqueLogs ?? []),
   ]);
 }

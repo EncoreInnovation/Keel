@@ -80,6 +80,12 @@ export const MOVEMENT_PATTERNS = [
   'power',
   /** Hamstring curls — the only direct hamstring isolation pattern. */
   'kneeFlexion',
+  /** Upper-trap work — the yoke that makes the wrestler silhouette. */
+  'shrug',
+  /** Rear-delt isolation (reverse flies, face pulls). */
+  'rearDelt',
+  /** Grip endurance and crushing/pinching strength. */
+  'grip',
 ] as const;
 
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
@@ -292,6 +298,20 @@ export interface PostureAngles {
 
 export type PostureView = 'front' | 'side';
 
+/* ------------------------------------------------------------------ *
+ * Physique check-ins — monthly front/side/back photos
+ * ------------------------------------------------------------------ */
+
+export const PHYSIQUE_VIEWS = ['front', 'side', 'back'] as const;
+export type PhysiqueView = (typeof PHYSIQUE_VIEWS)[number];
+
+/** Metadata only — the photos live in their own blob keys, on this device only. */
+export interface PhysiqueLog {
+  id: string;
+  at: number;
+  views: PhysiqueView[];
+}
+
 export interface PostureLog {
   id: string;
   at: number;
@@ -341,6 +361,11 @@ export interface Slot {
   locked: boolean;
   /** Bias the selector toward corrective value in this slot. */
   preferCorrective?: boolean;
+  /**
+   * A guaranteed weekly dose (traps, rear delts, glutes, calves): survives
+   * the tired-day accessory trim, so the weekly floor holds even in hard weeks.
+   */
+  guaranteed?: boolean;
 }
 
 export interface DayTemplate {
@@ -405,6 +430,8 @@ export interface PrescribedSession {
   isDeload: boolean;
   exercises: PrescribedExercise[];
   estimatedMinutes: number;
+  /** Cut down to the 20–25 minute version for a busy day. */
+  express?: boolean;
 }
 
 /* ------------------------------------------------------------------ *

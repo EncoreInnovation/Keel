@@ -1718,3 +1718,143 @@
   padding: var(--s1) var(--s2);
   cursor: pointer;
 }
+
+/* ---------------- Physique check-in ---------------- */
+
+.physique-checkin {
+  justify-content: flex-start;
+  gap: var(--s4);
+}
+
+.physique-checkin__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+  width: 100%;
+  max-width: 24rem;
+}
+
+.physique-checkin__slot {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius);
+  border: 1px dashed var(--line-strong);
+  background: var(--surface);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.physique-checkin__slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.physique-checkin__empty {
+  font-size: 2rem;
+  color: var(--text-faint);
+}
+
+.physique-checkin__label {
+  position: absolute;
+  bottom: var(--s1);
+  left: 0;
+  right: 0;
+  font-size: var(--fs-micro);
+  color: var(--text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.physique-checkin__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ---------------- Today check-in cards ---------------- */
+
+.checkin-card {
+  width: 100%;
+  max-width: 24rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: var(--s3) var(--s4);
+  text-align: left;
+}
+
+.checkin-card__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  margin-bottom: var(--s2);
+}
+
+.checkin-card__row {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+}
+
+.checkin-card__row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--fs-body);
+  padding: 0 var(--s3);
+}
+
+.checkin-card--button {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+/* ---------------- Guidance ---------------- */
+
+.guidance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.guidance-list__item {
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.guidance-list__title {
+  font-weight: 600;
+  font-size: var(--fs-body);
+}
+
+.guidance-list__body {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  margin-top: var(--s1);
+}
+
+.guidance-list__source {
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+  margin-top: var(--s1);
+}
+
+.guidance-list__disclaimer {
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}
+
+.arrive-intent__tip {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  margin: 0;
+  text-align: left;
+}

@@ -128,3 +128,37 @@ describe('Insanity in the fatigue model', () => {
     expect(busySets).toBeLessThan(quietSets);
   });
 });
+
+describe('express mode', () => {
+  it('cuts a strength day to about 25 minutes, keeping the locked primary first', async () => {
+    const { expressSession } = await import('../src/engine/blocks');
+    const block = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctx(), T0);
+    const full = generateSession({ block, weekNumber: 2, dayId: 'strength-a', catalog, ctx: ctx(), profile, history: [], volumeMultiplier: 1 });
+    const short = expressSession(full);
+    expect(short.express).toBe(true);
+    expect(short.exercises[0]!.slotId).toBe(full.exercises.find((e) => e.role === 'primary')!.slotId);
+    expect(short.exercises.length).toBeLessThanOrEqual(4);
+    expect(short.estimatedMinutes).toBeLessThanOrEqual(27);
+    expect(short.estimatedMinutes).toBeLessThan(full.estimatedMinutes);
+    expect(expressSession(short)).toBe(short);
+  });
+
+  it('switches an untouched session to express and back, and refuses once a set is logged', async () => {
+    const { setExpress, logSet } = await import('../src/state/sessionController');
+    const { getActivePrescription } = await import('../src/storage/repository');
+    const today = await loadToday(catalog, profile, T0);
+    const short = await setExpress(today.sessionId);
+    expect((await getActivePrescription())!.express).toBe(true);
+    const restored = await setExpress(today.sessionId, today.prescription);
+    expect(restored).toEqual(today.prescription);
+
+    const first = today.prescription.exercises[0]!;
+    const slot = today.block.days[0]!.slots.find((s) => s.id === first.slotId)!;
+    await logSet(today.sessionId, {
+      prescription: today.prescription, slot, exerciseIndex: 0, setIndex: 0, side: first.sets[0]!.side,
+      weight: first.sets[0]!.weight, reps: first.sets[0]!.repTarget, rpe: 8, at: T0 + 60_000, profile,
+    });
+    await expect(setExpress(today.sessionId)).rejects.toThrow(/already started/);
+    void short;
+  });
+});

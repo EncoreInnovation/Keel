@@ -20,7 +20,7 @@ import {
   volumeMultiplier,
   type FatigueState,
 } from '../engine/recovery';
-import { createBlock, HYBRID_BLOCK_DAYS, generateSession, nextDay, swapExerciseInSlot, withGymLocks } from '../engine/blocks';
+import { createBlock, expressSession, HYBRID_BLOCK_DAYS, generateSession, nextDay, swapExerciseInSlot, withGymLocks } from '../engine/blocks';
 import { achievableLoads } from '../engine/loading';
 import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
 import { rankCandidates, type SelectionContext } from '../engine/selector';
@@ -433,6 +433,29 @@ export async function swapExercise(input: SwapExerciseInput): Promise<Prescribed
   await repo.saveActivePrescription(updatedPrescription);
 
   return updatedPrescription;
+}
+
+/* ------------------------------------------------------------------ *
+ * Express mode
+ * ------------------------------------------------------------------ */
+
+/**
+ * Switch today's untouched session to its 20–25 minute version, or restore a
+ * previously saved full prescription. Refuses once any set is logged —
+ * reshaping a session mid-way would strand sets already done.
+ */
+export async function setExpress(sessionId: string, replacement?: PrescribedSession): Promise<PrescribedSession> {
+  const [record, prescription, sets] = await Promise.all([
+    repo.getActiveSessionRecord(),
+    repo.getActivePrescription(),
+    repo.getAllSets(),
+  ]);
+  if (!record || record.id !== sessionId || !prescription) throw new Error('No active session to change');
+  if (sets.some((s) => s.sessionId === sessionId)) throw new Error('Session already started');
+
+  const next = replacement ?? expressSession(prescription);
+  await repo.saveActivePrescription(next);
+  return next;
 }
 
 /** Skip a set (or a whole exercise) with an optional reason — a first-class, not-nagged-about action. */

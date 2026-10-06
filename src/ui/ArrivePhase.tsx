@@ -14,6 +14,7 @@ import { BreathSequence, TimedPrompt } from './PhasePrimer';
 import { PROTOCOLS } from './BreathPacer';
 import { primerFor } from './phaseCopy';
 import { CUE_WORDS, DEFAULT_IF_THEN } from '../mind/cues';
+import { tipForDay } from '../mind/guidance';
 
 export interface ArrivePhaseProps {
   dayId: string;
@@ -26,6 +27,7 @@ type Step = 'breath' | 'primer' | 'intent';
 export function ArrivePhase({ dayId, onComplete }: ArrivePhaseProps) {
   const [step, setStep] = useState<Step>('breath');
   const [copy] = useState(() => primerFor(dayId, new Date().getHours()));
+  const tip = tipForDay(Date.now());
 
   return (
     <div className="phase-screen">
@@ -40,6 +42,9 @@ export function ArrivePhase({ dayId, onComplete }: ArrivePhaseProps) {
         <div className="arrive-intent">
           <div className="phase-primer__title">Pick today’s cue word</div>
           <p className="arrive-intent__plan">{DEFAULT_IF_THEN}</p>
+          <p className="arrive-intent__tip">
+            <strong>{tip.title}.</strong> {tip.body}
+          </p>
           <div className="settings-options arrive-intent__cues">
             {CUE_WORDS.map((cue) => (
               <button key={cue} className="chip" onClick={() => onComplete(cue)}>
