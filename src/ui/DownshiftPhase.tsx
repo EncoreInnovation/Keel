@@ -7,14 +7,7 @@
 import { useState } from 'react';
 import { BreathSequence, TimedPrompt } from './PhasePrimer';
 import { PROTOCOLS } from './BreathPacer';
-
-const COOLDOWN_COPY: Record<string, { title: string; lines: string[] }> = {
-  push: { title: 'Cool down · Chest & shoulders', lines: ['Doorway chest stretch, both sides.', 'Let the shoulders drop away from the ears.'] },
-  pull: { title: 'Cool down · Back & lats', lines: ['Child’s pose or a lat stretch on a doorframe.', 'Let the exhale be longer than the inhale.'] },
-  legs: { title: 'Cool down · Legs', lines: ['Kneeling hip flexor stretch, both sides.', 'Let the exhale be longer than the inhale.'] },
-  upper: { title: 'Cool down · Chest & back', lines: ['Doorway chest stretch, then a lat stretch on a doorframe.', 'Let the exhale be longer than the inhale.'] },
-  lower: { title: 'Cool down · Hamstrings', lines: ['Seated or standing hamstring stretch.', 'No bouncing — hold, breathe, ease in.'] },
-};
+import { cooldownFor } from './phaseCopy';
 
 export interface DownshiftPhaseProps {
   dayId: string;
@@ -23,7 +16,7 @@ export interface DownshiftPhaseProps {
 
 export function DownshiftPhase({ dayId, onComplete }: DownshiftPhaseProps) {
   const [breathDone, setBreathDone] = useState(false);
-  const copy = COOLDOWN_COPY[dayId] ?? COOLDOWN_COPY.push!;
+  const copy = cooldownFor(dayId);
 
   return (
     <div className="phase-screen">

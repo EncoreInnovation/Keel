@@ -11,7 +11,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { CATALOG } from '../catalog/exercises';
-import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay } from '../src/engine/blocks';
+import { createBlock, HYBRID_BLOCK_DAYS, generateSession, nextDay } from '../src/engine/blocks';
 import {
   applyConditioning,
   applySet,
@@ -38,12 +38,13 @@ const DAY = 86_400_000;
 const T0 = 1_700_000_000_000;
 
 /**
- * Push / Pull / Legs / Upper / Lower, Mon–Fri with weekends off — the real
- * schedule a five-day split assumes. The two-day gap after Legs (before
- * Upper) and the weekend gap after Lower (before next week's Push) are what
- * keep the same-muscle days from stacking on top of each other.
+ * Strength A / Strength B / Build / Athletic on Mon, Wed, Thu, Sat. The one
+ * back-to-back pair is Strength B → Build, the safe one: Build has no locked
+ * primaries, so nothing heavy lands on muscles still recovering from the day
+ * before. (On a schedule that does stack two strength days, the recovery
+ * guard cuts the dose instead.)
  */
-const DAY_OFFSETS = [0, 1, 2, 4, 5];
+const DAY_OFFSETS = [0, 2, 3, 5];
 
 const PROFILE: UserProfile = {
   bodyweight: 292,
@@ -134,7 +135,7 @@ function simulate(options: { conditioning?: ConditioningLog[] } = {}): SimResult
   let block = createBlock(
     'block-1',
     'Hypertrophy Block',
-    HYPERTROPHY_BLOCK_DAYS,
+    HYBRID_BLOCK_DAYS,
     catalog,
     buildContext(history, conditioning, fatigue, T0, 0),
     T0,
@@ -158,7 +159,7 @@ function simulate(options: { conditioning?: ConditioningLog[] } = {}): SimResult
       block = createBlock(
         'block-2',
         'Build Block',
-        HYPERTROPHY_BLOCK_DAYS,
+        HYBRID_BLOCK_DAYS,
         catalog,
         buildContext(history, conditioning, fatigue, at, 6),
         at,
@@ -269,7 +270,7 @@ describe('12-week simulation', () => {
   const result = simulate();
 
   it('runs a full two blocks without throwing', () => {
-    expect(result.sessions.length).toBe(60);
+    expect(result.sessions.length).toBe(48);
     expect(result.history.length).toBeGreaterThan(500);
   });
 
@@ -293,7 +294,7 @@ describe('12-week simulation', () => {
   });
 
   it('holds the primary lifts constant across each block', () => {
-    for (const blockSessions of [result.sessions.slice(0, 30), result.sessions.slice(30)]) {
+    for (const blockSessions of [result.sessions.slice(0, 24), result.sessions.slice(24)]) {
       const bySlot = new Map<string, Set<string>>();
       for (const s of blockSessions) {
         for (const [slotId, exerciseId] of Object.entries(s.primaryBySlot)) {
@@ -309,7 +310,7 @@ describe('12-week simulation', () => {
   });
 
   it('rotates accessory work so it does not go stale', () => {
-    const pushDays = result.sessions.filter((s) => s.dayId === 'push');
+    const pushDays = result.sessions.filter((s) => s.dayId === 'build');
     const distinct = new Set(pushDays.flatMap((s) => s.accessoryIds));
     expect(distinct.size).toBeGreaterThan(1);
   });
@@ -349,7 +350,7 @@ describe('12-week simulation', () => {
   });
 
   it('produces sessions in the promised time envelope', () => {
-    // Sanity: 5 days/week at 30-45 min. Deload weeks run shorter by design.
+    // Sanity: 4 days/week at 35-55 min. Deload weeks run shorter by design.
     for (const s of result.sessions) {
       expect(s.totalSets).toBeGreaterThan(4);
       expect(s.totalSets).toBeLessThan(60);
@@ -366,7 +367,9 @@ describe('12-week simulation', () => {
     // compound lift, which legitimately pushes them well past 20 and isn't
     // a target this test is trying to hold them to.
     const week4 = result.sessions.filter((s) => s.weekNumber === 4);
-    const at = week4.at(-1)!.at;
+    // Just after the week's last session, so its own sets are inside the
+    // seven-day window rather than landing a few minutes past its end.
+    const at = week4.at(-1)!.at + 2 * 3_600_000;
     const volume = weeklyMuscleVolume(result.history, catalogById, at);
 
     for (const muscle of ['chest', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'calves'] as const) {

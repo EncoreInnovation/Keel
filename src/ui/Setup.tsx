@@ -30,7 +30,7 @@ export function Setup({ onComplete }: SetupProps) {
       activeGymId,
       flaggedJoints: [],
       impactCeiling: 'low',
-      daysPerWeek: 5,
+      daysPerWeek: 4,
       sessionMinutes: 45,
     });
   };

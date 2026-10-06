@@ -59,93 +59,79 @@ function slot(
 }
 
 /**
- * Push / Pull / Legs / Upper / Lower across five days.
+ * A four-day hybrid rotation — two strength days, a build day, an athletic
+ * day — where every day is full-body-leaning.
  *
- * Every muscle still lands two exposures a week — the strongest single
- * predictor of hypertrophy — but PPL now carries the volume (wide rep ranges,
- * isolation work as first-class slots instead of an afterthought) while the
- * Upper/Lower half adds a second heavier compound exposure. Five days rather
- * than six leaves real recovery headroom at 41 and 290 lbs, where joint load
- * and systemic fatigue are constraints conditioning work adds to, not just
- * lifting.
+ * Why not a five-day split: real weeks have three sessions in them as often
+ * as five (work, holidays, Insanity on top), and a body-part split punishes a
+ * missed day by dropping a muscle for a week. Here each muscle is hit on at
+ * least two of any three consecutive days, and `nextDay()` rotates by
+ * sessions completed rather than by calendar, so a three-session week just
+ * carries the rotation into the next one with nothing skipped.
  *
- * Corrective work doesn't get a separate day — it never did. It rides along
- * on the slots that already double as the counterweight: upper-back volume
- * on push work, unilateral bias on lunges, anti-rotation and anti-extension
- * accessories. That's a demotion from headline to ingredient, not a removal.
+ * Strength days run heavy locked primaries (4–8 reps) — load is what builds
+ * dense-looking muscle, and it's what the locks make measurable. Build day is
+ * moderate-rep volume and calisthenics; Athletic day puts explosive work
+ * first while the nervous system is fresh. Volume sits at the low-to-mid end
+ * of the 10–20 set landmarks on purpose: hard conditioning (Insanity,
+ * running) shares the same recovery budget.
+ *
+ * Corrective work still rides along rather than getting its own day —
+ * upper-back volume against rolled shoulders, unilateral bias on lunges,
+ * anti-rotation core for the hip.
  */
-export const HYPERTROPHY_BLOCK_DAYS: DayTemplate[] = [
+export const HYBRID_BLOCK_DAYS: DayTemplate[] = [
   {
-    id: 'push',
-    name: 'Push',
+    id: 'strength-a',
+    name: 'Strength A',
     slots: [
-      slot('push-primary', 'primary', 'horizontalPush', 6, 6, 10, 8, 150),
-      slot('push-sec-1', 'secondary', 'verticalPush', 3, 8, 12, 7.5, 120),
-      // Upper-back volume on a push day is not a mistake. It is the direct
-      // counterweight to rolled-forward shoulders, and it happens to be the
-      // same tissue that builds the wrestler silhouette.
-      slot('push-sec-2', 'secondary', 'horizontalPull', 3, 10, 15, 7, 120, { preferCorrective: true }),
-      slot('push-acc-1', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
-      slot('push-acc-2', 'accessory', 'elbowExtension', 3, 10, 15, 7, 60),
-      slot('push-fin', 'finisher', 'coreFlexion', 2, 12, 20, 6.5, 60),
+      slot('a-primary-squat', 'primary', 'squat', 4, 4, 8, 8, 180),
+      slot('a-primary-push', 'primary', 'horizontalPush', 4, 5, 8, 8, 150),
+      slot('a-sec-row', 'secondary', 'horizontalPull', 3, 8, 12, 7.5, 90, { preferCorrective: true }),
+      slot('a-sec-hinge', 'secondary', 'hinge', 3, 8, 12, 7.5, 120),
+      slot('a-acc-delts', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
+      slot('a-fin-core', 'finisher', 'antiRotation', 2, 8, 12, 7, 60, { preferCorrective: true }),
     ],
   },
   {
-    id: 'pull',
-    name: 'Pull',
+    id: 'strength-b',
+    name: 'Strength B',
     slots: [
-      slot('pull-primary', 'primary', 'verticalPull', 4, 6, 10, 8, 150),
-      slot('pull-sec-1', 'secondary', 'horizontalPull', 3, 8, 12, 7.5, 120),
-      slot('pull-sec-2', 'secondary', 'elbowFlexion', 3, 10, 15, 7, 75),
-      slot('pull-acc-1', 'accessory', 'antiRotation', 2, 8, 12, 7, 75, { preferCorrective: true }),
-      slot('pull-acc-2', 'accessory', 'rotation', 2, 10, 15, 7, 60, { preferCorrective: true }),
-      slot('pull-fin', 'finisher', 'neck', 2, 10, 15, 6.5, 60, { preferCorrective: true }),
+      slot('b-primary-hinge', 'primary', 'hinge', 4, 4, 8, 8, 180),
+      slot('b-primary-pull', 'primary', 'verticalPull', 4, 5, 8, 8, 150),
+      slot('b-sec-press', 'secondary', 'verticalPush', 3, 8, 12, 7.5, 120),
+      slot('b-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
+      slot('b-acc-arms', 'accessory', 'elbowFlexion', 3, 10, 15, 7, 60),
+      slot('b-fin-carry', 'finisher', 'carry', 2, 30, 45, 7, 60),
     ],
   },
   {
-    id: 'legs',
-    name: 'Legs',
+    id: 'build',
+    name: 'Build',
     slots: [
-      slot('legs-primary', 'primary', 'squat', 4, 6, 10, 8, 150),
-      slot('legs-sec-1', 'secondary', 'hinge', 3, 8, 12, 7.5, 120),
-      slot('legs-sec-2', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
-      slot('legs-acc-1', 'accessory', 'bridge', 2, 10, 15, 7, 75, { preferCorrective: true }),
-      slot('legs-acc-2', 'accessory', 'calfRaise', 5, 12, 20, 7, 60),
-      slot('legs-fin', 'finisher', 'carry', 2, 30, 45, 7, 60),
+      slot('c-sec-push', 'secondary', 'horizontalPush', 3, 8, 15, 7.5, 90),
+      slot('c-sec-pull', 'secondary', 'horizontalPull', 3, 10, 15, 7.5, 90),
+      slot('c-sec-legs', 'secondary', 'squat', 3, 10, 15, 7.5, 90),
+      slot('c-acc-triceps', 'accessory', 'elbowExtension', 4, 10, 15, 7, 60),
+      slot('c-acc-biceps', 'accessory', 'elbowFlexion', 3, 10, 15, 7, 60),
+      slot('c-acc-delts', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
+      slot('c-acc-calves', 'accessory', 'calfRaise', 5, 12, 20, 7, 45),
+      slot('c-fin-neck', 'finisher', 'neck', 2, 10, 15, 6.5, 60, { preferCorrective: true }),
     ],
   },
   {
-    id: 'upper',
-    name: 'Upper',
+    id: 'athletic',
+    name: 'Athletic',
     slots: [
-      // Two heavy compounds, not one — this day's whole job is a second
-      // weekly exposure for chest and back at real intensity, on top of what
-      // Push and Pull already deliver. `createBlock` locks each primary from
-      // the ranked candidate list in slot order, so this naturally lands a
-      // different chest/back exercise than Push/Pull chose rather than
-      // repeating them.
-      slot('upper-primary-push', 'primary', 'horizontalPush', 6, 6, 10, 8, 150),
-      slot('upper-primary-pull', 'primary', 'horizontalPull', 3, 6, 10, 8, 150),
-      slot('upper-sec-1', 'secondary', 'elbowFlexion', 3, 8, 12, 7.5, 75),
-      slot('upper-sec-2', 'secondary', 'elbowExtension', 3, 8, 12, 7.5, 75),
-      slot('upper-acc-1', 'accessory', 'shoulderAbduction', 3, 12, 20, 7, 60),
-      slot('upper-fin', 'finisher', 'antiExtension', 2, 8, 12, 6.5, 60, { preferCorrective: true }),
-    ],
-  },
-  {
-    id: 'lower',
-    name: 'Lower',
-    slots: [
-      slot('lower-primary', 'primary', 'hinge', 4, 6, 10, 8, 150),
-      slot('lower-sec-1', 'secondary', 'squat', 3, 10, 15, 7, 120),
-      slot('lower-sec-2', 'secondary', 'lunge', 3, 8, 12, 7.5, 120, { preferCorrective: true }),
-      slot('lower-acc-1', 'accessory', 'bridge', 2, 10, 15, 7, 75, { preferCorrective: true }),
-      // Abs already land well past the volume floor from bracing work on
-      // every compound day (squats, hinges, presses, carries all credit abs
-      // as a secondary mover) — calves get nothing outside a dedicated slot,
-      // so this is their second weekly exposure, not a repeat of Legs day.
-      slot('lower-acc-2', 'accessory', 'calfRaise', 5, 12, 20, 7, 60),
-      slot('lower-fin', 'finisher', 'carry', 2, 30, 45, 7, 60),
+      // Explosive work first, fresh, low reps, full rest — power is a
+      // quality, and fatigue turns it into sloppy conditioning.
+      slot('d-power', 'secondary', 'power', 3, 3, 5, 6.5, 90),
+      slot('d-sec-hinge', 'secondary', 'hinge', 3, 10, 15, 7, 75),
+      slot('d-sec-lunge', 'secondary', 'lunge', 3, 8, 12, 7, 90, { preferCorrective: true }),
+      slot('d-sec-push', 'secondary', 'horizontalPush', 3, 10, 15, 7, 75),
+      slot('d-acc-rotation', 'accessory', 'rotation', 3, 6, 10, 7, 60, { preferCorrective: true }),
+      slot('d-acc-calves', 'accessory', 'calfRaise', 5, 12, 20, 7, 45),
+      slot('d-fin-carry', 'finisher', 'carry', 2, 40, 60, 7.5, 60),
     ],
   },
 ];
@@ -246,6 +232,13 @@ export interface GenerationInput {
   history: SetLog[];
   /** Scales total volume, from readiness and systemic load. */
   volumeMultiplier: number;
+  /**
+   * True when a plyometric conditioning session (Insanity) already happened in
+   * the last 48 hours. That session already covered the jumping volume, so
+   * power slots drop to a single skill set instead of adding more contacts on
+   * top of hundreds.
+   */
+  powerCovered?: boolean;
 }
 
 const SECONDS_PER_REP = 3.5;
@@ -404,9 +397,11 @@ export function generateSession(input: GenerationInput): PrescribedSession {
   // unchanged — and an app that ignores what you just did stops being
   // believable. Dropping the trailing accessory is legible and honest.
   const trimAccessories = !deload && volumeMultiplier < 0.9;
-  const slots = trimAccessories
-    ? day.slots.filter((s, i) => s.role !== 'accessory' || i === day.slots.findIndex((x) => x.role === 'accessory'))
-    : day.slots;
+  const slots = (
+    trimAccessories
+      ? day.slots.filter((s, i) => s.role !== 'accessory' || i === day.slots.findIndex((x) => x.role === 'accessory'))
+      : day.slots
+  ).map((s) => (input.powerCovered && s.pattern === 'power' ? { ...s, sets: 1 } : s));
 
   /**
    * The baseline rung sitting on the same ladder as `exercise`, if the test

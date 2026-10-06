@@ -61,7 +61,7 @@ describe('loadToday', () => {
     const today = await loadToday(catalog, PROFILE, T0);
     expect(today.resumed).toBe(false);
     expect(today.prescription.exercises.length).toBeGreaterThan(0);
-    expect(today.prescription.dayId).toBe('push');
+    expect(today.prescription.dayId).toBe('strength-a');
   });
 
   it('resumes the same prescription rather than regenerating it', async () => {
@@ -381,7 +381,20 @@ describe('completeSession → next loadToday', () => {
       await completeSession(at + 30 * 60_000);
     }
 
-    expect(dayIds).toEqual(['push', 'pull', 'legs', 'upper', 'lower']);
+    expect(dayIds).toEqual(['strength-a', 'strength-b', 'build', 'athletic', 'strength-a']);
+  });
+
+  it('a three-session week carries the rotation into the next week instead of skipping a day', async () => {
+    // Mon / Wed / Fri, then the following Monday — a busy week, nothing lost.
+    const offsets = [0, 2, 4, 7, 9];
+    const dayIds: string[] = [];
+    for (const offset of offsets) {
+      const at = T0 + offset * DAY;
+      const today = await loadToday(catalog, PROFILE, at);
+      dayIds.push(today.prescription.dayId);
+      await completeSession(at + 30 * 60_000);
+    }
+    expect(dayIds).toEqual(['strength-a', 'strength-b', 'build', 'athletic', 'strength-a']);
   });
 
   it('has no active prescription immediately after completing', async () => {

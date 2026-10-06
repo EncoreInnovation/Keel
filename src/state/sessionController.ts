@@ -20,7 +20,7 @@ import {
   volumeMultiplier,
   type FatigueState,
 } from '../engine/recovery';
-import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay, swapExerciseInSlot, withGymLocks } from '../engine/blocks';
+import { createBlock, HYBRID_BLOCK_DAYS, generateSession, nextDay, swapExerciseInSlot, withGymLocks } from '../engine/blocks';
 import { achievableLoads } from '../engine/loading';
 import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
 import { rankCandidates, type SelectionContext } from '../engine/selector';
@@ -110,6 +110,9 @@ export function buildSelectionContext(
  * Today
  * ------------------------------------------------------------------ */
 
+/** How long an Insanity session counts as having covered the jumping volume. */
+const POWER_COVERED_WINDOW_MS = 48 * 3_600_000;
+
 export interface TodayState {
   block: Block;
   /** The prescribed session for today — resumed as-is, or freshly generated. */
@@ -134,7 +137,7 @@ export async function ensureActiveBlock(catalog: Exercise[], profile: UserProfil
   const fatigue = rebuildFatigue(sets, await repo.getConditioningLogs(), catalogById, at);
   const ctx = buildSelectionContext(profile, sets, fatigue, at, 0);
 
-  const block = createBlock('block-2', 'Hypertrophy Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, at);
+  const block = createBlock('block-2', 'Hybrid Block', HYBRID_BLOCK_DAYS, catalog, ctx, at);
   await repo.startNewBlock(block);
   return block;
 }
@@ -201,6 +204,9 @@ export async function loadToday(
     profile,
     history: sets,
     volumeMultiplier: volumeMultiplier(load, readiness),
+    powerCovered: conditioning.some(
+      (c) => c.kind === 'insanity' && c.startedAt <= at && c.startedAt > at - POWER_COVERED_WINDOW_MS,
+    ),
   });
 
   const sessionId = `sess-${block.id}-${weekNumber}-${dayId}-${at}`;

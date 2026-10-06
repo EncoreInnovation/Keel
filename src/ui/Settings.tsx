@@ -251,8 +251,8 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
       <section className="settings-section settings-section--locked">
         <h2 className="settings-section__title">Program schedule</h2>
         <p className="settings-section__hint">
-          {draft.daysPerWeek} days/week, {draft.sessionMinutes} min sessions — fixed for the
-          Hypertrophy Block.
+          Four-day hybrid rotation, ~{draft.sessionMinutes} min sessions. Three-session weeks are
+          fine — the rotation carries over instead of skipping a day.
         </p>
       </section>
 

@@ -76,6 +76,8 @@ export const MOVEMENT_PATTERNS = [
   'shoulderAbduction',
   'calfRaise',
   'coreFlexion',
+  /** Explosive intent — jumps, throws, slams, swings. Programmed first, fresh. */
+  'power',
 ] as const;
 
 export type MovementPattern = (typeof MOVEMENT_PATTERNS)[number];
@@ -290,7 +292,7 @@ export interface PostureLog {
  * Conditioning
  * ------------------------------------------------------------------ */
 
-export type ConditioningKind = 'run' | 'walk' | 'bike' | 'circuit' | 'hiit' | 'other';
+export type ConditioningKind = 'run' | 'walk' | 'bike' | 'elliptical' | 'circuit' | 'hiit' | 'insanity' | 'other';
 
 export interface ConditioningLog {
   id: string;

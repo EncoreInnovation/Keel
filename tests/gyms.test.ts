@@ -12,7 +12,7 @@ import {
   FC_NORTH_HILLS_GYM,
   HOME_GYM,
 } from '../src/config/gyms';
-import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, withGymLocks } from '../src/engine/blocks';
+import { createBlock, HYBRID_BLOCK_DAYS, generateSession, withGymLocks } from '../src/engine/blocks';
 import { achievableLoads } from '../src/engine/loading';
 import type { SelectionContext } from '../src/engine/selector';
 import type { Exercise, GymId, MuscleMap, UserProfile } from '../src/engine/types';
@@ -73,10 +73,10 @@ describe('every gym builds sessions only from its own kit', () => {
   for (const gym of DEFAULT_GYMS) {
     it(`${gym.name}: every exercise is trainable and every weight loadable`, () => {
       const ctx = ctxAt(gym.id);
-      const block = createBlock('b', 'Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+      const block = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
       const available = new Set<string>(gym.equipment);
 
-      for (const day of HYPERTROPHY_BLOCK_DAYS) {
+      for (const day of HYBRID_BLOCK_DAYS) {
         const session = generateSession({
           block,
           weekNumber: 1,
@@ -106,13 +106,13 @@ describe('every gym builds sessions only from its own kit', () => {
 
 describe('per-gym primary locks', () => {
   it('locks primaries for the gym the block was created in, and only that gym', () => {
-    const block = createBlock('b', 'Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctxAt('fc-north-hills'), T0);
+    const block = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctxAt('fc-north-hills'), T0);
     expect(block.lockedAssignments['fc-north-hills']).toBeDefined();
     expect(block.lockedAssignments.home).toBeUndefined();
   });
 
   it('adds a second gym its own locks the first time it is trained in, keeping the first', () => {
-    const block = createBlock('b', 'Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctxAt('fc-north-hills'), T0);
+    const block = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctxAt('fc-north-hills'), T0);
     const withHome = withGymLocks(block, catalog, ctxAt('home'));
     expect(withHome).not.toBe(block);
     expect(withHome.lockedAssignments.home).toBeDefined();
@@ -121,19 +121,21 @@ describe('per-gym primary locks', () => {
     expect(withGymLocks(withHome, catalog, ctxAt('home'))).toBe(withHome);
   });
 
-  it('never prescribes a barbell primary locked at FC when training at home without a rack', () => {
-    const block = createBlock('b', 'Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctxAt('fc-north-hills'), T0);
-    const fcLocks = Object.values(block.lockedAssignments['fc-north-hills']!);
+  it("keeps FC's machine/cable primaries at FC — home gets its own locks", () => {
+    // Pin FC's locks to kit home doesn't have, so the scenario is guaranteed
+    // rather than dependent on whatever the scorer happened to rank first.
+    const base = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctxAt('fc-north-hills'), T0);
+    const fcLocks = { ...base.lockedAssignments['fc-north-hills']!, 'a-primary-squat': 'leg-press', 'b-primary-pull': 'cable-lat-pulldown' };
+    const block = { ...base, lockedAssignments: { 'fc-north-hills': fcLocks } };
     const homeEquipment = new Set<string>(HOME_GYM.equipment);
-    const fcOnly = fcLocks
-      .map((id) => catalog.find((e) => e.id === id)!)
-      .filter((e) => e.equipment.some((item) => !homeEquipment.has(item)));
-    // The scenario only means something if FC actually locked kit home lacks.
-    expect(fcOnly.length).toBeGreaterThan(0);
+    expect(['legPress', 'cable'].some((e) => homeEquipment.has(e))).toBe(false);
 
     const homeCtx = ctxAt('home');
     const homeBlock = withGymLocks(block, catalog, homeCtx);
-    for (const day of HYPERTROPHY_BLOCK_DAYS) {
+    expect(homeBlock.lockedAssignments.home!['a-primary-squat']).not.toBe('leg-press');
+    expect(homeBlock.lockedAssignments['fc-north-hills']).toEqual(fcLocks);
+
+    for (const day of HYBRID_BLOCK_DAYS) {
       const session = generateSession({
         block: homeBlock,
         weekNumber: 1,
@@ -155,11 +157,11 @@ describe('per-gym primary locks', () => {
   it('falls back to a trainable pick if a stale lock points at missing kit', () => {
     // A block saved before per-gym locking, or kit removed in Settings: the
     // home lock names an FC-only exercise. The selector must not obey it.
-    const fcBlock = createBlock('b', 'Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctxAt(FC_NORTH_HILLS_GYM.id), T0);
+    const fcBlock = createBlock('b', 'Block', HYBRID_BLOCK_DAYS, catalog, ctxAt(FC_NORTH_HILLS_GYM.id), T0);
     const stale = { ...fcBlock, lockedAssignments: { home: fcBlock.lockedAssignments['fc-north-hills']! } };
     const homeCtx = ctxAt('home');
     const homeEquipment = new Set<string>(HOME_GYM.equipment);
-    for (const day of HYPERTROPHY_BLOCK_DAYS) {
+    for (const day of HYBRID_BLOCK_DAYS) {
       const session = generateSession({
         block: stale,
         weekNumber: 1,

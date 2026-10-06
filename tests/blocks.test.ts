@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG, CATALOG_BY_ID } from '../catalog/exercises';
-import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, swapExerciseInSlot } from '../src/engine/blocks';
+import { createBlock, HYBRID_BLOCK_DAYS, generateSession, swapExerciseInSlot } from '../src/engine/blocks';
 import { epley1RM } from '../src/engine/overload';
 import { TEST_GYM, testProfile } from './support/profile';
 import type { Exercise, SetLog } from '../src/engine/types';
@@ -34,8 +34,8 @@ function makeSet(over: Partial<SetLog>): SetLog {
 describe('generateSession — bestE1RM', () => {
   it('reports the best e1RM ever logged for a locked primary, not just the last session', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
-    const primaryId = block.lockedAssignments.home!['push-primary']!;
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
+    const primaryId = block.lockedAssignments.home!['a-primary-push']!;
 
     // Best session was two sessions ago, not the most recent one — proves
     // this reads across all history rather than just the last attempt.
@@ -47,29 +47,29 @@ describe('generateSession — bestE1RM', () => {
     const expectedBest = Math.max(...history.map((s) => epley1RM(s.weight, s.reps)));
 
     const session = generateSession({
-      block, weekNumber: 1, dayId: 'push', catalog, ctx, profile, history, volumeMultiplier: 1,
+      block, weekNumber: 1, dayId: 'strength-a', catalog, ctx, profile, history, volumeMultiplier: 1,
     });
 
-    const primary = session.exercises.find((e) => e.slotId === 'push-primary')!;
+    const primary = session.exercises.find((e) => e.slotId === 'a-primary-push')!;
     expect(primary.bestE1RM).toBeCloseTo(expectedBest, 5);
   });
 
   it('leaves bestE1RM undefined when the exercise has never been logged', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
 
     const session = generateSession({
-      block, weekNumber: 1, dayId: 'push', catalog, ctx, profile, history: [], volumeMultiplier: 1,
+      block, weekNumber: 1, dayId: 'strength-a', catalog, ctx, profile, history: [], volumeMultiplier: 1,
     });
 
-    const primary = session.exercises.find((e) => e.slotId === 'push-primary')!;
+    const primary = session.exercises.find((e) => e.slotId === 'a-primary-push')!;
     expect(primary.bestE1RM).toBeUndefined();
   });
 
   it('ignores skipped and unloaded sets when finding the best e1RM', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
-    const primaryId = block.lockedAssignments.home!['push-primary']!;
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
+    const primaryId = block.lockedAssignments.home!['a-primary-push']!;
 
     const history: SetLog[] = [
       makeSet({ id: 'a', exerciseId: primaryId, weight: 200, reps: 10, skipped: true, completedAt: T0 - 2 * 86_400_000 }),
@@ -78,10 +78,10 @@ describe('generateSession — bestE1RM', () => {
     ];
 
     const session = generateSession({
-      block, weekNumber: 1, dayId: 'push', catalog, ctx, profile, history, volumeMultiplier: 1,
+      block, weekNumber: 1, dayId: 'strength-a', catalog, ctx, profile, history, volumeMultiplier: 1,
     });
 
-    const primary = session.exercises.find((e) => e.slotId === 'push-primary')!;
+    const primary = session.exercises.find((e) => e.slotId === 'a-primary-push')!;
     expect(primary.bestE1RM).toBeCloseTo(epley1RM(30, 8), 5);
   });
 });
@@ -89,28 +89,28 @@ describe('generateSession — bestE1RM', () => {
 describe('swapExerciseInSlot', () => {
   it('rebuilds the slot around the chosen exercise instead of the selected one', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
     const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
 
     const result = swapExerciseInSlot(
-      block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1,
+      block, 'strength-a', 'a-acc-delts', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1,
     );
 
     expect(result.exercise.id).toBe('dumbbell-lateral-raise');
-    expect(result.slotId).toBe('push-acc-1');
+    expect(result.slotId).toBe('a-acc-delts');
     expect(result.role).toBe('accessory');
   });
 
   it('sizes sets to the slot the exercise is swapped into, not the exercise\'s home slot', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
     const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
 
     const result = swapExerciseInSlot(
-      block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1,
+      block, 'strength-a', 'a-acc-delts', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1,
     );
 
-    const slotDef = HYPERTROPHY_BLOCK_DAYS.find((d) => d.id === 'push')!.slots.find((s) => s.id === 'push-acc-1')!;
+    const slotDef = HYBRID_BLOCK_DAYS.find((d) => d.id === 'strength-a')!.slots.find((s) => s.id === 'a-acc-delts')!;
     for (const set of result.sets) {
       expect(set.repTarget).toBe(slotDef.repMin);
       expect(set.targetRpe).toBe(slotDef.targetRpe);
@@ -119,31 +119,31 @@ describe('swapExerciseInSlot', () => {
 
   it('refuses to swap a locked primary slot', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
     const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
 
     expect(() =>
-      swapExerciseInSlot(block, 'push', 'push-primary', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1),
+      swapExerciseInSlot(block, 'strength-a', 'a-primary-push', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1),
     ).toThrow(/locked primary/);
   });
 
   it('throws for an unknown slot id', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
     const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
 
     expect(() =>
-      swapExerciseInSlot(block, 'push', 'not-a-real-slot', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1),
+      swapExerciseInSlot(block, 'strength-a', 'not-a-real-slot', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1),
     ).toThrow();
   });
 
   it('applies deload scaling on the deload week same as fresh generation would', () => {
     const ctx = makeContext();
-    const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
+    const block = createBlock('b', 'Test Block', HYBRID_BLOCK_DAYS, catalog, ctx, T0);
     const chosen = CATALOG_BY_ID.get('dumbbell-lateral-raise')!;
 
-    const normal = swapExerciseInSlot(block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1);
-    const deloadWeek = swapExerciseInSlot(block, 'push', 'push-acc-1', chosen, TEST_GYM, profile, [], ctx.recovery, block.deloadWeek, 1);
+    const normal = swapExerciseInSlot(block, 'strength-a', 'a-acc-delts', chosen, TEST_GYM, profile, [], ctx.recovery, 1, 1);
+    const deloadWeek = swapExerciseInSlot(block, 'strength-a', 'a-acc-delts', chosen, TEST_GYM, profile, [], ctx.recovery, block.deloadWeek, 1);
 
     expect(deloadWeek.sets.length).toBeLessThan(normal.sets.length);
   });

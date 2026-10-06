@@ -180,6 +180,8 @@ const CONDITIONING_PROFILE: Record<ConditioningLog['kind'], Partial<MuscleMap>> 
   run: { quads: 0.8, hamstrings: 0.6, calves: 1.0, glutes: 0.4, lowerBack: 0.15 },
   walk: { quads: 0.2, calves: 0.3, glutes: 0.15, hamstrings: 0.1 },
   bike: { quads: 0.7, glutes: 0.35, calves: 0.2, hamstrings: 0.2 },
+  // No ground contact: leg work close to a bike's, spread a little wider.
+  elliptical: { quads: 0.45, glutes: 0.3, hamstrings: 0.15, calves: 0.15, shoulders: 0.05 },
   circuit: {
     quads: 0.4,
     glutes: 0.3,
@@ -198,6 +200,18 @@ const CONDITIONING_PROFILE: Record<ConditioningLog['kind'], Partial<MuscleMap>> 
     abs: 0.4,
     shoulders: 0.2,
     chest: 0.2,
+  },
+  // Insanity-style bodyweight plyometric HIIT: hundreds of foot contacts per
+  // session, so calves and quads take far more than a generic HIIT log.
+  insanity: {
+    quads: 0.8,
+    glutes: 0.5,
+    hamstrings: 0.4,
+    calves: 0.9,
+    abs: 0.4,
+    shoulders: 0.3,
+    chest: 0.25,
+    triceps: 0.15,
   },
   other: { quads: 0.3, glutes: 0.2, abs: 0.2, shoulders: 0.15 },
 };

@@ -11,14 +11,25 @@ import { appendConditioningLog } from '../storage/repository';
 import { IMPACT_ORDER } from '../engine/recovery';
 import type { ConditioningKind, ImpactLevel } from '../engine/types';
 
-const KIND_OPTIONS: ConditioningKind[] = ['run', 'walk', 'bike', 'circuit', 'hiit', 'other'];
+const KIND_OPTIONS: ConditioningKind[] = ['insanity', 'run', 'walk', 'bike', 'elliptical', 'circuit', 'hiit', 'other'];
 const KIND_LABEL: Record<ConditioningKind, string> = {
+  insanity: 'Insanity',
   run: 'Run',
   walk: 'Walk',
   bike: 'Bike',
+  elliptical: 'Elliptical',
   circuit: 'Circuit',
   hiit: 'HIIT',
   other: 'Other',
+};
+
+/** Sensible defaults applied when a kind is picked — Insanity is one tap from saved. */
+const KIND_DEFAULTS: Partial<Record<ConditioningKind, { minutes?: number; impact?: ImpactLevel; effort?: number }>> = {
+  insanity: { minutes: 30, impact: 'high', effort: 8 },
+  run: { impact: 'moderate' },
+  walk: { impact: 'low' },
+  bike: { impact: 'none' },
+  elliptical: { impact: 'none' },
 };
 
 export interface ConditioningLogFormProps {
@@ -60,7 +71,13 @@ export function ConditioningLogForm({ onSaved, onCancel }: ConditioningLogFormPr
             <button
               key={k}
               className={`chip${kind === k ? ' chip--active' : ''}`}
-              onClick={() => setKind(k)}
+              onClick={() => {
+                setKind(k);
+                const d = KIND_DEFAULTS[k];
+                if (d?.minutes) setMinutes(d.minutes);
+                if (d?.impact) setImpact(d.impact);
+                if (d?.effort) setEffort(d.effort);
+              }}
             >
               {KIND_LABEL[k]}
             </button>
