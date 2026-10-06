@@ -27,6 +27,7 @@
   /* Purple accent — primary actions: buttons, active states, completed sets. */
   --accent: #8b5cf6;
   --accent-press: #7c3aed;
+  --accent-soft: rgba(139, 92, 246, 0.38);
   --on-accent: #f8f7ff;
 
   /* Gold — achievement moments only (PRs, ladder advances, block

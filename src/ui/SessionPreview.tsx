@@ -11,6 +11,7 @@ import { CATALOG } from '../../catalog/exercises';
 import { buildLadderIndex, rungDepth } from '../engine/ladders';
 import type { Equipment, Exercise, Gym, PrescribedExercise } from '../engine/types';
 import type { SwapCandidate } from '../state/sessionController';
+import { MuscleDiagram } from './MuscleDiagram';
 
 const CATALOG_BY_ID = new Map(CATALOG.map((e) => [e.id, e]));
 const LADDER_INDEX = buildLadderIndex(CATALOG);
@@ -93,7 +94,10 @@ export function SessionPreview({ exercises, gym, onSwap, loadSwapCandidates }: S
 
           return (
             <div key={pe.slotId} className={`session-preview__card session-preview__card--${pe.role}`}>
-              <div className="session-preview__name">{pe.exercise.name}</div>
+              <div className="session-preview__row">
+                <div className="session-preview__name">{pe.exercise.name}</div>
+                <MuscleDiagram exercise={pe.exercise} height={40} />
+              </div>
               <div className="session-preview__meta">
                 <span data-numeric>
                   {setCount} × {repTarget}

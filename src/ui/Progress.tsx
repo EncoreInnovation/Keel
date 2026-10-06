@@ -25,6 +25,7 @@ import {
   getPillarLogs,
 } from '../storage/repository';
 import type { BodyMetricLog, Exercise, SetLog } from '../engine/types';
+import { TrendChart } from './charts/TrendChart';
 
 const WEEK_MS = 7 * 86_400_000;
 
@@ -70,31 +71,6 @@ function computeE1rmSeries(sets: SetLog[]): E1rmSeries[] {
     .sort((a, b) => b.points.length - a.points.length);
 }
 
-function Sparkline({ points }: { points: { at: number; value: number }[] }) {
-  const width = 260;
-  const height = 48;
-  const values = points.map((p) => p.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-
-  const coords = points.map((p, i) => {
-    const x = points.length === 1 ? width / 2 : (i / (points.length - 1)) * width;
-    const y = height - ((p.value - min) / range) * height;
-    return `${x},${y}`;
-  });
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} className="sparkline">
-      <polyline points={coords.join(' ')} fill="none" stroke="var(--accent)" strokeWidth="2" />
-      {coords.map((c, i) => {
-        const [x, y] = c.split(',');
-        return <circle key={i} cx={x} cy={y} r="2.5" fill="var(--accent)" />;
-      })}
-    </svg>
-  );
-}
-
 export interface ProgressProps {
   onBack: () => void;
   onOpenAsymmetry: () => void;
@@ -106,6 +82,7 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
   const [pillarMinutes, setPillarMinutes] = useState(0);
   const [bodyMetrics, setBodyMetrics] = useState<BodyMetricLog[]>([]);
   const [weightInput, setWeightInput] = useState('');
+  const [waistInput, setWaistInput] = useState('');
   const [asymmetryGap, setAsymmetryGap] = useState(0);
   const [reflection, setReflection] = useState<string | undefined>();
   const [reflectionError, setReflectionError] = useState<string | undefined>();
@@ -151,11 +128,23 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
       ? latestWeight.weight - firstWeight.weight
       : undefined;
 
+  const weightPoints = bodyMetrics.filter((m) => m.weight !== undefined).map((m) => ({ at: m.at, value: m.weight! }));
+  const waistPoints = bodyMetrics
+    .filter((m) => m.measurements?.waist !== undefined)
+    .map((m) => ({ at: m.at, value: m.measurements!.waist! }));
+
   const handleSaveWeight = async () => {
-    const value = Number(weightInput);
-    if (!value) return;
-    await appendBodyMetric({ id: `bm-${Date.now()}`, at: Date.now(), weight: value });
+    const weight = Number(weightInput) || undefined;
+    const waist = Number(waistInput) || undefined;
+    if (!weight && !waist) return;
+    await appendBodyMetric({
+      id: `bm-${Date.now()}`,
+      at: Date.now(),
+      weight,
+      measurements: waist ? { waist } : undefined,
+    });
     setWeightInput('');
+    setWaistInput('');
     await refresh();
   };
 
@@ -221,15 +210,9 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
         {e1rmSeries.length === 0 ? (
           <p className="placeholder__body">Log a loaded set to start a trend line.</p>
         ) : (
-          e1rmSeries.slice(0, 4).map((series) => (
-            <div key={series.exerciseId} className="progress-lift">
-              <div className="progress-lift__header">
-                <span>{series.name}</span>
-                <span data-numeric>{Math.round(series.points.at(-1)!.value)} lb</span>
-              </div>
-              <Sparkline points={series.points} />
-            </div>
-          ))
+          e1rmSeries
+            .slice(0, 6)
+            .map((series) => <TrendChart key={series.exerciseId} title={series.name} points={series.points} unit="lb" />)
         )}
       </section>
 
@@ -250,7 +233,9 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
       </section>
 
       <section className="progress-section">
-        <h2 className="progress-section__title">Weight</h2>
+        <h2 className="progress-section__title">Body</h2>
+        <TrendChart title="Bodyweight" points={weightPoints} unit="lb" lowerIsBetter />
+        <TrendChart title="Waist" points={waistPoints} unit="in" lowerIsBetter />
         {latestWeight?.weight !== undefined ? (
           <p className="progress-weight">
             <span data-numeric>{latestWeight.weight} lb</span>
@@ -268,9 +253,16 @@ export function Progress({ onBack, onOpenAsymmetry }: ProgressProps) {
           <input
             type="number"
             inputMode="numeric"
-            placeholder="Today's weight"
+            placeholder="Weight (lb)"
             value={weightInput}
             onChange={(e) => setWeightInput(e.target.value)}
+          />
+          <input
+            type="number"
+            inputMode="decimal"
+            placeholder="Waist (in)"
+            value={waistInput}
+            onChange={(e) => setWaistInput(e.target.value)}
           />
           <button className="btn btn--ghost" onClick={() => void handleSaveWeight()}>
             Save

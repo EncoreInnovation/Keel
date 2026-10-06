@@ -18,6 +18,8 @@ import { primeAudio, playSetComplete } from './audio';
 import { haptics } from './haptics';
 import { rpeLabel } from './rpe';
 import { FINISHER_FRAME, restPrompt } from '../mind/cues';
+import { MuscleDiagram } from './MuscleDiagram';
+import { embedUrl } from './video';
 import type { Block, PrescribedSession, SkipReason, Slot, UserProfile } from '../engine/types';
 
 type Phase = 'loading' | 'set' | 'resting' | 'done';
@@ -59,6 +61,7 @@ export function SessionPlayer({
   const [showSkip, setShowSkip] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   const [weight, setWeight] = useState(0);
   const [reps, setReps] = useState(0);
@@ -240,6 +243,7 @@ export function SessionPlayer({
           {sideLabel ? ` · ${sideLabel}` : ''}
         </div>
         <h1 className="session-player__exercise">{exercise.exercise.name}</h1>
+        <MuscleDiagram exercise={exercise.exercise} height={96} />
         {exercise.lastPerformance && (
           <div className="session-player__ghost">
             Last time: {exercise.lastPerformance.weight > 0 ? `${exercise.lastPerformance.weight} lb × ` : ''}
@@ -268,14 +272,31 @@ export function SessionPlayer({
               </ol>
             )}
             {showInstructions && exercise.exercise.videoUrl && (
-              <a
-                className="session-player__howto-video"
-                href={exercise.exercise.videoUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Watch technique video
-              </a>
+              <div className="session-player__video">
+                {showVideo && navigator.onLine && embedUrl(exercise.exercise.videoUrl) ? (
+                  <iframe
+                    key={exercise.exercise.id}
+                    className="session-player__video-frame"
+                    src={embedUrl(exercise.exercise.videoUrl)}
+                    title={`${exercise.exercise.name} technique video`}
+                    loading="lazy"
+                    allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <button className="session-player__howto-toggle" onClick={() => setShowVideo(true)}>
+                    {navigator.onLine ? '▶ Watch demo' : 'Demo needs a connection'}
+                  </button>
+                )}
+                <a
+                  className="session-player__howto-video"
+                  href={exercise.exercise.videoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open in YouTube
+                </a>
+              </div>
             )}
           </div>
         )}

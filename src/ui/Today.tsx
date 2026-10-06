@@ -39,6 +39,7 @@ export interface TodayProps {
   onOpenConditioning: () => void;
   onOpenSettings: () => void;
   onOpenAskCoach: () => void;
+  onOpenRoadmap: () => void;
   onSwapExercise: (slotId: string, newExerciseId: string) => void;
   loadSwapCandidates: (slotId: string) => Promise<SwapCandidate[]>;
 }
@@ -60,6 +61,7 @@ export function Today({
   onOpenConditioning,
   onOpenSettings,
   onOpenAskCoach,
+  onOpenRoadmap,
   onSwapExercise,
   loadSwapCandidates,
 }: TodayProps) {
@@ -126,10 +128,10 @@ export function Today({
 
       <RecoveryPreview onOpenRecovery={onOpenRecovery} />
 
-      <div className="today__meta">
+      <button className="today__meta today__meta--link" onClick={onOpenRoadmap} aria-label="Open the Q4 roadmap">
         Week {prescription.weekNumber} of {weeksTotal}
-        {prescription.isDeload ? ' · Deload' : ''}
-      </div>
+        {prescription.isDeload ? ' · Deload' : ''} · Q4 plan ›
+      </button>
       <h1 className="today__day">{label}</h1>
       <div className="today__estimate" data-numeric>
         {prescription.estimatedMinutes} min

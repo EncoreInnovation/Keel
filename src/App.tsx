@@ -19,6 +19,7 @@ import { PostureCompare } from './ui/PostureCompare';
 import { PostureHistory } from './ui/PostureHistory';
 import { PostureScan } from './ui/PostureScan';
 import { Progress } from './ui/Progress';
+import { Roadmap } from './ui/Roadmap';
 import { RecoveryMap } from './ui/RecoveryMap';
 import { SessionPlayer } from './ui/SessionPlayer';
 import { Settings } from './ui/Settings';
@@ -61,7 +62,8 @@ type Screen =
   | 'postureCompare'
   | 'conditioning'
   | 'settings'
-  | 'askCoach';
+  | 'askCoach'
+  | 'roadmap';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -290,6 +292,7 @@ export default function App() {
         onOpenConditioning={() => setScreen('conditioning')}
         onOpenSettings={() => setScreen('settings')}
         onOpenAskCoach={() => setScreen('askCoach')}
+        onOpenRoadmap={() => setScreen('roadmap')}
         onSwapExercise={(slotId, exerciseId) => void handleSwapExercise(slotId, exerciseId)}
         loadSwapCandidates={handleLoadSwapCandidates}
       />
@@ -339,6 +342,10 @@ export default function App() {
     return (
       <ConditioningLogForm onSaved={() => setScreen('today')} onCancel={() => setScreen('today')} />
     );
+  }
+
+  if (screen === 'roadmap') {
+    return <Roadmap onBack={() => setScreen('today')} />;
   }
 
   if (screen === 'askCoach') {
