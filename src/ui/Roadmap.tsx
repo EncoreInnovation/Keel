@@ -10,7 +10,7 @@ import { buildRoadmap, currentWeekIndex, daysUntil, type RoadmapWeek } from '../
 import { getActiveBlock, getBlockHistory, getBodyMetrics, getCompletedSessions } from '../storage/repository';
 import type { BodyMetricLog } from '../engine/types';
 import { TrendChart } from './charts/TrendChart';
-import { COACHING_TIPS } from '../mind/guidance';
+import { COACHING_TIPS, SEXUAL_HEALTH_NOTES } from '../mind/guidance';
 
 export interface RoadmapProps {
   onBack: () => void;
@@ -140,6 +140,22 @@ export function Roadmap({ onBack }: RoadmapProps) {
           ))}
         </ul>
         <p className="guidance-list__disclaimer">General guidance, not medical advice.</p>
+      </section>
+
+      <section className="roadmap__section">
+        <h2 className="settings-section__title">Testosterone & sexual health</h2>
+        <ul className="guidance-list">
+          {SEXUAL_HEALTH_NOTES.map((tip) => (
+            <li key={tip.id} className="guidance-list__item">
+              <div className="guidance-list__title">{tip.title}</div>
+              <div className="guidance-list__body">{tip.body}</div>
+              <div className="guidance-list__source">{tip.source}</div>
+            </li>
+          ))}
+        </ul>
+        <p className="guidance-list__disclaimer">
+          General information, not medical advice. Symptoms of low testosterone or erectile changes are worth a doctor’s visit — ED can be an early heart-health signal.
+        </p>
       </section>
 
       <button className="btn btn--ghost" onClick={onBack}>

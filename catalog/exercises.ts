@@ -446,7 +446,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     jointLoad: ['knee', 'hip'],
     progressionOf: 'bodyweight-squat',
     tempo: '3-1-1-0',
-    breathCue: 'Big breath at the top, hold it down, exhale on the way up.',
+    breathCue: 'Big breath at the top, hold it down, exhale on the way up. Light lift of the pelvic floor with the brace — never bear down.',
     instructions: [
       'Hold a dumbbell vertically against your chest.',
       'Squat between your knees, elbows tracking inside the thighs.',
@@ -1159,7 +1159,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     correctiveFit: 0.55,
     jointLoad: ['hip', 'lowBack'],
     progressionOf: 'hip-thrust-db',
-    breathCue: 'Exhale hard at the top, squeezing the glutes, not the low back.',
+    breathCue: 'Exhale hard at the top, squeezing the glutes, not the low back. Light lift of the pelvic floor with the brace — never bear down.',
     instructions: [
       'Upper back braced against a sturdy chair or couch edge, bar across the hips, feet flat.',
       'Drive through the heels, exhaling to full hip extension.',
@@ -1447,7 +1447,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     goalFit: 0.8,
     correctiveFit: 0.15,
     jointLoad: ['knee', 'hip'],
-    breathCue: 'Inhale lowering, exhale pressing away.',
+    breathCue: 'Inhale lowering, exhale pressing away. Light lift of the pelvic floor with the brace — never bear down.',
     instructions: [
       'Feet shoulder-width on the platform, low back flat on the pad.',
       'Lower until the knees reach about 90°.',
@@ -2378,7 +2378,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     goalFit: 0.95,
     correctiveFit: 0.2,
     jointLoad: ['knee', 'hip', 'lowBack'],
-    breathCue: 'Big breath into the belly and brace before each rep; exhale past the sticking point.',
+    breathCue: 'Big breath into the belly and brace before each rep; exhale past the sticking point. Light lift of the pelvic floor with the brace — never bear down.',
     instructions: [
       'Set the safeties just below your bottom position. Bar on the upper traps, hands just outside the shoulders.',
       'Brace, sit down between the hips, knees tracking over the toes.',
@@ -2424,7 +2424,7 @@ export const CATALOG: (Exercise & { videoSearch?: string })[] = [
     goalFit: 1.0,
     correctiveFit: 0.3,
     jointLoad: ['lowBack', 'hip'],
-    breathCue: 'Brace before the bar leaves the floor; exhale only once you are standing tall.',
+    breathCue: 'Brace before the bar leaves the floor; exhale only once you are standing tall. Light lift of the pelvic floor with the brace — never bear down.',
     instructions: [
       'Bar over mid-foot, shins close. Hinge down and grip just outside the legs.',
       'Chest up, lats tight ("bend the bar"), take the slack out before you pull.',

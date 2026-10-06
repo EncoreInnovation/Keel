@@ -15,6 +15,7 @@
 
 import { PROTOCOLS } from '../ui/BreathPacer';
 import type { PillarSession } from './types';
+import { pelvicFloorSession } from './pelvicFloor';
 
 /**
  * Morning up-regulation, for early sessions. Daylight in the first hour after
@@ -258,6 +259,8 @@ export const PILLAR_SESSIONS: Record<PillarSession['kind'], PillarSession> = {
   resonance: RESONANCE,
   nsdr: NSDR,
   focus: FOCUS,
+  // Level 0; the live session is built from practice count — see App.
+  pelvic: pelvicFloorSession(0),
   realign: REALIGN,
   unlock: UNLOCK,
   ground: GROUND,

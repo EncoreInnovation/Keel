@@ -42,7 +42,9 @@ import {
   swapExercise,
   type TodayState,
 } from './state/sessionController';
-import { getProfile, saveProfile, updateActiveSessionMeta } from './storage/repository';
+import { getPillarLogs, getProfile, saveProfile, updateActiveSessionMeta } from './storage/repository';
+import { pelvicFloorSession } from './pillars/pelvicFloor';
+import type { PillarSession } from './pillars/types';
 import type { Exercise, GymId, PillarKind, UserProfile } from './engine/types';
 
 const catalog = CATALOG as Exercise[];
@@ -75,6 +77,7 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | undefined>();
   const [today, setToday] = useState<TodayState | undefined>();
   const [pillar, setPillar] = useState<PillarKind>('reset');
+  const [pillarSession, setPillarSession] = useState<PillarSession | undefined>();
   const [error, setError] = useState<string | undefined>();
   const [coachNote, setCoachNote] = useState<string | undefined>();
   const [cueWord, setCueWord] = useState<string | undefined>();
@@ -306,6 +309,12 @@ export default function App() {
         onStart={handleStart}
         onOpenPillar={(kind) => {
           setPillar(kind);
+          setPillarSession(undefined);
+          if (kind === 'pelvic') {
+            void getPillarLogs().then((logs) =>
+              setPillarSession(pelvicFloorSession(logs.filter((l) => l.kind === 'pelvic' && l.completedAt).length)),
+            );
+          }
           setScreen('pillar');
         }}
         onOpenAsymmetry={() => setScreen('asymmetry')}
@@ -325,7 +334,8 @@ export default function App() {
   }
 
   if (screen === 'pillar') {
-    return <PillarPlayer session={PILLAR_SESSIONS[pillar]} onComplete={() => setScreen('today')} />;
+    if (pillar === 'pelvic' && !pillarSession) return <div className="today today--loading">Loading…</div>;
+    return <PillarPlayer session={pillarSession ?? PILLAR_SESSIONS[pillar]} onComplete={() => setScreen('today')} />;
   }
 
   if (screen === 'asymmetry') {

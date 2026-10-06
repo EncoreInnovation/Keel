@@ -244,7 +244,7 @@ export interface SessionLog {
  * Pillar micro-sessions — breath, nervous-system, mobility, corrective
  * ------------------------------------------------------------------ */
 
-export const PILLAR_KINDS = ['activate', 'reset', 'sigh', 'resonance', 'nsdr', 'focus', 'realign', 'unlock', 'ground'] as const;
+export const PILLAR_KINDS = ['activate', 'reset', 'sigh', 'resonance', 'nsdr', 'focus', 'pelvic', 'realign', 'unlock', 'ground'] as const;
 export type PillarKind = (typeof PILLAR_KINDS)[number];
 
 export interface PillarLog {

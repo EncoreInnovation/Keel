@@ -15,7 +15,8 @@ import { PILLAR_KINDS, type Gym, type GymId, type PillarKind, type PrescribedSes
 import { PILLAR_SESSIONS } from '../pillars/library';
 import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
-import { appendBodyMetric, getBodyMetrics, getCompletedSessions, getPhysiqueLogs, getPostureLogs } from '../storage/repository';
+import { appendBodyMetric, getBodyMetrics, getCompletedSessions, getPhysiqueLogs, getPillarLogs, getPostureLogs } from '../storage/repository';
+import { isSameCalendarDay } from '../engine/time';
 import { physiqueDue, weighInDue } from '../engine/checkins';
 import type { SwapCandidate } from '../state/sessionController';
 import { RecoveryPreview } from './RecoveryPreview';
@@ -79,6 +80,7 @@ export function Today({
   const [weekCount, setWeekCount] = useState(0);
   const [showWeighIn, setShowWeighIn] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
+  const [pelvicDoneToday, setPelvicDoneToday] = useState(true);
   const [weightIn, setWeightIn] = useState('');
   const [waistIn, setWaistIn] = useState('');
 
@@ -92,6 +94,11 @@ export function Today({
     });
     void getBodyMetrics().then((m) => !cancelled && setShowWeighIn(weighInDue(m, now)));
     void getPhysiqueLogs().then((l) => !cancelled && setShowPhotos(physiqueDue(l, now)));
+    void getPillarLogs().then(
+      (logs) =>
+        !cancelled &&
+        setPelvicDoneToday(logs.some((l) => l.kind === 'pelvic' && l.completedAt && isSameCalendarDay(l.completedAt, now))),
+    );
     void getCompletedSessions().then((sessions) => {
       if (cancelled) return;
       const dates = sessions.map((s) => s.completedAt ?? s.startedAt);
@@ -164,6 +171,13 @@ export function Today({
         <button className="checkin-card checkin-card--button" onClick={onOpenPhysiqueCheckin}>
           <div className="checkin-card__title">Monthly physique photos ›</div>
           <div className="placeholder__body">Front, side, back — the change the mirror hides week to week.</div>
+        </button>
+      )}
+
+      {!pelvicDoneToday && (
+        <button className="checkin-card checkin-card--button" onClick={() => onOpenPillar('pelvic')}>
+          <div className="checkin-card__title">Pelvic floor · 6 min ›</div>
+          <div className="placeholder__body">Daily. Builds control and erection quality — anywhere, no equipment.</div>
         </button>
       )}
 

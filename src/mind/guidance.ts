@@ -63,8 +63,67 @@ export const COACHING_TIPS: Tip[] = [
   },
 ];
 
-/** One tip per calendar day, rotating through the list. */
+/**
+ * Testosterone and sexual health — the levers with real evidence behind
+ * them, and an honest line on the ones without.
+ */
+export const SEXUAL_HEALTH_NOTES: Tip[] = [
+  {
+    id: 't-fat-loss',
+    title: 'Fat loss is the biggest testosterone lever',
+    body: 'Body fat converts testosterone to estrogen. In men carrying extra weight, losing it raises testosterone — more the more is lost.',
+    source: 'Corona et al., Eur J Endocrinol 2013 (meta-analysis)',
+  },
+  {
+    id: 't-sleep',
+    title: 'Sleep protects testosterone',
+    body: 'One week of 5-hour nights cut testosterone by 10–15% in healthy young men. Most testosterone is released during sleep.',
+    source: 'Leproult & Van Cauter, JAMA 2011',
+  },
+  {
+    id: 't-lifting',
+    title: 'Lift heavy, don’t overtrain',
+    body: 'Compound strength work supports healthy levels; chronic overtraining and crash dieting suppress them. The app’s autoregulation and deloads are built for exactly this.',
+    source: 'Hackney, Endocrine 2020; Kraemer & Ratamess, Sports Med 2005',
+  },
+  {
+    id: 't-micronutrients',
+    title: 'Vitamin D and zinc — only if low',
+    body: 'Correcting a real deficiency helps; topping up normal levels doesn’t. Get tested rather than guessing. Morning daylight helps vitamin D and sleep both.',
+    source: 'Prasad et al., Nutrition 1996; Lerchbaum et al., Eur J Endocrinol 2017',
+  },
+  {
+    id: 't-alcohol',
+    title: 'Go easy on alcohol',
+    body: 'Heavy drinking lowers testosterone and hurts sleep and erections. A couple of drinks is a different story from a lot.',
+    source: 'Emanuele & Emanuele, Alcohol Health Res World 1998',
+  },
+  {
+    id: 't-cardio',
+    title: 'Erections run on blood flow',
+    body: 'Erectile function shares risk factors with heart disease — waist size, blood pressure, blood sugar. Conditioning and fat loss help both.',
+    source: 'Gandaglia et al., Eur Urol 2014',
+  },
+  {
+    id: 't-pelvic',
+    title: 'Train the pelvic floor',
+    body: 'In trials, pelvic floor training restored or improved erections in most men with ED and gave most men with premature ejaculation control. It’s the Pelvic Floor session — 6 minutes, daily.',
+    source: 'Dorey et al., BJU Int 2005; Pastore et al., Ther Adv Urol 2014',
+  },
+  {
+    id: 't-boosters',
+    title: 'Skip “T boosters”',
+    body: 'Most testosterone-booster supplements have little or no evidence that they raise testosterone. If you have symptoms of low T, a morning blood test and a doctor are the real route.',
+    source: 'Clemesha et al., World J Mens Health 2020',
+  },
+];
+
+const ALL_TIPS = [...COACHING_TIPS, ...SEXUAL_HEALTH_NOTES];
+
+/** One tip per calendar day, rotating through every note. */
 export function tipForDay(now: number): Tip {
   const day = Math.floor(now / 86_400_000);
-  return COACHING_TIPS[day % COACHING_TIPS.length]!;
+  return ALL_TIPS[day % ALL_TIPS.length]!;
 }
+
+export const TIP_COUNT = ALL_TIPS.length;
