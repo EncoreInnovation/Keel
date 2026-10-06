@@ -1858,3 +1858,9 @@
   margin: 0;
   text-align: left;
 }
+
+.rpe-selector__explainer {
+  margin-top: var(--s1);
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}

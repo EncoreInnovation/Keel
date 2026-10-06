@@ -19,7 +19,7 @@ import { achievableLoads } from '../engine/loading';
 import { buildLadderIndex } from '../engine/ladders';
 import { activeGym } from '../engine/types';
 import { appendSets, saveProfile } from '../storage/repository';
-import { RPE_HINTS } from './rpe';
+import { RPE_EXPLAINER, RPE_HINTS } from './rpe';
 import type { Exercise, SetLog, UserProfile } from '../engine/types';
 
 const catalog = CATALOG as Exercise[];
@@ -150,6 +150,7 @@ export function BaselineTest({ profile, onComplete, onSkip }: BaselineTestProps)
                 />
               </label>
             </div>
+            <p className="settings-section__hint">{RPE_EXPLAINER}</p>
             <div className="baseline-test__row">
               {[7, 8, 9, 10].map((value) => (
                 <button

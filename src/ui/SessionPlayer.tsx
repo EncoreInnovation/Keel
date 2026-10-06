@@ -16,7 +16,7 @@ import { activeGym } from '../engine/types';
 import { RestTimer } from './RestTimer';
 import { primeAudio, playSetComplete } from './audio';
 import { haptics } from './haptics';
-import { rpeLabel } from './rpe';
+import { RPE_EXPLAINER, rpeLabel } from './rpe';
 import { FINISHER_FRAME, restPrompt } from '../mind/cues';
 import { MuscleDiagram } from './MuscleDiagram';
 import { embedUrl } from './video';
@@ -443,6 +443,7 @@ function RpeSelector({ value, onChange }: { value: number; onChange: (v: number)
       {/* The number alone meant nothing to anyone who hadn't met RPE before,
           so the selected value always spells itself out. */}
       <div className="rpe-selector__hint">{rpeLabel(Math.round(value))}</div>
+      <div className="rpe-selector__explainer">{RPE_EXPLAINER}</div>
     </div>
   );
 }
