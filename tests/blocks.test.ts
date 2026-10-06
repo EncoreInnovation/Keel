@@ -35,7 +35,7 @@ describe('generateSession — bestE1RM', () => {
   it('reports the best e1RM ever logged for a locked primary, not just the last session', () => {
     const ctx = makeContext();
     const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
-    const primaryId = block.lockedAssignments['push-primary']!;
+    const primaryId = block.lockedAssignments.home!['push-primary']!;
 
     // Best session was two sessions ago, not the most recent one — proves
     // this reads across all history rather than just the last attempt.
@@ -69,7 +69,7 @@ describe('generateSession — bestE1RM', () => {
   it('ignores skipped and unloaded sets when finding the best e1RM', () => {
     const ctx = makeContext();
     const block = createBlock('b', 'Test Block', HYPERTROPHY_BLOCK_DAYS, catalog, ctx, T0);
-    const primaryId = block.lockedAssignments['push-primary']!;
+    const primaryId = block.lockedAssignments.home!['push-primary']!;
 
     const history: SetLog[] = [
       makeSet({ id: 'a', exerciseId: primaryId, weight: 200, reps: 10, skipped: true, completedAt: T0 - 2 * 86_400_000 }),

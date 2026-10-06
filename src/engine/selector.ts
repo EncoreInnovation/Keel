@@ -210,7 +210,10 @@ export function selectForSlot(
 ): Exercise | undefined {
   if (slot.locked && lockedExerciseId) {
     const locked = catalog.find((e) => e.id === lockedExerciseId);
-    if (locked) return locked;
+    // A lock still has to be trainable here. Equipment edited in Settings or
+    // a newly flagged joint can make it impossible, and prescribing it anyway
+    // stops the session cold — fall through to the ranked pick instead.
+    if (locked && passesHardFilters(locked, ctx)) return locked;
   }
 
   const ranked = rankCandidates(catalog, slot, ctx).filter(

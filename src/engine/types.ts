@@ -99,6 +99,15 @@ export const EQUIPMENT = [
   'mat',
   'wall',
   'chair',
+  // Big-box gym kit — present at Fitness Connection, absent at home and in
+  // the apartment gym, so these are what let the same slot resolve to a
+  // barbell back squat at FC and a goblet squat everywhere else.
+  'squatRack',
+  'smithMachine',
+  /** Selectorized pin-stack stations (pulldown, leg curl, leg extension, …). */
+  'machine',
+  'plyoBox',
+  'sled',
 ] as const;
 
 export type Equipment = (typeof EQUIPMENT)[number];
@@ -334,8 +343,14 @@ export interface Block {
   deloadWeek: number;
   days: DayTemplate[];
   startedAt: number;
-  /** Exercise chosen for each locked slot, held constant across the block. */
-  lockedAssignments: Record<string, string>; // slotId -> exerciseId
+  /**
+   * Exercise chosen for each locked slot, per gym, held constant across the
+   * block. Keyed by gym because the gyms differ too much for one lock to
+   * hold: a barbell squat locked at Fitness Connection can't be loaded at
+   * home. Each gym gets its own primaries, assigned the first time a session
+   * is generated there, so progress stays measurable within each gym.
+   */
+  lockedAssignments: Partial<Record<GymId, Record<string, string>>>; // gymId -> slotId -> exerciseId
 }
 
 /* ------------------------------------------------------------------ *
@@ -386,7 +401,7 @@ export interface PrescribedSession {
  * Gyms
  * ------------------------------------------------------------------ */
 
-export type GymId = 'home' | 'apartment';
+export type GymId = 'home' | 'apartment' | 'fc-north-hills' | 'fc-rtp';
 
 /**
  * A loadable bar: its own weight plus the plate pairs available for it.

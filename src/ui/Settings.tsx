@@ -34,6 +34,11 @@ const EQUIPMENT_LABEL: Record<Equipment, string> = {
   mat: 'Mat',
   wall: 'Wall space',
   chair: 'Chair',
+  squatRack: 'Squat rack',
+  smithMachine: 'Smith machine',
+  machine: 'Selectorized machines',
+  plyoBox: 'Plyo boxes',
+  sled: 'Sled',
 };
 
 const JOINT_LABEL: Record<Joint, string> = {

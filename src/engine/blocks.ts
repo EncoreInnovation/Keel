@@ -166,21 +166,14 @@ export const RECOVERY_GUARD_THRESHOLD = 0.4;
  * ------------------------------------------------------------------ */
 
 /**
- * Choose the block's locked primary lifts once, at creation.
+ * Choose one gym's locked primary lifts.
  *
  * Unilateral variants win ties here on purpose — with a known right-side
  * preference, a locked bilateral primary would let the strong side carry the
  * whole block without ever showing up in the numbers.
  */
-export function createBlock(
-  id: string,
-  name: string,
-  days: DayTemplate[],
-  catalog: Exercise[],
-  ctx: SelectionContext,
-  startedAt: number,
-): Block {
-  const lockedAssignments: Record<string, string> = {};
+function chooseLocks(days: DayTemplate[], catalog: Exercise[], ctx: SelectionContext): Record<string, string> {
+  const locks: Record<string, string> = {};
   const used = new Set<string>();
 
   for (const day of days) {
@@ -196,12 +189,23 @@ export function createBlock(
         );
       const chosen = ranked[0]?.exercise;
       if (chosen) {
-        lockedAssignments[s.id] = chosen.id;
+        locks[s.id] = chosen.id;
         used.add(chosen.id);
       }
     }
   }
+  return locks;
+}
 
+/** Create a block, locking primaries for the gym `ctx.profile` is training in. */
+export function createBlock(
+  id: string,
+  name: string,
+  days: DayTemplate[],
+  catalog: Exercise[],
+  ctx: SelectionContext,
+  startedAt: number,
+): Block {
   return {
     id,
     name,
@@ -209,7 +213,21 @@ export function createBlock(
     deloadWeek: BLOCK_WEEKS,
     days,
     startedAt,
-    lockedAssignments,
+    lockedAssignments: { [activeGym(ctx.profile).id]: chooseLocks(days, catalog, ctx) },
+  };
+}
+
+/**
+ * The block with primaries locked for the active gym, adding them the first
+ * time a session is built there. Returns the same object when nothing changed,
+ * so callers can tell whether it needs persisting.
+ */
+export function withGymLocks(block: Block, catalog: Exercise[], ctx: SelectionContext): Block {
+  const gymId = activeGym(ctx.profile).id;
+  if (block.lockedAssignments[gymId]) return block;
+  return {
+    ...block,
+    lockedAssignments: { ...block.lockedAssignments, [gymId]: chooseLocks(block.days, catalog, ctx) },
   };
 }
 
@@ -409,8 +427,10 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     return match ? byId.get(match) : undefined;
   }
 
+  const gymLocks = block.lockedAssignments[gym.id] ?? {};
+
   for (const slotDef of slots) {
-    const lockedId = block.lockedAssignments[slotDef.id];
+    const lockedId = gymLocks[slotDef.id];
     let exercise = selectForSlot(catalog, slotDef, ctx, lockedId, chosenThisSession);
     if (!exercise) continue;
 
@@ -418,7 +438,7 @@ export function generateSession(input: GenerationInput): PrescribedSession {
     // entire block — only its reps and load are allowed to move. Ladder
     // rung changes are exactly the kind of identity change that's reserved
     // for slots the selector is still free to rotate.
-    const isLockedPrimary = slotDef.locked && Boolean(lockedId);
+    const isLockedPrimary = slotDef.locked && exercise.id === lockedId;
 
     // Ladder: bodyweight and band work progresses by variant, not by load.
     const attempts = attemptsFor(history, exercise.id);

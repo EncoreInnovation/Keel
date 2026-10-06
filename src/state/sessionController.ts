@@ -20,7 +20,7 @@ import {
   volumeMultiplier,
   type FatigueState,
 } from '../engine/recovery';
-import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay, swapExerciseInSlot } from '../engine/blocks';
+import { createBlock, HYPERTROPHY_BLOCK_DAYS, generateSession, nextDay, swapExerciseInSlot, withGymLocks } from '../engine/blocks';
 import { achievableLoads } from '../engine/loading';
 import { adjustRemainingSets, type InSessionAdjustment } from '../engine/overload';
 import { rankCandidates, type SelectionContext } from '../engine/selector';
@@ -158,7 +158,7 @@ export async function loadToday(
   at: number,
   readiness?: number,
 ): Promise<TodayState> {
-  const block = await ensureActiveBlock(catalog, profile, at);
+  let block = await ensureActiveBlock(catalog, profile, at);
 
   const [existingRecord, existingPrescription] = await Promise.all([
     repo.getActiveSessionRecord(),
@@ -175,6 +175,13 @@ export async function loadToday(
 
   const weeksTrained = Math.floor((at - block.startedAt) / (7 * 86_400_000));
   const ctx = buildSelectionContext(profile, sets, fatigue, at, weeksTrained);
+
+  // First session at this gym in this block: lock its primaries now.
+  const locked = withGymLocks(block, catalog, ctx);
+  if (locked !== block) {
+    await repo.saveActiveBlock(locked);
+    block = locked;
+  }
 
   const completed = await repo.getCompletedSessionsForBlock(block.id);
   const { weekNumber, dayId } = nextDay(block, completed);
