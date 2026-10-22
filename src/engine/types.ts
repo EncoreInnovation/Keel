@@ -271,6 +271,14 @@ export interface BodyMetricLog {
   weight?: number;
   /** Inches, keyed by site. Sparse — log only what you measured that day. */
   measurements?: Partial<Record<MeasurementSite, number>>;
+  /**
+   * Smart-scale readings. Bioimpedance is noisy in absolute terms (hydration
+   * alone moves it a couple of points), so only the trend is trusted — same
+   * scale, same time of day, each time.
+   */
+  bodyFatPct?: number;
+  /** The scale's visceral-fat rating. Units vary by brand; only direction is used. */
+  visceralFat?: number;
   notes?: string;
 }
 
@@ -498,8 +506,14 @@ export interface UserProfile {
   impactCeiling: ImpactLevel;
   daysPerWeek: number;
   sessionMinutes: number;
-  /** Drives the countdown and Block 1's tuning. */
+  /** Deadline for the body goals below. Defaults to the end of Dec 31 this year. */
   goalDate?: number;
+  /** lb to be at or under by `goalDate`. */
+  goalWeight?: number;
+  /** Body fat % to be at or under by `goalDate`. */
+  goalBodyFatPct?: number;
+  /** For the birthday countdown. Month is 1-based. */
+  birthday?: { month: number; day: number };
   /**
    * Ladder rungs the baseline test measured you onto.
    *

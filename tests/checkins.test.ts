@@ -15,6 +15,8 @@ describe('check-in cadence', () => {
   it('asks for a weigh-in when nothing was logged in the last week', () => {
     expect(weighInDue([], NOW)).toBe(true);
     expect(weighInDue([{ id: 'a', at: NOW - 3 * DAY, weight: 285 }], NOW)).toBe(false);
+    // A smart-scale reading on its own still counts as this week's check-in.
+    expect(weighInDue([{ id: 'a', at: NOW - 3 * DAY, bodyFatPct: 22 }], NOW)).toBe(false);
     expect(weighInDue([{ id: 'a', at: NOW - 8 * DAY, weight: 285 }], NOW)).toBe(true);
     expect(weighInDue([{ id: 'a', at: NOW - DAY, measurements: { waist: 44 } }], NOW)).toBe(false);
   });

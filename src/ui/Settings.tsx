@@ -14,6 +14,9 @@ import { EQUIPMENT, JOINTS } from '../engine/types';
 import { IMPACT_ORDER } from '../engine/recovery';
 import { exportAll, importAll, saveProfile } from '../storage/repository';
 import type { Equipment, ExperienceLevel, ImpactLevel, Joint, UserProfile } from '../engine/types';
+import { resolveGoals } from '../engine/goals';
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const EQUIPMENT_LABEL: Record<Equipment, string> = {
   bodyweight: 'Bodyweight / floor',
@@ -77,6 +80,26 @@ function parseWeightList(raw: string): number[] {
  * from the parsed numbers on every keystroke would eat a half-typed "8." or a
  * trailing comma, making decimals and new entries impossible to type.
  */
+/** One number, kept as typed until it parses; blank or out of range leaves the value alone. */
+function NumberInput({ value, min, max, onChange, label }: { value: number; min: number; max: number; onChange: (n: number) => void; label: string }) {
+  const [text, setText] = useState(String(value));
+  return (
+    <input
+      type="text"
+      inputMode="decimal"
+      className="settings-input"
+      aria-label={label}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        const n = Number(e.target.value.trim());
+        if (e.target.value.trim() !== '' && Number.isFinite(n) && n >= min && n <= max) onChange(n);
+      }}
+      onBlur={() => setText(String(value))}
+    />
+  );
+}
+
 function WeightListInput({ values, onChange }: { values: number[]; onChange: (next: number[]) => void }) {
   const [text, setText] = useState(values.join(', '));
   return (
@@ -100,6 +123,7 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
   const [restoreArmed, setRestoreArmed] = useState(false);
   const [restoreError, setRestoreError] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const goals = resolveGoals(draft, Date.now());
 
   const handleSave = async () => {
     await saveProfile(draft);
@@ -136,6 +160,44 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
   return (
     <div className="phase-screen settings">
       <div className="phase-screen__eyebrow">Settings</div>
+
+      <section className="settings-section">
+        <h2 className="settings-section__title">Goals</h2>
+        <p className="settings-section__hint">
+          What the Q4 plan tracks you against, due {new Date(goals.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}.
+        </p>
+        <h3 className="settings-section__title">Goal weight (lb)</h3>
+        <NumberInput label="Goal weight in pounds" value={goals.weight} min={80} max={600} onChange={(goalWeight) => setDraft({ ...draft, goalWeight })} />
+        <h3 className="settings-section__title">Goal body fat (%)</h3>
+        <NumberInput label="Goal body fat percent" value={goals.bodyFatPct} min={3} max={60} onChange={(goalBodyFatPct) => setDraft({ ...draft, goalBodyFatPct })} />
+        <h3 className="settings-section__title">Birthday</h3>
+        <div className="settings-options">
+          <select
+            className="settings-input"
+            aria-label="Birthday month"
+            value={goals.birthday.month}
+            onChange={(e) => setDraft({ ...draft, birthday: { ...goals.birthday, month: Number(e.target.value) } })}
+          >
+            {MONTHS.map((m, i) => (
+              <option key={m} value={i + 1}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <select
+            className="settings-input"
+            aria-label="Birthday day"
+            value={goals.birthday.day}
+            onChange={(e) => setDraft({ ...draft, birthday: { ...goals.birthday, day: Number(e.target.value) } })}
+          >
+            {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
+      </section>
 
       <section className="settings-section">
         <h2 className="settings-section__title">Experience level</h2>

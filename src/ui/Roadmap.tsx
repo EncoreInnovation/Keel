@@ -8,11 +8,15 @@
 import { useEffect, useState } from 'react';
 import { buildRoadmap, currentWeekIndex, daysUntil, type RoadmapWeek } from '../engine/roadmap';
 import { getActiveBlock, getBlockHistory, getBodyMetrics, getCompletedSessions } from '../storage/repository';
-import type { BodyMetricLog } from '../engine/types';
+import type { BodyMetricLog, UserProfile } from '../engine/types';
+import { goalProgress, resolveGoals } from '../engine/goals';
+import { Countdowns } from './Countdowns';
+import { GoalsPanel } from './GoalsPanel';
 import { TrendChart } from './charts/TrendChart';
 import { COACHING_TIPS, SEXUAL_HEALTH_NOTES } from '../mind/guidance';
 
 export interface RoadmapProps {
+  profile: UserProfile;
   onBack: () => void;
 }
 
@@ -23,7 +27,7 @@ function range(w: RoadmapWeek): string {
   return `${f(w.start)} – ${f(w.end - 86_400_000)}`;
 }
 
-export function Roadmap({ onBack }: RoadmapProps) {
+export function Roadmap({ profile, onBack }: RoadmapProps) {
   const [weeks, setWeeks] = useState<RoadmapWeek[] | undefined>();
   const [doneThisWeek, setDoneThisWeek] = useState(0);
   const [metrics, setMetrics] = useState<BodyMetricLog[]>([]);
@@ -54,6 +58,10 @@ export function Roadmap({ onBack }: RoadmapProps) {
   const retest = weeks.at(-1)!;
   const weight = metrics.filter((m) => m.weight !== undefined).map((m) => ({ at: m.at, value: m.weight! }));
   const waist = metrics.filter((m) => m.measurements?.waist !== undefined).map((m) => ({ at: m.at, value: m.measurements!.waist! }));
+  const bodyFat = metrics.filter((m) => m.bodyFatPct !== undefined).map((m) => ({ at: m.at, value: m.bodyFatPct! }));
+  const goals = resolveGoals(profile, now);
+  const progress = goalProgress(metrics, profile, now);
+  const deadlineLabel = new Date(goals.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   return (
     <div className="phase-screen roadmap">
@@ -62,6 +70,17 @@ export function Roadmap({ onBack }: RoadmapProps) {
         Your 12 weeks to year-end, phase by phase. The app adjusts training for you — glance here
         weekly to see where you are and what's next.
       </p>
+
+      <Countdowns
+        now={now}
+        birthday={goals.birthday}
+        poundsToGo={progress?.weight ? progress.weight.latest - progress.weight.target : undefined}
+      />
+
+      <section className="roadmap__section">
+        <h2 className="settings-section__title">{deadlineLabel} goals</h2>
+        <GoalsPanel progress={progress} goals={goals} now={now} />
+      </section>
 
       <div className="roadmap__hero">
         <div className="roadmap__hero-value">Week {Math.min(currentIndex + 1, 12)}</div>
@@ -122,12 +141,13 @@ export function Roadmap({ onBack }: RoadmapProps) {
 
       <section className="roadmap__section">
         <h2 className="settings-section__title">Body</h2>
-        {weight.length === 0 && waist.length === 0 ? (
+        {weight.length === 0 && waist.length === 0 && bodyFat.length === 0 ? (
           <p className="placeholder__body">Log weight and waist on the Progress screen each week to see the trend here.</p>
         ) : (
           <>
             <TrendChart title="Bodyweight" points={weight} unit="lb" lowerIsBetter />
             <TrendChart title="Waist" points={waist} unit="in" lowerIsBetter />
+            {bodyFat.length > 0 && <TrendChart title="Body fat" points={bodyFat} unit="%" lowerIsBetter />}
           </>
         )}
       </section>

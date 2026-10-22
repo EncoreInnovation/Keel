@@ -16,11 +16,13 @@ import {
   getPhysiqueLogs,
   getPostureLogs,
 } from '../storage/repository';
-import type { PillarKind } from '../engine/types';
+import type { PillarKind, UserProfile } from '../engine/types';
+import { goalProgress } from '../engine/goals';
 import { describeGap } from './Asymmetry';
 import { VolumeReadout } from './VolumeReadout';
 
 export interface ProgressHubProps {
+  profile: UserProfile;
   onOpenRoadmap: () => void;
   onOpenProgress: () => void;
   onOpenPhysique: () => void;
@@ -80,13 +82,14 @@ export function ProgressHub(props: ProgressHubProps) {
       const change = (xs: number[], unit: string) => {
         if (xs.length < 2) return undefined;
         const d = Math.round((xs.at(-1)! - xs[0]!) * 10) / 10;
-        return `${d > 0 ? '+' : ''}${d} ${unit}`;
+        return `${d > 0 ? '+' : ''}${d}${unit.startsWith('%') ? '' : ' '}${unit}`;
       };
       const waistChange = change(waists.map((m) => m.measurements!.waist!), 'in waist');
       const weightChange = change(weights.map((m) => m.weight!), 'lb');
+      const fatChange = change(metrics.filter((m) => m.bodyFatPct !== undefined).map((m) => m.bodyFatPct!), '% body fat');
       const body =
-        waistChange || weightChange
-          ? [waistChange, weightChange].filter(Boolean).join(' · ') + ' since you started'
+        waistChange || weightChange || fatChange
+          ? [waistChange, weightChange, fatChange].filter(Boolean).join(' · ') + ' since you started'
           : weights.length || waists.length
             ? 'One check-in so far — the trend starts next week'
             : 'No weigh-ins yet';
@@ -94,14 +97,17 @@ export function ProgressHub(props: ProgressHubProps) {
       const lastPhoto = physique.at(-1);
       const unilateral = asymmetryReport(sets);
 
+      const goal = goalProgress(metrics, props.profile, now)?.weight;
+      const goalWord = goal && goal.status !== 'start' ? ` · ${goal.status === 'hit' ? 'Weight goal hit' : goal.status === 'on-track' ? 'On track' : goal.status === 'ahead' ? 'Ahead of goal' : 'Behind goal'}` : '';
       setStatus({
-        plan: `Week ${Math.min(i + 1, 12)} of 12 · ${phase} · ${daysUntil(weeks.at(-1)!.start, now)} days to retest`,
+        plan: `Week ${Math.min(i + 1, 12)} of 12 · ${phase} · ${daysUntil(weeks.at(-1)!.start, now)} days to retest${goalWord}`,
         body,
         physique: lastPhoto ? `Last photos ${Math.floor((now - lastPhoto.at) / DAY)} days ago` : 'No photos yet',
         alignment: alignmentSummary(posture, now),
         balance: unilateral.length ? describeGap(overallGap(unilateral)) : 'No one-sided lifts logged yet',
       });
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

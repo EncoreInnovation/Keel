@@ -2004,3 +2004,180 @@
   color: var(--text-dim);
   font-size: var(--fs-sm);
 }
+
+/* ---------------- Weekly check-in form ---------------- */
+
+.weigh-in {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: 100%;
+}
+
+.weigh-in__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+}
+
+.weigh-in__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.weigh-in__label {
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.weigh-in__field input {
+  min-width: 0;
+  min-height: 44px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--fs-body);
+  padding: 0 var(--s3);
+}
+
+.weigh-in__group {
+  margin-top: var(--s1, 4px);
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.weigh-in__save {
+  align-self: stretch;
+}
+
+/* ---------------- Countdowns ---------------- */
+
+.countdowns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  gap: var(--s2);
+  width: 100%;
+  max-width: 24rem;
+}
+
+.countdowns__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+button.countdowns__tile {
+  cursor: pointer;
+}
+
+.countdowns__tile--q4 {
+  border-color: var(--accent-soft);
+}
+
+.countdowns__label {
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.countdowns__days {
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.countdowns__tile--q4 .countdowns__days {
+  color: var(--accent);
+}
+
+.countdowns__unit {
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+}
+
+.countdowns__sub {
+  margin-top: 2px;
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ---------------- Goals ---------------- */
+
+.goals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  width: 100%;
+}
+
+.goal-row {
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.goal-row__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s2);
+}
+
+.goal-row__title {
+  font-weight: 600;
+}
+
+.goal-row__status {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.goal-row__status--on-track,
+.goal-row__status--ahead {
+  color: var(--data-0);
+}
+
+.goal-row__status--behind {
+  color: var(--data-3);
+}
+
+.goal-row__status--hit {
+  color: var(--gold);
+}
+
+.goal-row__status--start {
+  color: var(--text-dim);
+}
+
+.goal-row__numbers {
+  margin-top: var(--s1, 4px);
+  font-size: var(--fs-lg);
+}
+
+.goal-row__detail {
+  margin-top: var(--s1, 4px);
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}

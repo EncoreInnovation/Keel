@@ -11,16 +11,18 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { Exercise, Gym, GymId, PillarKind, PrescribedSession } from '../engine/types';
+import type { BodyMetricLog, Exercise, Gym, GymId, PillarKind, PrescribedSession } from '../engine/types';
 import { currentStreak, sessionsThisWeek } from '../engine/streak';
 import { CATALOG } from '../../catalog/exercises';
 import type { Recommendation } from '../pillars/recommend';
 import { loadRecommendations } from '../state/recommendations';
 import { RecommendationCard } from './RecommendationCard';
-import { appendBodyMetric, getBodyMetrics, getCompletedSessions, getPhysiqueLogs } from '../storage/repository';
+import { getBodyMetrics, getCompletedSessions, getPhysiqueLogs } from '../storage/repository';
 import { physiqueDue, weighInDue } from '../engine/checkins';
 import type { SwapCandidate } from '../state/sessionController';
 import { SessionPreview } from './SessionPreview';
+import { Countdowns } from './Countdowns';
+import { WeighInForm } from './WeighInForm';
 
 export interface TodayProps {
   prescription: PrescribedSession;
@@ -38,6 +40,10 @@ export interface TodayProps {
   /** Toggle the 20–25 min version; only offered before the session starts. */
   onToggleExpress: () => void;
   onOpenPhysiqueCheckin: () => void;
+  /** Saves a check-in and keeps the profile's bodyweight in step with it. */
+  onLogWeighIn: (entry: BodyMetricLog) => Promise<void>;
+  goalWeight: number;
+  birthday: { month: number; day: number };
   onSwapExercise: (slotId: string, newExerciseId: string) => void;
   loadSwapCandidates: (slotId: string) => Promise<SwapCandidate[]>;
 }
@@ -56,6 +62,9 @@ export function Today({
   onOpenRoadmap,
   onToggleExpress,
   onOpenPhysiqueCheckin,
+  onLogWeighIn,
+  goalWeight,
+  birthday,
   onSwapExercise,
   loadSwapCandidates,
 }: TodayProps) {
@@ -66,13 +75,16 @@ export function Today({
   const [showWeighIn, setShowWeighIn] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
   const [recommendation, setRecommendation] = useState<Recommendation | undefined>();
-  const [weightIn, setWeightIn] = useState('');
-  const [waistIn, setWaistIn] = useState('');
+  const [latestWeight, setLatestWeight] = useState<number | undefined>();
 
   useEffect(() => {
     let cancelled = false;
     const now = Date.now();
-    void getBodyMetrics().then((m) => !cancelled && setShowWeighIn(weighInDue(m, now)));
+    void getBodyMetrics().then((m) => {
+      if (cancelled) return;
+      setShowWeighIn(weighInDue(m, now));
+      setLatestWeight([...m].sort((a, b) => a.at - b.at).filter((x) => x.weight !== undefined).at(-1)?.weight);
+    });
     void getPhysiqueLogs().then((l) => !cancelled && setShowPhotos(physiqueDue(l, now)));
     void loadRecommendations(CATALOG as Exercise[], prescription, now).then((r) => !cancelled && setRecommendation(r[0]));
     void getCompletedSessions().then((sessions) => {
@@ -88,26 +100,22 @@ export function Today({
 
   return (
     <div className="today">
+      <Countdowns
+        now={Date.now()}
+        birthday={birthday}
+        poundsToGo={latestWeight !== undefined ? latestWeight - goalWeight : undefined}
+        onSelect={onOpenRoadmap}
+      />
       {showWeighIn && (
         <div className="checkin-card">
-          <div className="checkin-card__title">Weekly check-in — weight and waist</div>
-          <div className="checkin-card__row">
-            <input type="number" inputMode="decimal" placeholder="Weight (lb)" value={weightIn} onChange={(e) => setWeightIn(e.target.value)} aria-label="Weight in pounds" />
-            <input type="number" inputMode="decimal" placeholder="Waist (in)" value={waistIn} onChange={(e) => setWaistIn(e.target.value)} aria-label="Waist in inches" />
-            <button
-              className="btn btn--ghost"
-              onClick={() => {
-                const weight = Number(weightIn) || undefined;
-                const waist = Number(waistIn) || undefined;
-                if (!weight && !waist) return;
-                void appendBodyMetric({ id: `bm-${Date.now()}`, at: Date.now(), weight, measurements: waist ? { waist } : undefined }).then(
-                  () => setShowWeighIn(false),
-                );
-              }}
-            >
-              Save
-            </button>
-          </div>
+          <div className="checkin-card__title">Weekly check-in</div>
+          <WeighInForm
+            onSave={async (entry) => {
+              await onLogWeighIn(entry);
+              if (entry.weight !== undefined) setLatestWeight(entry.weight);
+              setShowWeighIn(false);
+            }}
+          />
         </div>
       )}
       {showPhotos && (

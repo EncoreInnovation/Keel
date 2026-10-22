@@ -17,7 +17,6 @@ import { CATALOG } from '../../catalog/exercises';
 import { askCoach } from '../ai/client';
 import { buildWeeklyReflectionPrompt, summarizeWeek } from '../ai/prompts';
 import {
-  appendBodyMetric,
   getAllSets,
   getBodyMetrics,
   getCompletedSessions,
@@ -26,6 +25,8 @@ import {
 } from '../storage/repository';
 import type { BodyMetricLog, Exercise, SetLog } from '../engine/types';
 import { TrendChart } from './charts/TrendChart';
+import { WeighInForm } from './WeighInForm';
+import { leanMass } from '../engine/goals';
 
 const WEEK_MS = 7 * 86_400_000;
 
@@ -76,15 +77,15 @@ export interface ProgressProps {
   onOpenAsymmetry: () => void;
   onOpenPhysique: () => void;
   onNewPhysique: () => void;
+  /** Saves a check-in and keeps the profile's bodyweight in step with it. */
+  onLogWeighIn: (entry: BodyMetricLog) => Promise<void>;
 }
 
-export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysique }: ProgressProps) {
+export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysique, onLogWeighIn }: ProgressProps) {
   const [sets, setSets] = useState<SetLog[] | undefined>();
   const [weeksTrained, setWeeksTrained] = useState(0);
   const [pillarMinutes, setPillarMinutes] = useState(0);
   const [bodyMetrics, setBodyMetrics] = useState<BodyMetricLog[]>([]);
-  const [weightInput, setWeightInput] = useState('');
-  const [waistInput, setWaistInput] = useState('');
   const [asymmetryGap, setAsymmetryGap] = useState(0);
   const [reflection, setReflection] = useState<string | undefined>();
   const [reflectionError, setReflectionError] = useState<string | undefined>();
@@ -123,7 +124,7 @@ export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysiqu
     .filter((x) => x.exercise && x.exercise.loadType !== 'external' && x.depth > 0)
     .sort((a, b) => b.depth - a.depth);
 
-  const latestWeight = bodyMetrics.at(-1);
+  const latestWeight = bodyMetrics.filter((m) => m.weight !== undefined).at(-1);
   const firstWeight = bodyMetrics.find((m) => m.weight !== undefined);
   const weightDelta =
     latestWeight?.weight !== undefined && firstWeight?.weight !== undefined
@@ -131,24 +132,15 @@ export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysiqu
       : undefined;
 
   const weightPoints = bodyMetrics.filter((m) => m.weight !== undefined).map((m) => ({ at: m.at, value: m.weight! }));
+  const bodyFatPoints = bodyMetrics.filter((m) => m.bodyFatPct !== undefined).map((m) => ({ at: m.at, value: m.bodyFatPct! }));
+  const visceralPoints = bodyMetrics.filter((m) => m.visceralFat !== undefined).map((m) => ({ at: m.at, value: m.visceralFat! }));
+  const leanPoints = bodyMetrics.flatMap((m) => {
+    const lean = leanMass(m);
+    return lean === undefined ? [] : [{ at: m.at, value: lean }];
+  });
   const waistPoints = bodyMetrics
     .filter((m) => m.measurements?.waist !== undefined)
     .map((m) => ({ at: m.at, value: m.measurements!.waist! }));
-
-  const handleSaveWeight = async () => {
-    const weight = Number(weightInput) || undefined;
-    const waist = Number(waistInput) || undefined;
-    if (!weight && !waist) return;
-    await appendBodyMetric({
-      id: `bm-${Date.now()}`,
-      at: Date.now(),
-      weight,
-      measurements: waist ? { waist } : undefined,
-    });
-    setWeightInput('');
-    setWaistInput('');
-    await refresh();
-  };
 
   const handleGetReflection = async () => {
     setReflectionBusy(true);
@@ -242,6 +234,9 @@ export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysiqu
         <h2 className="progress-section__title">Body</h2>
         <TrendChart title="Bodyweight" points={weightPoints} unit="lb" lowerIsBetter />
         <TrendChart title="Waist" points={waistPoints} unit="in" lowerIsBetter />
+        {bodyFatPoints.length > 0 && <TrendChart title="Body fat" points={bodyFatPoints} unit="%" lowerIsBetter />}
+        {leanPoints.length > 0 && <TrendChart title="Lean mass" points={leanPoints} unit="lb" />}
+        {visceralPoints.length > 0 && <TrendChart title="Visceral fat" points={visceralPoints} unit="" lowerIsBetter />}
         {latestWeight?.weight !== undefined ? (
           <p className="progress-weight">
             <span data-numeric>{latestWeight.weight} lb</span>
@@ -255,25 +250,12 @@ export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysiqu
         ) : (
           <p className="placeholder__body">No weight logged yet.</p>
         )}
-        <div className="progress-weight-entry">
-          <input
-            type="number"
-            inputMode="numeric"
-            placeholder="Weight (lb)"
-            value={weightInput}
-            onChange={(e) => setWeightInput(e.target.value)}
-          />
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder="Waist (in)"
-            value={waistInput}
-            onChange={(e) => setWaistInput(e.target.value)}
-          />
-          <button className="btn btn--ghost" onClick={() => void handleSaveWeight()}>
-            Save
-          </button>
-        </div>
+        <WeighInForm
+          onSave={async (entry) => {
+            await onLogWeighIn(entry);
+            await refresh();
+          }}
+        />
       </section>
 
       <section className="progress-section">

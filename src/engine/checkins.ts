@@ -11,7 +11,7 @@ export const WEIGH_IN_EVERY_DAYS = 7;
 export const PHOTOS_EVERY_DAYS = 28;
 
 export function weighInDue(metrics: BodyMetricLog[], now: number): boolean {
-  const last = [...metrics].reverse().find((m) => m.weight !== undefined || m.measurements?.waist !== undefined);
+  const last = [...metrics].reverse().find((m) => m.weight !== undefined || m.measurements?.waist !== undefined || m.bodyFatPct !== undefined);
   return !last || now - last.at >= WEIGH_IN_EVERY_DAYS * DAY_MS;
 }
 

@@ -48,10 +48,11 @@ import {
   swapExercise,
   type TodayState,
 } from './state/sessionController';
-import { getPillarLogs, getProfile, saveProfile, updateActiveSessionMeta } from './storage/repository';
+import { appendBodyMetric, getPillarLogs, getProfile, saveProfile, updateActiveSessionMeta } from './storage/repository';
 import { pelvicFloorSession } from './pillars/pelvicFloor';
 import type { PillarSession } from './pillars/types';
-import type { Exercise, GymId, PillarKind, UserProfile } from './engine/types';
+import type { BodyMetricLog, Exercise, GymId, PillarKind, UserProfile } from './engine/types';
+import { resolveGoals } from './engine/goals';
 
 const catalog = CATALOG as Exercise[];
 
@@ -176,6 +177,17 @@ export default function App() {
    * has been trained against it yet; it refuses to run (and this becomes a
    * no-op) if any set has actually been logged.
    */
+  async function handleLogWeighIn(entry: BodyMetricLog) {
+    await appendBodyMetric(entry);
+    // The profile's bodyweight was only ever set at setup; keep it current so
+    // anything scaled to bodyweight uses today's number, not October's.
+    if (profile && entry.weight !== undefined && entry.weight !== profile.bodyweight) {
+      const updated: UserProfile = { ...profile, bodyweight: entry.weight };
+      await saveProfile(updated);
+      setProfile(updated);
+    }
+  }
+
   async function handleSwitchGym(gymId: GymId) {
     if (!profile) return;
     await discardUntouchedSession();
@@ -348,6 +360,9 @@ export default function App() {
         onOpenRoadmap={() => setScreen('roadmap')}
         onToggleExpress={() => void handleToggleExpress()}
         onOpenPhysiqueCheckin={() => setScreen('physiqueCheckin')}
+        onLogWeighIn={handleLogWeighIn}
+        goalWeight={resolveGoals(profile, Date.now()).weight}
+        birthday={resolveGoals(profile, Date.now()).birthday}
         onSwapExercise={(slotId, exerciseId) => void handleSwapExercise(slotId, exerciseId)}
         loadSwapCandidates={handleLoadSwapCandidates}
       />,
@@ -369,6 +384,7 @@ export default function App() {
     return withTabs(
       'progressHub',
       <ProgressHub
+        profile={profile}
         onOpenRoadmap={() => setScreen('roadmap')}
         onOpenProgress={() => setScreen('progress')}
         onOpenPhysique={() => setScreen('physiqueCompare')}
@@ -411,6 +427,7 @@ export default function App() {
         onOpenAsymmetry={() => setScreen('asymmetry')}
         onOpenPhysique={() => setScreen('physiqueCompare')}
         onNewPhysique={() => setScreen('physiqueCheckin')}
+        onLogWeighIn={handleLogWeighIn}
       />
     );
   }
@@ -453,7 +470,7 @@ export default function App() {
   }
 
   if (screen === 'roadmap') {
-    return <Roadmap onBack={back} />;
+    return <Roadmap profile={profile} onBack={back} />;
   }
 
   if (screen === 'askCoach') {
