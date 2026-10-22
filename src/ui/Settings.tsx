@@ -72,6 +72,28 @@ function parseWeightList(raw: string): number[] {
     .filter((n) => Number.isFinite(n) && n > 0);
 }
 
+/**
+ * A comma-separated weight list that keeps the text as typed. Re-rendering
+ * from the parsed numbers on every keystroke would eat a half-typed "8." or a
+ * trailing comma, making decimals and new entries impossible to type.
+ */
+function WeightListInput({ values, onChange }: { values: number[]; onChange: (next: number[]) => void }) {
+  const [text, setText] = useState(values.join(', '));
+  return (
+    <input
+      type="text"
+      inputMode="text"
+      className="settings-input"
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(parseWeightList(e.target.value));
+      }}
+      onBlur={() => setText(values.join(', '))}
+    />
+  );
+}
+
 export function Settings({ profile, onSaved, onBack }: SettingsProps) {
   const [draft, setDraft] = useState<UserProfile>(profile);
   const [saved, setSaved] = useState(false);
@@ -158,22 +180,29 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
               increment, so the engine needs the real list to avoid prescribing a weight you
               can't pick up.
             </p>
-            <input
-              type="text"
-              inputMode="numeric"
-              className="settings-input"
-              value={gym.dumbbells.join(', ')}
-              onChange={(e) => updateGym({ dumbbells: parseWeightList(e.target.value) })}
+            <WeightListInput
+              key={`${gym.id}-dumbbells`}
+              values={gym.dumbbells}
+              onChange={(next) => updateGym({ dumbbells: next })}
             />
 
             <h3 className="settings-section__title">Kettlebells (lb)</h3>
-            <input
-              type="text"
-              inputMode="numeric"
-              className="settings-input"
-              value={gym.kettlebells.join(', ')}
-              onChange={(e) => updateGym({ kettlebells: parseWeightList(e.target.value) })}
+            <WeightListInput
+              key={`${gym.id}-kettlebells`}
+              values={gym.kettlebells}
+              onChange={(next) => updateGym({ kettlebells: next })}
             />
+
+            {gym.equipment.includes('medicineBall') && (
+              <>
+                <h3 className="settings-section__title">Medicine / slam balls (lb)</h3>
+                <WeightListInput
+                  key={`${gym.id}-medicineBalls`}
+                  values={gym.medicineBalls ?? []}
+                  onChange={(next) => updateGym({ medicineBalls: next })}
+                />
+              </>
+            )}
 
             {gym.barbell && (
               <>

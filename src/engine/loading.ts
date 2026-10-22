@@ -93,6 +93,7 @@ export function achievableLoads(exercise: Exercise, gym: Gym): number[] {
 
   if (uses('barbell') && gym.barbell) return barLoads(gym.barbell);
   if (uses('ezBar') && gym.ezBar) return barLoads(gym.ezBar);
+  if (uses('medicineBall')) return normalize(gym.medicineBalls ?? []);
   if (uses('kettlebell')) return normalize(gym.kettlebells);
 
   if (uses('dumbbell')) {

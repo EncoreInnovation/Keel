@@ -11,6 +11,7 @@ import {
   DEFAULT_GYMS,
   FC_NORTH_HILLS_GYM,
   HOME_GYM,
+  upgradeGyms,
 } from '../src/config/gyms';
 import { createBlock, HYBRID_BLOCK_DAYS, generateSession, withGymLocks } from '../src/engine/blocks';
 import { achievableLoads } from '../src/engine/loading';
@@ -55,6 +56,15 @@ describe('default gym inventories', () => {
     const dumbbellPress = catalog.find((e) => e.equipment.length === 1 && e.equipment[0] === 'dumbbell' && e.loadType === 'external')!;
     const loads = achievableLoads(dumbbellPress, APARTMENT_GYM);
     expect(Math.max(...loads)).toBe(50);
+  });
+
+  it('lists the four real apartment kettlebells — 4, 6, 12 and 16 kg', () => {
+    expect(APARTMENT_GYM.kettlebells).toEqual([8.8, 13.2, 26.4, 35.2]);
+  });
+
+  it('loads apartment slams with the 10–18 lb balls actually on the rack', () => {
+    const slam = catalog.find((e) => e.id === 'medicine-ball-slam')!;
+    expect(achievableLoads(slam, APARTMENT_GYM)).toEqual([10, 12, 14, 16, 18]);
   });
 
   it('includes the TRX straps in the apartment gym', () => {
@@ -196,5 +206,31 @@ describe('what each gym locks', () => {
         expect(catalog.find((e) => e.id === id)!.isolation, `${gym.name} locked ${id}`).toBeFalsy();
       }
     }
+  });
+});
+
+describe('upgradeGyms', () => {
+  const oldApartment = { ...APARTMENT_GYM, kettlebells: [25, 35, 45], medicineBalls: undefined };
+  const saved = (apartment: typeof APARTMENT_GYM): UserProfile => ({
+    ...profileAt('apartment'),
+    gyms: [HOME_GYM, apartment, FC_NORTH_HILLS_GYM],
+  });
+
+  it('replaces the old guessed kettlebells and adds the balls on an existing install', () => {
+    const upgraded = upgradeGyms(saved(oldApartment));
+    const apt = upgraded.gyms.find((g) => g.id === 'apartment')!;
+    expect(apt.kettlebells).toEqual([8.8, 13.2, 26.4, 35.2]);
+    expect(apt.medicineBalls).toEqual([10, 12, 14, 16, 18]);
+    expect(upgraded.gyms.find((g) => g.id === 'home')).toBe(HOME_GYM);
+  });
+
+  it('keeps kettlebells the user edited in Settings', () => {
+    const edited = upgradeGyms(saved({ ...oldApartment, kettlebells: [20, 30] }));
+    expect(edited.gyms.find((g) => g.id === 'apartment')!.kettlebells).toEqual([20, 30]);
+  });
+
+  it('changes nothing once upgraded, so no needless save', () => {
+    const once = upgradeGyms(saved(oldApartment));
+    expect(upgradeGyms(once)).toBe(once);
   });
 });

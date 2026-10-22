@@ -11,7 +11,7 @@
  * pairs. Getting that wrong would silently double every barbell prescription.
  */
 
-import type { Gym } from '../engine/types';
+import type { Gym, UserProfile } from '../engine/types';
 
 /** 2×25 and 6×10 — one pair of 25s, three pairs of 10s. Shared across both bars. */
 const HOME_PLATES = { plates: [25, 10], pairsPerPlate: [1, 3] };
@@ -46,13 +46,14 @@ export const APARTMENT_GYM: Gym = {
   // From photos of the actual room: a fixed rack topping out at 50, a dual
   // adjustable functional trainer (cables, rope and straight-bar attachments,
   // pull-up bar on top), adjustable bench, seated leg press, TRX straps,
-  // kettlebells, medicine/slam balls, battle ropes. No barbell, plates, rack,
+  // kettlebells (4, 6, 12 and 16 kg), 10–18 lb slam balls, battle ropes. No barbell, plates, rack,
   // or dedicated pulldown/row/leg-curl stations — the cable trainer covers
   // those patterns. Cardio (treadmills, ellipticals, bike) is logged as
   // conditioning, not prescribed here.
   dumbbells: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50],
   dumbbellsPaired: true,
-  kettlebells: [25, 35, 45],
+  kettlebells: [8.8, 13.2, 26.4, 35.2],
+  medicineBalls: [10, 12, 14, 16, 18],
   equipment: [
     'bodyweight',
     'dumbbell',
@@ -118,3 +119,29 @@ export const FC_NORTH_HILLS_GYM: Gym = { id: 'fc-north-hills', name: 'FC North H
 export const FC_RTP_GYM: Gym = { id: 'fc-rtp', name: 'FC RTP', ...FC_STANDARD };
 
 export const DEFAULT_GYMS: Gym[] = [HOME_GYM, APARTMENT_GYM, FC_NORTH_HILLS_GYM, FC_RTP_GYM];
+
+/** What the apartment kettlebells were guessed as before the real ones were counted. */
+const OLD_APARTMENT_KETTLEBELLS = [25, 35, 45];
+
+/**
+ * Bring a saved profile's gyms up to date with inventory learned since it was
+ * set up. Setup copies the defaults into the profile, so a corrected default
+ * never reaches an existing install on its own. Only values still sitting at
+ * the old guess are replaced — anything edited in Settings is left alone.
+ * Returns the same object when nothing changes, so callers can skip the save.
+ */
+export function upgradeGyms(profile: UserProfile): UserProfile {
+  let changed = false;
+  const gyms = profile.gyms.map((gym) => {
+    if (gym.id !== APARTMENT_GYM.id) return gym;
+    let next = gym;
+    const stale =
+      gym.kettlebells.length === OLD_APARTMENT_KETTLEBELLS.length &&
+      gym.kettlebells.every((w, i) => w === OLD_APARTMENT_KETTLEBELLS[i]);
+    if (stale) next = { ...next, kettlebells: [...APARTMENT_GYM.kettlebells] };
+    if (!next.medicineBalls) next = { ...next, medicineBalls: [...APARTMENT_GYM.medicineBalls!] };
+    if (next !== gym) changed = true;
+    return next;
+  });
+  return changed ? { ...profile, gyms } : profile;
+}

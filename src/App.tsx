@@ -37,6 +37,7 @@ import { acquireWakeLock, type WakeLockHandle } from './ui/wakeLock';
 import { askCoach } from './ai/client';
 import { buildReadinessPrompt } from './ai/prompts';
 import { PILLAR_SESSIONS } from './pillars/library';
+import { upgradeGyms } from './config/gyms';
 import {
   completeSession,
   discardUntouchedSession,
@@ -94,11 +95,13 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const stored = await getProfile();
-      if (!stored) {
+      const saved = await getProfile();
+      if (!saved) {
         setScreen('setup');
         return;
       }
+      const stored = upgradeGyms(saved);
+      if (stored !== saved) await saveProfile(stored);
       setProfile(stored);
       // A profile that never took the baseline is still guessing at every
       // load, so the test comes before anything else.

@@ -477,6 +477,8 @@ export interface Gym {
   ezBar?: BarInventory;
   /** Kettlebell weights physically present. */
   kettlebells: number[];
+  /** Medicine / slam ball weights present. Absent = the ball's weight isn't tracked. */
+  medicineBalls?: number[];
   equipment: Equipment[];
 }
 
