@@ -213,6 +213,14 @@ const CONDITIONING_PROFILE: Record<ConditioningLog['kind'], Partial<MuscleMap>> 
     chest: 0.25,
     triceps: 0.15,
   },
+  // Generic fallback; a logged Dig Deeper session carries its own per-workout map.
+  'dig-deeper': { quads: 0.3, glutes: 0.3, chest: 0.3, upperBack: 0.3, shoulders: 0.3, abs: 0.2 },
+  // Stepmill: a loaded step-up, hundreds of times — glutes and quads first.
+  stairs: { quads: 0.7, glutes: 0.7, calves: 0.5, hamstrings: 0.25 },
+  // Every contact lands on the calves and Achilles.
+  rope: { calves: 1.3, quads: 0.35, shoulders: 0.15, forearms: 0.15 },
+  // Heat, not training: recovery, not fatigue.
+  sauna: {},
   other: { quads: 0.3, glutes: 0.2, abs: 0.2, shoulders: 0.15 },
 };
 
@@ -235,7 +243,7 @@ export function applyConditioning(state: FatigueState, log: ConditioningLog): Fa
 
   const minutes = log.durationSec / 60;
   const effortScale = Math.max(0.3, log.effort / 6);
-  const profile = CONDITIONING_PROFILE[log.kind];
+  const profile = log.muscles ?? CONDITIONING_PROFILE[log.kind];
 
   const fatigue = { ...next.fatigue };
   for (const [muscle, perMinute] of Object.entries(profile) as [Muscle, number][]) {
@@ -283,6 +291,7 @@ export function systemicLoad(
     if (set.completedAt >= since) total += setStimulus(set);
   }
   for (const c of conditioning) {
+    if (c.kind === 'sauna') continue;
     if (c.startedAt >= since) total += (c.durationSec / 60) * Math.max(0.3, c.effort / 6) * 0.9;
   }
 

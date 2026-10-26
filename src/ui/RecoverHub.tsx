@@ -8,23 +8,26 @@ import { useEffect, useState } from 'react';
 import { CATALOG } from '../../catalog/exercises';
 import { PILLAR_GROUPS, PILLAR_SESSIONS } from '../pillars/library';
 import type { Recommendation } from '../pillars/recommend';
-import { loadRecommendations } from '../state/recommendations';
+import { loadRecommendations, type ProgramDay } from '../state/recommendations';
 import type { Exercise, PillarKind, PrescribedSession } from '../engine/types';
 import { RecommendationCard } from './RecommendationCard';
 import { RecoveryPreview } from './RecoveryPreview';
 
 export interface RecoverHubProps {
-  prescription: PrescribedSession;
+  prescription?: PrescribedSession;
+  /** Set in Dig Deeper mode, where there's no COLOSSUS prescription to read. */
+  programDay?: ProgramDay;
   onOpenPillar: (kind: PillarKind) => void;
   onOpenRecovery: () => void;
 }
 
-export function RecoverHub({ prescription, onOpenPillar, onOpenRecovery }: RecoverHubProps) {
+export function RecoverHub({ prescription, programDay, onOpenPillar, onOpenRecovery }: RecoverHubProps) {
   const [recs, setRecs] = useState<Recommendation[]>([]);
 
   useEffect(() => {
-    void loadRecommendations(CATALOG as Exercise[], prescription, Date.now()).then(setRecs);
-  }, [prescription]);
+    void loadRecommendations(CATALOG as Exercise[], prescription, Date.now(), programDay).then(setRecs);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prescription, JSON.stringify(programDay)]);
 
   return (
     <div className="phase-screen hub">

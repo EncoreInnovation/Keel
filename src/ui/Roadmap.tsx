@@ -12,11 +12,15 @@ import type { BodyMetricLog, UserProfile } from '../engine/types';
 import { goalProgress, resolveGoals } from '../engine/goals';
 import { Countdowns } from './Countdowns';
 import { GoalsPanel } from './GoalsPanel';
+import { COLLECTIONS, ddRoadmap, parseYmd, ymd } from '../programs/digDeeper';
+import type { ProgramState } from '../state/program';
 import { TrendChart } from './charts/TrendChart';
 import { COACHING_TIPS, SEXUAL_HEALTH_NOTES } from '../mind/guidance';
 
 export interface RoadmapProps {
   profile: UserProfile;
+  /** Dig Deeper's plan, when it's the lifting program — its 12 weeks replace COLOSSUS's blocks here. */
+  program?: ProgramState;
   onBack: () => void;
 }
 
@@ -27,7 +31,7 @@ function range(w: RoadmapWeek): string {
   return `${f(w.start)} – ${f(w.end - 86_400_000)}`;
 }
 
-export function Roadmap({ profile, onBack }: RoadmapProps) {
+export function Roadmap({ profile, program, onBack }: RoadmapProps) {
   const [weeks, setWeeks] = useState<RoadmapWeek[] | undefined>();
   const [doneThisWeek, setDoneThisWeek] = useState(0);
   const [metrics, setMetrics] = useState<BodyMetricLog[]>([]);
@@ -82,62 +86,68 @@ export function Roadmap({ profile, onBack }: RoadmapProps) {
         <GoalsPanel progress={progress} goals={goals} now={now} />
       </section>
 
-      <div className="roadmap__hero">
-        <div className="roadmap__hero-value">Week {Math.min(currentIndex + 1, 12)}</div>
-        <div className="roadmap__hero-label">
-          of 12 · {PHASE_LABEL[current.phase]} · {daysUntil(retest.start, now)} days to retest
-        </div>
-      </div>
-
-      <div className="roadmap__strip" role="list" aria-label="Weeks of the plan">
-        {weeks.map((w) => (
-          <div
-            key={w.index}
-            role="listitem"
-            className={`roadmap__week roadmap__week--${w.phase}${w.index === currentIndex ? ' roadmap__week--current' : ''}${w.index < currentIndex ? ' roadmap__week--past' : ''}`}
-            title={`${PHASE_LABEL[w.phase]} · ${range(w)}${w.events.length ? ' · ' + w.events.join(', ') : ''}`}
-          >
-            <span className="roadmap__week-num">{w.phase === 'retest' ? 'R' : w.weekInBlock}</span>
-            {w.events.length > 0 && <span className="roadmap__week-flag" aria-hidden="true" />}
+      {program && program.settings.kind === 'dig-deeper' ? (
+        <DigDeeperPlan program={program} now={now} />
+      ) : (
+        <>
+          <div className="roadmap__hero">
+            <div className="roadmap__hero-value">Week {Math.min(currentIndex + 1, 12)}</div>
+            <div className="roadmap__hero-label">
+              of 12 · {PHASE_LABEL[current.phase]} · {daysUntil(retest.start, now)} days to retest
+            </div>
           </div>
-        ))}
-      </div>
-      <div className="roadmap__legend">
-        <span><i className="roadmap__key roadmap__key--build" /> Build</span>
-        <span><i className="roadmap__key roadmap__key--deload" /> Deload</span>
-        <span><i className="roadmap__key roadmap__key--retest" /> Retest</span>
-        <span><i className="roadmap__key roadmap__key--flag" /> Holiday</span>
-      </div>
 
-      <section className="roadmap__section">
-        <h2 className="settings-section__title">This week</h2>
-        <p className="roadmap__line">
-          <span data-numeric>{doneThisWeek}</span> of 3–4 sessions done · {range(current)}
-          {current.phase === 'deload' && ' · lighter on purpose — recovery is where the growth lands'}
-        </p>
-        {current.events.length > 0 && (
-          <p className="roadmap__line roadmap__line--dim">
-            {current.events.join(', ')} this week — three sessions is a full week. Use “Short on time” if needed.
-          </p>
-        )}
-      </section>
+          <div className="roadmap__strip" role="list" aria-label="Weeks of the plan">
+            {weeks.map((w) => (
+              <div
+                key={w.index}
+                role="listitem"
+                className={`roadmap__week roadmap__week--${w.phase}${w.index === currentIndex ? ' roadmap__week--current' : ''}${w.index < currentIndex ? ' roadmap__week--past' : ''}`}
+                title={`${PHASE_LABEL[w.phase]} · ${range(w)}${w.events.length ? ' · ' + w.events.join(', ') : ''}`}
+              >
+                <span className="roadmap__week-num">{w.phase === 'retest' ? 'R' : w.weekInBlock}</span>
+                {w.events.length > 0 && <span className="roadmap__week-flag" aria-hidden="true" />}
+              </div>
+            ))}
+          </div>
+          <div className="roadmap__legend">
+            <span><i className="roadmap__key roadmap__key--build" /> Build</span>
+            <span><i className="roadmap__key roadmap__key--deload" /> Deload</span>
+            <span><i className="roadmap__key roadmap__key--retest" /> Retest</span>
+            <span><i className="roadmap__key roadmap__key--flag" /> Holiday</span>
+          </div>
 
-      <section className="roadmap__section">
-        <h2 className="settings-section__title">The plan</h2>
-        <ol className="roadmap__list">
-          {weeks.map((w) => (
-            <li key={w.index} className={w.index === currentIndex ? 'roadmap__list-row roadmap__list-row--current' : 'roadmap__list-row'}>
-              <span>
-                {w.phase === 'retest' ? 'Retest week' : `Block ${w.block} · week ${w.weekInBlock}`}
-                {w.events.length > 0 && <span className="roadmap__list-event"> · {w.events.join(', ')}</span>}
-              </span>
-              <span className="roadmap__list-meta">
-                {PHASE_LABEL[w.phase]} · {range(w)}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
+          <section className="roadmap__section">
+            <h2 className="settings-section__title">This week</h2>
+            <p className="roadmap__line">
+              <span data-numeric>{doneThisWeek}</span> of 3–4 sessions done · {range(current)}
+              {current.phase === 'deload' && ' · lighter on purpose — recovery is where the growth lands'}
+            </p>
+            {current.events.length > 0 && (
+              <p className="roadmap__line roadmap__line--dim">
+                {current.events.join(', ')} this week — three sessions is a full week. Use “Short on time” if needed.
+              </p>
+            )}
+          </section>
+
+          <section className="roadmap__section">
+            <h2 className="settings-section__title">The plan</h2>
+            <ol className="roadmap__list">
+              {weeks.map((w) => (
+                <li key={w.index} className={w.index === currentIndex ? 'roadmap__list-row roadmap__list-row--current' : 'roadmap__list-row'}>
+                  <span>
+                    {w.phase === 'retest' ? 'Retest week' : `Block ${w.block} · week ${w.weekInBlock}`}
+                    {w.events.length > 0 && <span className="roadmap__list-event"> · {w.events.join(', ')}</span>}
+                  </span>
+                  <span className="roadmap__list-meta">
+                    {PHASE_LABEL[w.phase]} · {range(w)}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </>
+      )}
 
       <section className="roadmap__section">
         <h2 className="settings-section__title">Body</h2>
@@ -186,5 +196,85 @@ export function Roadmap({ profile, onBack }: RoadmapProps) {
         Back
       </button>
     </div>
+  );
+}
+
+const ddDay = (s: string) => parseYmd(s).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+/** Dig Deeper's 12 calendar weeks from its start date, coloured by collection. */
+function DigDeeperPlan({ program, now }: { program: ProgramState; now: number }) {
+  const weeks = ddRoadmap(program.settings.startDate);
+  const today = ymd(new Date(now));
+  const found = weeks.findIndex((w) => today >= w.start && today <= w.end);
+  const currentIndex = today < weeks[0]!.start ? 0 : found === -1 ? weeks.length - 1 : found;
+  const current = weeks[currentIndex]!;
+  const { plan } = program;
+  const doneThisWeek = program.logs.filter(
+    (l) => (l.type === 'completed' || l.type === 'substitute') && l.date >= current.start && l.date <= current.end,
+  ).length;
+  const perWeek = program.settings.trainingDays.length;
+
+  return (
+    <>
+      <div className="roadmap__hero">
+        <div className="roadmap__hero-value">Week {currentIndex + 1}</div>
+        <div className="roadmap__hero-label">
+          of 12 · {COLLECTIONS[current.collection].name} · finishes {plan.projectedFinish ? ddDay(plan.projectedFinish) : '—'}
+          {plan.daysBehind > 0 && ` (${plan.daysBehind} days behind)`}
+        </div>
+      </div>
+
+      <div className="roadmap__strip roadmap__strip--dd" role="list" aria-label="Weeks of Dig Deeper">
+        {weeks.map((w) => (
+          <div
+            key={w.index}
+            role="listitem"
+            className={`roadmap__week roadmap__week--${w.collection}${w.index === currentIndex ? ' roadmap__week--current' : ''}${w.index < currentIndex ? ' roadmap__week--past' : ''}`}
+            title={`${COLLECTIONS[w.collection].name} · ${ddDay(w.start)} – ${ddDay(w.end)}${w.events.length ? ' · ' + w.events.join(', ') : ''}`}
+          >
+            <span className="roadmap__week-num">{w.week}</span>
+            {w.events.length > 0 && <span className="roadmap__week-flag" aria-hidden="true" />}
+          </div>
+        ))}
+      </div>
+      <div className="roadmap__legend">
+        <span><i className="roadmap__key roadmap__key--dc" /> Dynamic Circuits</span>
+        <span><i className="roadmap__key roadmap__key--sd" /> Sculpt & Define</span>
+        <span><i className="roadmap__key roadmap__key--tb" /> The Build</span>
+        <span><i className="roadmap__key roadmap__key--flag" /> Holiday</span>
+      </div>
+
+      <section className="roadmap__section">
+        <h2 className="settings-section__title">This week</h2>
+        <p className="roadmap__line">
+          <span data-numeric>{doneThisWeek}</span> of {perWeek} Dig Deeper days done · {ddDay(current.start)} – {ddDay(current.end)}
+        </p>
+        <p className="roadmap__line roadmap__line--dim">
+          {plan.done} of {plan.total} workouts logged{plan.consistency !== undefined ? ` · ${plan.consistency}% consistency` : ''}.
+        </p>
+        {current.events.length > 0 && (
+          <p className="roadmap__line roadmap__line--dim">
+            {current.events.join(', ')} this week — a No Excuses workout (under 25 min) still counts if the day gets away from you.
+          </p>
+        )}
+      </section>
+
+      <section className="roadmap__section">
+        <h2 className="settings-section__title">The plan</h2>
+        <ol className="roadmap__list">
+          {weeks.map((w) => (
+            <li key={w.index} className={w.index === currentIndex ? 'roadmap__list-row roadmap__list-row--current' : 'roadmap__list-row'}>
+              <span>
+                Week {w.week}
+                {w.events.length > 0 && <span className="roadmap__list-event"> · {w.events.join(', ')}</span>}
+              </span>
+              <span className="roadmap__list-meta">
+                {COLLECTIONS[w.collection].name} · {ddDay(w.start)} – {ddDay(w.end)}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </>
   );
 }

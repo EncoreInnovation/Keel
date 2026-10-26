@@ -18,6 +18,7 @@ import { askCoach } from '../ai/client';
 import { buildWeeklyReflectionPrompt, summarizeWeek } from '../ai/prompts';
 import {
   getAllSets,
+  getBalanceSets,
   getBodyMetrics,
   getCompletedSessions,
   getConditioningLogs,
@@ -106,7 +107,7 @@ export function Progress({ onBack, onOpenAsymmetry, onOpenPhysique, onNewPhysiqu
     }, 0);
     setPillarMinutes(Math.round(minutes));
     setBodyMetrics(metrics);
-    setAsymmetryGap(overallGap(asymmetryReport(allSets)));
+    setAsymmetryGap(overallGap(asymmetryReport(await getBalanceSets())));
   }
 
   useEffect(() => {

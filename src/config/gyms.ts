@@ -12,6 +12,7 @@
  */
 
 import type { Gym, UserProfile } from '../engine/types';
+import { DEFAULT_DD_SETTINGS } from '../programs/digDeeper';
 
 /** 2×25 and 6×10 — one pair of 25s, three pairs of 10s. Shared across both bars. */
 const HOME_PLATES = { plates: [25, 10], pairsPerPlate: [1, 3] };
@@ -109,11 +110,12 @@ const FC_STANDARD: Omit<Gym, 'id' | 'name'> = {
     'mat',
     'wall',
     'chair',
+    'stairClimber',
   ],
 };
 
-/** Fitness Connection North Hills, Raleigh — the home club. */
-export const FC_NORTH_HILLS_GYM: Gym = { id: 'fc-north-hills', name: 'FC North Hills', ...FC_STANDARD };
+/** Fitness Connection North Hills, Raleigh — the home club. Has a sauna. */
+export const FC_NORTH_HILLS_GYM: Gym = { id: 'fc-north-hills', name: 'FC North Hills', ...FC_STANDARD, sauna: true };
 
 /** Fitness Connection RTP, 4700 Emperor Blvd, Durham — the one near RDU. */
 export const FC_RTP_GYM: Gym = { id: 'fc-rtp', name: 'FC RTP', ...FC_STANDARD };
@@ -123,16 +125,23 @@ export const DEFAULT_GYMS: Gym[] = [HOME_GYM, APARTMENT_GYM, FC_NORTH_HILLS_GYM,
 /** What the apartment kettlebells were guessed as before the real ones were counted. */
 const OLD_APARTMENT_KETTLEBELLS = [25, 35, 45];
 
+/** Bumped whenever `upgradeGyms` learns a new one-time change. */
+export const INVENTORY_REV = 2;
+
 /**
- * Bring a saved profile's gyms up to date with inventory learned since it was
- * set up. Setup copies the defaults into the profile, so a corrected default
- * never reaches an existing install on its own. Only values still sitting at
- * the old guess are replaced — anything edited in Settings is left alone.
- * Returns the same object when nothing changes, so callers can skip the save.
+ * Bring a saved profile up to date with what's been learned since it was set
+ * up. Setup copies the defaults into the profile, so a corrected default never
+ * reaches an existing install on its own.
+ *
+ * Each step runs once (tracked by `inventoryRev`), so anything changed in
+ * Settings afterwards stays changed — remove the stair climber from a gym and
+ * the next launch won't put it back. Returns the same object when nothing
+ * changes, so callers can skip the save.
  */
 export function upgradeGyms(profile: UserProfile): UserProfile {
+  const rev = profile.inventoryRev ?? 0;
   let changed = false;
-  const gyms = profile.gyms.map((gym) => {
+  let gyms = profile.gyms.map((gym) => {
     if (gym.id !== APARTMENT_GYM.id) return gym;
     let next = gym;
     const stale =
@@ -143,5 +152,22 @@ export function upgradeGyms(profile: UserProfile): UserProfile {
     if (next !== gym) changed = true;
     return next;
   });
-  return changed ? { ...profile, gyms } : profile;
+  let next: UserProfile = profile;
+
+  if (rev < 2) {
+    // Both Fitness Connection clubs have stair climbers; North Hills has a
+    // sauna. Dig Deeper became the lifting program on Mon Oct 26 2026.
+    gyms = gyms.map((gym) => {
+      if (!gym.id.startsWith('fc-')) return gym;
+      let g = gym;
+      if (!g.equipment.includes('stairClimber')) g = { ...g, equipment: [...g.equipment, 'stairClimber'] };
+      if (g.id === FC_NORTH_HILLS_GYM.id && g.sauna === undefined) g = { ...g, sauna: true };
+      return g;
+    });
+    next = { ...next, program: next.program ?? { kind: 'dig-deeper', ...DEFAULT_DD_SETTINGS } };
+    changed = true;
+  }
+
+  if (!changed) return profile;
+  return { ...next, gyms, inventoryRev: INVENTORY_REV };
 }

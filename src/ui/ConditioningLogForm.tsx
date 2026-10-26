@@ -11,7 +11,7 @@ import { appendConditioningLog } from '../storage/repository';
 import { IMPACT_ORDER } from '../engine/recovery';
 import type { ConditioningKind, ImpactLevel } from '../engine/types';
 
-const KIND_OPTIONS: ConditioningKind[] = ['insanity', 'run', 'walk', 'bike', 'elliptical', 'circuit', 'hiit', 'other'];
+const KIND_OPTIONS: ConditioningKind[] = ['insanity', 'run', 'walk', 'stairs', 'rope', 'bike', 'elliptical', 'circuit', 'hiit', 'other'];
 const KIND_LABEL: Record<ConditioningKind, string> = {
   insanity: 'Insanity',
   run: 'Run',
@@ -20,6 +20,10 @@ const KIND_LABEL: Record<ConditioningKind, string> = {
   elliptical: 'Elliptical',
   circuit: 'Circuit',
   hiit: 'HIIT',
+  'dig-deeper': 'Dig Deeper',
+  stairs: 'Stair climber',
+  rope: 'Jump rope',
+  sauna: 'Sauna',
   other: 'Other',
 };
 
@@ -30,6 +34,8 @@ const KIND_DEFAULTS: Partial<Record<ConditioningKind, { minutes?: number; impact
   walk: { impact: 'low' },
   bike: { impact: 'none' },
   elliptical: { impact: 'none' },
+  stairs: { impact: 'low' },
+  rope: { minutes: 10, impact: 'moderate' },
 };
 
 export interface ConditioningLogFormProps {

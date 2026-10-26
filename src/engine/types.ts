@@ -118,6 +118,8 @@ export const EQUIPMENT = [
   'machine',
   'plyoBox',
   'sled',
+  /** Stepmill / StairMaster — for the stair-climber finisher, not catalog lifts. */
+  'stairClimber',
 ] as const;
 
 export type Equipment = (typeof EQUIPMENT)[number];
@@ -332,7 +334,19 @@ export interface PostureLog {
  * Conditioning
  * ------------------------------------------------------------------ */
 
-export type ConditioningKind = 'run' | 'walk' | 'bike' | 'elliptical' | 'circuit' | 'hiit' | 'insanity' | 'other';
+export type ConditioningKind =
+  | 'run'
+  | 'walk'
+  | 'bike'
+  | 'elliptical'
+  | 'circuit'
+  | 'hiit'
+  | 'insanity'
+  | 'dig-deeper'
+  | 'stairs'
+  | 'rope'
+  | 'sauna'
+  | 'other';
 
 export interface ConditioningLog {
   id: string;
@@ -346,7 +360,18 @@ export interface ConditioningLog {
   impact: ImpactLevel;
   source: 'strava' | 'manual';
   externalId?: string;
+  /**
+   * Per-minute muscle stimulus overriding the kind's default — a Dig Deeper
+   * "Chest & Back" day loads very different muscles from its "Legs" day.
+   */
+  muscles?: Partial<MuscleMap>;
+  /** Which session of a progressive finisher program this was (stairs, rope). */
+  finisherSession?: number;
+  /** How the session felt against its target; drives finisher progression. */
+  rating?: FinisherRating;
 }
+
+export type FinisherRating = 'easy' | 'right' | 'hard';
 
 /* ------------------------------------------------------------------ *
  * Programming
@@ -485,6 +510,8 @@ export interface Gym {
   ezBar?: BarInventory;
   /** Kettlebell weights physically present. */
   kettlebells: number[];
+  /** Offers a sauna after training here. */
+  sauna?: boolean;
   /** Medicine / slam ball weights present. Absent = the ball's weight isn't tracked. */
   medicineBalls?: number[];
   equipment: Equipment[];
@@ -515,6 +542,15 @@ export interface UserProfile {
   /** For the birthday countdown. Month is 1-based. */
   birthday?: { month: number; day: number };
   /**
+   * An outside lifting program that replaces COLOSSUS's own sessions while it
+   * runs. Absent or 'colossus' means COLOSSUS generates the lifting.
+   */
+  program?: ProgramSettings;
+  /** Stair-climber level where a steady pace feels 6/10; every session is set from it. */
+  stairBaseLevel?: number;
+  /** Which one-time profile upgrades have run (see `upgradeGyms`). */
+  inventoryRev?: number;
+  /**
    * Ladder rungs the baseline test measured you onto.
    *
    * Without this, every bodyweight ladder starts at its bottom rung, which is
@@ -530,6 +566,16 @@ export interface UserProfile {
    * the presence of `baseline-*` SetLogs.
    */
   baselineCompletedAt?: number;
+}
+
+export interface ProgramSettings {
+  kind: 'dig-deeper' | 'colossus';
+  /** Local calendar date, YYYY-MM-DD. */
+  startDate: string;
+  /** Days of the week trained, 0 = Sunday. */
+  trainingDays: number[];
+  /** Include Dig Deeper's optional Saturday Steady State Cardio. */
+  includeCardio: boolean;
 }
 
 /** The gym the profile currently points at, with a safe fallback. */

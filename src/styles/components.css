@@ -2181,3 +2181,381 @@ button.countdowns__tile {
   color: var(--text-dim);
   font-size: var(--fs-sm);
 }
+
+/* ---------------- Dig Deeper ---------------- */
+
+.dd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s4);
+  width: 100%;
+}
+
+.dd__behind {
+  max-width: 24rem;
+  margin: 0;
+  color: var(--data-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+
+.dd-card {
+  --dd: var(--line-strong);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--s4);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--dd);
+  background: var(--surface);
+  text-align: left;
+}
+
+.dd-card--dc { --dd: #3cc1b9; }
+.dd-card--sd { --dd: #f0a13d; }
+.dd-card--tb { --dd: #f07c66; }
+.dd-card--ne { --dd: var(--text-dim); }
+
+.dd-card__eyebrow {
+  color: var(--text-dim);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dd-card__title {
+  margin: 0;
+  font-size: var(--fs-title);
+  letter-spacing: var(--tracking-tight);
+}
+
+.dd-card__meta {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.dd-card__note {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-body);
+}
+
+.dd-card__note--warn {
+  color: var(--data-3);
+}
+
+.dd-card__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s2);
+}
+
+.dd-card__watch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none;
+  text-decoration: none;
+}
+
+.dd-card__timer {
+  align-self: center;
+  font-size: 2.5rem;
+  font-weight: 600;
+}
+
+.dd-card__hint {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}
+
+.dd-card__hint a {
+  color: var(--text-dim);
+}
+
+.dd-card__alts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 var(--s2);
+}
+
+.dd-card__shorts,
+.dd-card__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.dd-card__logged {
+  font-weight: 600;
+}
+
+.dd-finishers,
+.dd-upnext {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  width: 100%;
+  max-width: 24rem;
+  text-align: left;
+}
+
+.dd-finishers__title {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dd-finishers__why {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-sm);
+}
+
+.dd-upnext__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dd-upnext__row {
+  display: flex;
+  gap: var(--s3);
+  padding: var(--s2) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+.dd-upnext__date {
+  min-width: 6.5rem;
+  color: var(--text-dim);
+}
+
+/* Log form */
+
+.dd-log {
+  justify-content: flex-start;
+  gap: var(--s3);
+}
+
+.dd-log__basics,
+.dd-log__effort,
+.dd-log__rows,
+.dd-log__wide {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.dd-log__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  text-align: left;
+}
+
+.dd-log textarea {
+  min-height: 4rem;
+  padding: var(--s2) var(--s3);
+  font: inherit;
+}
+
+.dd-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding-top: var(--s3);
+  border-top: 1px dashed var(--line);
+}
+
+.dd-row input,
+.dd-row select {
+  min-width: 0;
+  min-height: 44px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: var(--fs-body);
+  padding: 0 var(--s2);
+}
+
+.dd-row__nums {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.1fr auto;
+  gap: var(--s1);
+}
+
+.dd-row__remove {
+  min-width: 36px;
+  padding: 0;
+}
+
+/* ---------------- Interval player ---------------- */
+
+.interval {
+  gap: var(--s3);
+}
+
+.interval__title {
+  margin: 0;
+  font-size: var(--fs-title);
+}
+
+.interval__plan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 22rem;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.interval__plan-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--s1) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+.interval__plan-row--rest {
+  color: var(--text-dim);
+}
+
+.interval__notes {
+  margin: 0;
+  padding-left: 1.2rem;
+  max-width: 22rem;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+  text-align: left;
+}
+
+.interval__segment {
+  font-size: var(--fs-title);
+  font-weight: 600;
+}
+
+.interval__level {
+  color: var(--accent);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+}
+
+.interval--rest .interval__segment {
+  color: var(--data-0);
+}
+
+.interval__clock {
+  font-size: 5rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+}
+
+.interval__cue {
+  text-align: center;
+}
+
+.interval__progress {
+  width: 100%;
+  max-width: 22rem;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.interval__progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.interval__next {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.interval__controls,
+.interval__ratings {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.interval__hint {
+  font-size: var(--fs-sm);
+}
+
+/* Dig Deeper roadmap strip */
+
+.roadmap__strip--dd {
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.roadmap__week--dc { background: rgba(60, 193, 185, 0.35); }
+.roadmap__week--sd { background: rgba(240, 161, 61, 0.35); }
+.roadmap__week--tb { background: rgba(240, 124, 102, 0.35); }
+.roadmap__key--dc { background: rgba(60, 193, 185, 0.6); }
+.roadmap__key--sd { background: rgba(240, 161, 61, 0.6); }
+.roadmap__key--tb { background: rgba(240, 124, 102, 0.6); }
+
+.interval__base {
+  width: 100%;
+  max-width: 22rem;
+}
+
+.dd-trends {
+  list-style: none;
+  margin: var(--s2) 0 0;
+  padding: 0;
+  width: 100%;
+}
+
+.dd-trends__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding: 4px 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+
+.dd-card__watch {
+  min-height: 3.5rem;
+  font-size: var(--fs-lg);
+  text-align: center;
+}
+
+.dd-log .weigh-in__field {
+  width: 100%;
+  max-width: 24rem;
+  text-align: left;
+}
+
+.dd-log .weigh-in__field select,
+.dd-log .weigh-in__field textarea,
+.dd-log .weigh-in__field input {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  font-size: var(--fs-body);
+}
+
+.dd-log .weigh-in__row .weigh-in__field {
+  max-width: none;
+}

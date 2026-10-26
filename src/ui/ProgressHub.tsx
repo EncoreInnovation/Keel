@@ -10,19 +10,23 @@ import { buildRoadmap, currentWeekIndex, daysUntil } from '../engine/roadmap';
 import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import {
   getActiveBlock,
-  getAllSets,
+  getBalanceSets,
   getBlockHistory,
   getBodyMetrics,
   getPhysiqueLogs,
   getPostureLogs,
 } from '../storage/repository';
 import type { PillarKind, UserProfile } from '../engine/types';
+import { COLLECTIONS, ddLiftTrends, ddRoadmap, ymd } from '../programs/digDeeper';
+import type { ProgramState } from '../state/program';
 import { goalProgress } from '../engine/goals';
 import { describeGap } from './Asymmetry';
 import { VolumeReadout } from './VolumeReadout';
 
 export interface ProgressHubProps {
   profile: UserProfile;
+  /** Dig Deeper's plan, when it's the lifting program. */
+  program?: ProgramState;
   onOpenRoadmap: () => void;
   onOpenProgress: () => void;
   onOpenPhysique: () => void;
@@ -70,7 +74,7 @@ export function ProgressHub(props: ProgressHubProps) {
         getBodyMetrics(),
         getPhysiqueLogs(),
         getPostureLogs(),
-        getAllSets(),
+        getBalanceSets(),
       ]);
       const weeks = buildRoadmap(history[0]?.startedAt ?? active?.startedAt ?? now);
       const i = currentWeekIndex(weeks, now);
@@ -99,8 +103,13 @@ export function ProgressHub(props: ProgressHubProps) {
 
       const goal = goalProgress(metrics, props.profile, now)?.weight;
       const goalWord = goal && goal.status !== 'start' ? ` · ${goal.status === 'hit' ? 'Weight goal hit' : goal.status === 'on-track' ? 'On track' : goal.status === 'ahead' ? 'Ahead of goal' : 'Behind goal'}` : '';
+      const dd = props.program?.active ? props.program : undefined;
+      const ddWeeks = dd ? ddRoadmap(dd.settings.startDate) : undefined;
+      const ddWeek = ddWeeks ? ddWeeks.find((w) => ymd(new Date(now)) >= w.start && ymd(new Date(now)) <= w.end) ?? ddWeeks[0]! : undefined;
       setStatus({
-        plan: `Week ${Math.min(i + 1, 12)} of 12 · ${phase} · ${daysUntil(weeks.at(-1)!.start, now)} days to retest${goalWord}`,
+        plan: ddWeek
+          ? `Dig Deeper week ${ddWeek.week} of 12 · ${COLLECTIONS[ddWeek.collection].name}${goalWord}`
+          : `Week ${Math.min(i + 1, 12)} of 12 · ${phase} · ${daysUntil(weeks.at(-1)!.start, now)} days to retest${goalWord}`,
         body,
         physique: lastPhoto ? `Last photos ${Math.floor((now - lastPhoto.at) / DAY)} days ago` : 'No photos yet',
         alignment: alignmentSummary(posture, now),
@@ -118,7 +127,7 @@ export function ProgressHub(props: ProgressHubProps) {
       <HubCard
         title="Q4 plan"
         status={status.plan ?? '…'}
-        tells="Where you are in the 12 weeks: build weeks, deloads, holidays, retest."
+        tells={props.program?.active ? 'Where you are in Dig Deeper’s 12 weeks, your Dec 31 goals, and the holidays coming up.' : 'Where you are in the 12 weeks: build weeks, deloads, holidays, retest.'}
         check="Glance at it weekly."
         onClick={props.onOpenRoadmap}
       />
@@ -137,12 +146,16 @@ export function ProgressHub(props: ProgressHubProps) {
         onClick={status.physique === 'No photos yet' ? props.onNewPhysique : props.onOpenPhysique}
       />
 
-      <section className="hub__group">
-        <VolumeReadout />
-        <p className="hub__caption">
-          Hard sets per muscle this week. 10–20 is the growth zone; under 10 means that muscle is falling behind. Check weekly.
-        </p>
-      </section>
+      {props.program?.active ? (
+        <DigDeeperCard program={props.program} onOpen={props.onOpenRoadmap} />
+      ) : (
+        <section className="hub__group">
+          <VolumeReadout />
+          <p className="hub__caption">
+            Hard sets per muscle this week. 10–20 is the growth zone; under 10 means that muscle is falling behind. Check weekly.
+          </p>
+        </section>
+      )}
 
       <HubCard
         title="Posture"
@@ -164,5 +177,38 @@ export function ProgressHub(props: ProgressHubProps) {
         onClick={props.onOpenAsymmetry}
       />
     </div>
+  );
+}
+
+/** Dig Deeper's scoreboard: workouts logged, consistency, and the weights going up. */
+function DigDeeperCard({ program, onOpen }: { program: ProgramState; onOpen: () => void }) {
+  const { plan } = program;
+  const trends = ddLiftTrends(program.logs).slice(0, 5);
+  return (
+    <button className="hub-card" onClick={onOpen}>
+      <div className="hub-card__head">
+        <span className="hub-card__title">Dig Deeper</span>
+        <span className="hub-card__meta">›</span>
+      </div>
+      <div className="hub-card__status">
+        {plan.done} of {plan.total} workouts logged
+        {plan.consistency !== undefined ? ` · ${plan.consistency}% consistency` : ''}
+      </div>
+      {trends.length > 0 ? (
+        <ul className="dd-trends">
+          {trends.map((t) => (
+            <li key={t.exercise} className="dd-trends__row">
+              <span>{t.exercise}</span>
+              <span data-numeric>{t.times > 1 ? `${t.first} → ${t.latest} lb` : `${t.latest} lb`}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="hub-card__body">Log weights when you save a workout and your top weight per exercise shows up here.</div>
+      )}
+      <div className="hub-card__when">
+        <strong>Check:</strong> Weekly. The weights should creep up inside each 4-week collection.
+      </div>
+    </button>
   );
 }

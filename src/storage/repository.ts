@@ -25,6 +25,7 @@ import {
   STORAGE_KEYS,
 } from './db';
 import { runExclusive } from './mutex';
+import { ddSideSets, type DDLog } from '../programs/digDeeper';
 import type {
   Block,
   BodyMetricLog,
@@ -246,7 +247,8 @@ export function getConditioningLogs(): Promise<ConditioningLog[]> {
 export function appendConditioningLog(entry: ConditioningLog): Promise<ConditioningLog[]> {
   return runExclusive('conditioning', async () => {
     const logs = (await readKey<ConditioningLog[]>(STORAGE_KEYS.conditioning)) ?? [];
-    const next = [...logs, entry];
+    // Replacing by id makes re-saving the same entry (an edited program log) idempotent.
+    const next = [...logs.filter((l) => l.id !== entry.id), entry];
     await writeKey(STORAGE_KEYS.conditioning, next);
     return next;
   });
@@ -339,6 +341,60 @@ export async function deletePostureLog(id: string): Promise<PostureLog[]> {
  * Physique check-ins
  * ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ *
+ * Outside program (Dig Deeper)
+ *
+ * Each logged workout is stored twice on purpose: the program log (what was
+ * scheduled, what was done, the weights) drives the schedule, and a matching
+ * conditioning entry with the workout's muscle map feeds the same fatigue
+ * model as everything else — so the recovery map and Recover suggestions
+ * know about a Dig Deeper legs day without a second code path.
+ * ------------------------------------------------------------------ */
+
+export function getProgramLogs(): Promise<DDLog[]> {
+  return readKey<DDLog[]>(STORAGE_KEYS.programLogs).then((v) => v ?? []);
+}
+
+/** The conditioning entry id paired with a program log. */
+export const programFatigueId = (logId: string) => `dd-${logId}`;
+
+export async function saveProgramLog(entry: DDLog, fatigue?: ConditioningLog): Promise<DDLog[]> {
+  if (fatigue) await appendConditioningLog({ ...fatigue, id: programFatigueId(entry.id) });
+  return runExclusive('programLogs', async () => {
+    const logs = (await readKey<DDLog[]>(STORAGE_KEYS.programLogs)) ?? [];
+    const next = [...logs.filter((l) => l.id !== entry.id), entry].sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+    await writeKey(STORAGE_KEYS.programLogs, next);
+    return next;
+  });
+}
+
+export async function deleteProgramLog(id: string): Promise<DDLog[]> {
+  await runExclusive('conditioning', async () => {
+    const logs = (await readKey<ConditioningLog[]>(STORAGE_KEYS.conditioning)) ?? [];
+    await writeKey(STORAGE_KEYS.conditioning, logs.filter((l) => l.id !== programFatigueId(id)));
+  });
+  return runExclusive('programLogs', async () => {
+    const logs = (await readKey<DDLog[]>(STORAGE_KEYS.programLogs)) ?? [];
+    const next = logs.filter((l) => l.id !== id);
+    await writeKey(STORAGE_KEYS.programLogs, next);
+    return next;
+  });
+}
+
+/** Every one-sided set from COLOSSUS and Dig Deeper, for Left/right balance. */
+export async function getBalanceSets(): Promise<SetLog[]> {
+  const [sets, programLogs] = await Promise.all([getAllSets(), getProgramLogs()]);
+  return [...sets, ...ddSideSets(programLogs)];
+}
+
+export function getProgramReadiness(): Promise<{ date: string; value: number } | undefined> {
+  return readKey<{ date: string; value: number }>(STORAGE_KEYS.programReadiness);
+}
+
+export function saveProgramReadiness(date: string, value: number): Promise<void> {
+  return writeKey(STORAGE_KEYS.programReadiness, { date, value });
+}
+
 export function getPhysiqueLogs(): Promise<PhysiqueLog[]> {
   return readKey<PhysiqueLog[]>(STORAGE_KEYS.physiqueLogs).then((v) => v ?? []);
 }
@@ -385,6 +441,8 @@ export interface KeelExport {
   postureLogs: PostureLog[];
   /** Dates and views only; the photos stay on the device. Optional for older exports. */
   physiqueLogs?: PhysiqueLog[];
+  /** Dig Deeper workout logs. Optional for older exports. */
+  programLogs?: DDLog[];
 }
 
 export async function exportAll(now: number): Promise<KeelExport> {
@@ -414,6 +472,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     getPostureLogs(),
   ]);
   const physiqueLogs = await getPhysiqueLogs();
+  const programLogs = await getProgramLogs();
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -430,6 +489,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     bodyMetrics,
     postureLogs,
     physiqueLogs,
+    programLogs,
   };
 }
 
@@ -466,5 +526,6 @@ export async function importAll(data: KeelExport): Promise<void> {
     writeKey(STORAGE_KEYS.bodyMetrics, data.bodyMetrics),
     writeKey(STORAGE_KEYS.postureLogs, data.postureLogs),
     writeKey(STORAGE_KEYS.physiqueLogs, data.physiqueLogs ?? []),
+    writeKey(STORAGE_KEYS.programLogs, data.programLogs ?? []),
   ]);
 }

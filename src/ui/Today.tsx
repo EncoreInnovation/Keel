@@ -21,12 +21,29 @@ import { getBodyMetrics, getCompletedSessions, getPhysiqueLogs } from '../storag
 import { physiqueDue, weighInDue } from '../engine/checkins';
 import type { SwapCandidate } from '../state/sessionController';
 import { SessionPreview } from './SessionPreview';
+import { DigDeeperToday, type DigDeeperTodayProps } from './DigDeeperToday';
+import { programDay, type ProgramState } from '../state/program';
+import { parseYmd } from '../programs/digDeeper';
 import { Countdowns } from './Countdowns';
 import { WeighInForm } from './WeighInForm';
 
+/** Everything Today needs to show a Dig Deeper day instead of a COLOSSUS session. */
+export interface TodayProgramProps {
+  state: ProgramState;
+  readiness?: number;
+  onLog: DigDeeperTodayProps['onLog'];
+  onSkip: DigDeeperTodayProps['onSkip'];
+  onRestDay: DigDeeperTodayProps['onRestDay'];
+  onFinisher: DigDeeperTodayProps['onFinisher'];
+  stairBase?: number;
+}
+
 export interface TodayProps {
-  prescription: PrescribedSession;
+  /** COLOSSUS's session — absent while an outside program does the lifting. */
+  prescription?: PrescribedSession;
   weeksTotal: number;
+  /** Set while Dig Deeper is the lifting program. */
+  program?: TodayProgramProps;
   resumed: boolean;
   /** AI readiness commentary, if the coach was reachable — purely supplementary, never blocks rendering. */
   coachNote?: string;
@@ -51,6 +68,7 @@ export interface TodayProps {
 export function Today({
   prescription,
   weeksTotal,
+  program,
   resumed,
   coachNote,
   gyms,
@@ -68,8 +86,6 @@ export function Today({
   onSwapExercise,
   loadSwapCandidates,
 }: TodayProps) {
-  const label = prescription.dayName;
-
   const [streak, setStreak] = useState(0);
   const [weekCount, setWeekCount] = useState(0);
   const [showWeighIn, setShowWeighIn] = useState(false);
@@ -86,17 +102,23 @@ export function Today({
       setLatestWeight([...m].sort((a, b) => a.at - b.at).filter((x) => x.weight !== undefined).at(-1)?.weight);
     });
     void getPhysiqueLogs().then((l) => !cancelled && setShowPhotos(physiqueDue(l, now)));
-    void loadRecommendations(CATALOG as Exercise[], prescription, now).then((r) => !cancelled && setRecommendation(r[0]));
+    const day = program ? programDay(program.state, program.readiness) : undefined;
+    void loadRecommendations(CATALOG as Exercise[], prescription, now, day).then((r) => !cancelled && setRecommendation(r[0]));
     void getCompletedSessions().then((sessions) => {
       if (cancelled) return;
-      const dates = sessions.map((s) => s.completedAt ?? s.startedAt);
+      // Dig Deeper days count toward the streak the same as COLOSSUS sessions.
+      const programDates = (program?.state.logs ?? [])
+        .filter((l) => l.type === 'completed' || l.type === 'substitute')
+        .map((l) => parseYmd(l.date).getTime() + 12 * 3_600_000);
+      const dates = [...sessions.map((s) => s.completedAt ?? s.startedAt), ...programDates];
       setStreak(currentStreak(dates, now));
       setWeekCount(sessionsThisWeek(dates, now));
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [program?.state.logs.length]);
 
   return (
     <div className="today">
@@ -125,45 +147,79 @@ export function Today({
         </button>
       )}
 
-      <button className="today__meta today__meta--link" onClick={onOpenRoadmap} aria-label="Open the Q4 roadmap">
-        Block week {prescription.weekNumber} of {weeksTotal}
-        {prescription.isDeload ? ' · Deload' : ''} · Q4 plan ›
-      </button>
-      <h1 className="today__day">{label}</h1>
-      <div className="today__estimate" data-numeric>
-        {prescription.estimatedMinutes} min
-      </div>
+      {program ? (
+        <>
+          {gyms.length > 1 && (
+            <div className="gym-switch">
+              {gyms.map((gym) => (
+                <button
+                  key={gym.id}
+                  className={`chip${gym.id === activeGymId ? ' chip--active' : ''}`}
+                  onClick={() => onSwitchGym(gym.id)}
+                >
+                  {gym.name}
+                </button>
+              ))}
+            </div>
+          )}
+          <DigDeeperToday
+            program={program.state}
+            readiness={program.readiness}
+            gym={gyms.find((g) => g.id === activeGymId) ?? gyms[0]!}
+            stairBase={program.stairBase}
+            onOpenRoadmap={onOpenRoadmap}
+            onLog={program.onLog}
+            onSkip={program.onSkip}
+            onRestDay={program.onRestDay}
+            onFinisher={program.onFinisher}
+          />
+          <button className="btn btn--text" onClick={onOpenConditioning}>
+            Did a run, a walk or something else? Log it
+          </button>
+        </>
+      ) : prescription ? (
+        <>
+          <button className="today__meta today__meta--link" onClick={onOpenRoadmap} aria-label="Open the Q4 roadmap">
+            Block week {prescription.weekNumber} of {weeksTotal}
+            {prescription.isDeload ? ' · Deload' : ''} · Q4 plan ›
+          </button>
+          <h1 className="today__day">{prescription.dayName}</h1>
+          <div className="today__estimate" data-numeric>
+            {prescription.estimatedMinutes} min
+          </div>
 
-      {coachNote && <div className="coach-note">{coachNote}</div>}
+          {coachNote && <div className="coach-note">{coachNote}</div>}
 
-      {/* Switching gyms changes what today's session can be built from, so it
-          only makes sense before a session exists — once one's active, its
-          exercises are already locked in against whichever gym generated it. */}
-      {!resumed && gyms.length > 1 && (
-        <div className="gym-switch">
-          {gyms.map((gym) => (
-            <button
-              key={gym.id}
-              className={`chip${gym.id === activeGymId ? ' chip--active' : ''}`}
-              onClick={() => onSwitchGym(gym.id)}
-            >
-              {gym.name}
+          {/* Switching gyms changes what today's session can be built from, so it
+              only makes sense before a session exists — once one's active, its
+              exercises are already locked in against whichever gym generated it. */}
+          {!resumed && gyms.length > 1 && (
+            <div className="gym-switch">
+              {gyms.map((gym) => (
+                <button
+                  key={gym.id}
+                  className={`chip${gym.id === activeGymId ? ' chip--active' : ''}`}
+                  onClick={() => onSwitchGym(gym.id)}
+                >
+                  {gym.name}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <button className="btn btn--hero" onClick={onStart}>
+            {resumed ? 'Continue' : 'Start'}
+          </button>
+          {!resumed && (
+            <button className="btn btn--text today__express" onClick={onToggleExpress}>
+              {prescription.express ? 'Back to the full session' : 'Short on time? 25-min version'}
             </button>
-          ))}
-        </div>
-      )}
-
-      <button className="btn btn--hero" onClick={onStart}>
-        {resumed ? 'Continue' : 'Start'}
-      </button>
-      {!resumed && (
-        <button className="btn btn--text today__express" onClick={onToggleExpress}>
-          {prescription.express ? 'Back to the full session' : 'Short on time? 25-min version'}
-        </button>
-      )}
-      <button className="btn btn--text" onClick={onOpenConditioning}>
-        Did Insanity or a run? Log it
-      </button>
+          )}
+          <button className="btn btn--text" onClick={onOpenConditioning}>
+            Did Insanity or a run? Log it
+          </button>
+        </>
+      ) : null}
 
       {recommendation && <RecommendationCard rec={recommendation} onOpen={onOpenPillar} />}
 
@@ -180,17 +236,18 @@ export function Today({
         </div>
       )}
 
-      <SessionPreview
-        exercises={prescription.exercises}
-        gym={gyms.find((g) => g.id === activeGymId) ?? gyms[0]!}
-        // Swapping only makes sense before a session is actively being
-        // trained — same reasoning as the gym switch above: once sets exist
-        // against an exercise, replacing it out from under a resumed session
-        // would strand those logged sets under an id nothing points to anymore.
-        onSwap={resumed ? undefined : onSwapExercise}
-        loadSwapCandidates={resumed ? undefined : loadSwapCandidates}
-      />
-
+      {prescription && !program && (
+        <SessionPreview
+          exercises={prescription.exercises}
+          gym={gyms.find((g) => g.id === activeGymId) ?? gyms[0]!}
+          // Swapping only makes sense before a session is actively being
+          // trained — same reasoning as the gym switch above: once sets exist
+          // against an exercise, replacing it out from under a resumed session
+          // would strand those logged sets under an id nothing points to anymore.
+          onSwap={resumed ? undefined : onSwapExercise}
+          loadSwapCandidates={resumed ? undefined : loadSwapCandidates}
+        />
+      )}
     </div>
   );
 }

@@ -15,6 +15,10 @@ import { IMPACT_ORDER } from '../engine/recovery';
 import { exportAll, importAll, saveProfile } from '../storage/repository';
 import type { Equipment, ExperienceLevel, ImpactLevel, Joint, UserProfile } from '../engine/types';
 import { resolveGoals } from '../engine/goals';
+import { programSettings } from '../state/program';
+import { DEFAULT_STAIR_BASE } from '../programs/finishers';
+
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -42,6 +46,7 @@ const EQUIPMENT_LABEL: Record<Equipment, string> = {
   machine: 'Selectorized machines',
   plyoBox: 'Plyo boxes',
   sled: 'Sled',
+  stairClimber: 'Stair climber',
 };
 
 const JOINT_LABEL: Record<Joint, string> = {
@@ -124,6 +129,7 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
   const [restoreError, setRestoreError] = useState<string | undefined>();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const goals = resolveGoals(draft, Date.now());
+  const program = programSettings(draft);
 
   const handleSave = async () => {
     await saveProfile(draft);
@@ -160,6 +166,65 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
   return (
     <div className="phase-screen settings">
       <div className="phase-screen__eyebrow">Settings</div>
+
+      <section className="settings-section">
+        <h2 className="settings-section__title">Lifting program</h2>
+        <p className="settings-section__hint">
+          Dig Deeper replaces COLOSSUS's own lifting sessions while it runs; when its 12 weeks are done, COLOSSUS takes back over.
+        </p>
+        <div className="settings-options">
+          {(['dig-deeper', 'colossus'] as const).map((kind) => (
+            <button
+              key={kind}
+              className={`chip${program.kind === kind ? ' chip--active' : ''}`}
+              onClick={() => setDraft({ ...draft, program: { ...program, kind } })}
+            >
+              {kind === 'dig-deeper' ? 'Dig Deeper' : 'COLOSSUS lifting'}
+            </button>
+          ))}
+        </div>
+        {program.kind === 'dig-deeper' && (
+          <>
+            <h3 className="settings-section__title">Start date</h3>
+            <input
+              type="date"
+              className="settings-input"
+              aria-label="Dig Deeper start date"
+              value={program.startDate}
+              onChange={(e) => e.target.value && setDraft({ ...draft, program: { ...program, startDate: e.target.value } })}
+            />
+            <h3 className="settings-section__title">Training days</h3>
+            <div className="settings-options">
+              {DAY_NAMES.map((name, d) => (
+                <button
+                  key={name}
+                  className={`chip${program.trainingDays.includes(d) ? ' chip--active' : ''}`}
+                  onClick={() => setDraft({ ...draft, program: { ...program, trainingDays: toggle(program.trainingDays, d).sort() } })}
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+            <div className="settings-options">
+              <button
+                className={`chip${program.includeCardio ? ' chip--active' : ''}`}
+                onClick={() => setDraft({ ...draft, program: { ...program, includeCardio: !program.includeCardio } })}
+              >
+                Include Saturday Steady State Cardio
+              </button>
+            </div>
+          </>
+        )}
+        <h3 className="settings-section__title">Stair climber base level</h3>
+        <p className="settings-section__hint">The level where a steady pace feels 6/10. Easy is 2 below, hard is 3 above.</p>
+        <NumberInput
+          label="Stair climber base level"
+          value={draft.stairBaseLevel ?? DEFAULT_STAIR_BASE}
+          min={1}
+          max={20}
+          onChange={(stairBaseLevel) => setDraft({ ...draft, stairBaseLevel: Math.round(stairBaseLevel) })}
+        />
+      </section>
 
       <section className="settings-section">
         <h2 className="settings-section__title">Goals</h2>
@@ -234,6 +299,12 @@ export function Settings({ profile, onSaved, onBack }: SettingsProps) {
                   {EQUIPMENT_LABEL[eq]}
                 </button>
               ))}
+              <button
+                className={`chip${gym.sauna ? ' chip--active' : ''}`}
+                onClick={() => updateGym({ sauna: !gym.sauna })}
+              >
+                Sauna
+              </button>
             </div>
 
             <h3 className="settings-section__title">Dumbbells you own (lb)</h3>

@@ -8,7 +8,8 @@
 
 import { useEffect, useState } from 'react';
 import { asymmetryReport, overallGap, SIGNIFICANT_GAP, type AsymmetryReading } from '../engine/asymmetry';
-import { getAllSets } from '../storage/repository';
+import { getBalanceSets } from '../storage/repository';
+import { DD_EXERCISE_PREFIX } from '../programs/digDeeper';
 import { CATALOG_BY_ID } from '../../catalog/exercises';
 
 export interface AsymmetryProps {
@@ -16,6 +17,7 @@ export interface AsymmetryProps {
 }
 
 function exerciseName(exerciseId: string): string {
+  if (exerciseId.startsWith(DD_EXERCISE_PREFIX)) return `${exerciseId.slice(DD_EXERCISE_PREFIX.length)} (Dig Deeper)`;
   return CATALOG_BY_ID.get(exerciseId)?.name ?? exerciseId;
 }
 
@@ -30,7 +32,7 @@ export function Asymmetry({ onBack }: AsymmetryProps) {
 
   useEffect(() => {
     let cancelled = false;
-    void getAllSets().then((sets) => {
+    void getBalanceSets().then((sets) => {
       if (!cancelled) setReadings(asymmetryReport(sets));
     });
     return () => {

@@ -38,6 +38,29 @@ import { askCoach } from './ai/client';
 import { buildReadinessPrompt } from './ai/prompts';
 import { PILLAR_SESSIONS } from './pillars/library';
 import { upgradeGyms } from './config/gyms';
+import { DigDeeperLog } from './ui/DigDeeperLog';
+import { clearTimer, timerMinutes } from './ui/DigDeeperToday';
+import { IntervalPlayer } from './ui/IntervalPlayer';
+import { ymd, type DDSlot } from './programs/digDeeper';
+import {
+  DEFAULT_STAIR_BASE,
+  ROPE_CUES,
+  ropeSession,
+  SAUNA_GUIDANCE,
+  saunaSession,
+  stairSession,
+  type FinisherResult,
+  type FinisherSession,
+} from './programs/finishers';
+import {
+  loadProgram,
+  logFinisher,
+  logWorkout,
+  programDay,
+  type FinisherPick,
+  type ProgramState,
+  type WorkoutLogInput,
+} from './state/program';
 import {
   completeSession,
   discardUntouchedSession,
@@ -48,7 +71,15 @@ import {
   swapExercise,
   type TodayState,
 } from './state/sessionController';
-import { appendBodyMetric, getPillarLogs, getProfile, saveProfile, updateActiveSessionMeta } from './storage/repository';
+import {
+  appendBodyMetric,
+  getPillarLogs,
+  getProfile,
+  getProgramReadiness,
+  saveProfile,
+  saveProgramReadiness,
+  updateActiveSessionMeta,
+} from './storage/repository';
 import { pelvicFloorSession } from './pillars/pelvicFloor';
 import type { PillarSession } from './pillars/types';
 import type { BodyMetricLog, Exercise, GymId, PillarKind, UserProfile } from './engine/types';
@@ -80,7 +111,9 @@ type Screen =
   | 'askCoach'
   | 'roadmap'
   | 'physiqueCheckin'
-  | 'physiqueCompare';
+  | 'physiqueCompare'
+  | 'ddLog'
+  | 'finisher';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -93,6 +126,11 @@ export default function App() {
   const [coachNote, setCoachNote] = useState<string | undefined>();
   const [cueWord, setCueWord] = useState<string | undefined>();
   const [fullPrescription, setFullPrescription] = useState<TodayState['prescription'] | undefined>();
+  // Dig Deeper mode: the program's plan, today's readiness answer, and what's being logged or played.
+  const [program, setProgram] = useState<ProgramState | undefined>();
+  const [programReadiness, setProgramReadiness] = useState<number | undefined>();
+  const [ddLogTarget, setDdLogTarget] = useState<{ mode: 'completed' | 'substitute'; slot: DDSlot; performed: string } | undefined>();
+  const [finisher, setFinisher] = useState<{ pick: FinisherPick; session: FinisherSession; replacesSlot?: DDSlot } | undefined>();
 
   useEffect(() => {
     (async () => {
@@ -134,7 +172,34 @@ export default function App() {
    * readiness gate goes first: `volumeMultiplier` only sees readiness if
    * it's known *before* the prescription is built, not after.
    */
+  async function refreshProgram(p: UserProfile): Promise<ProgramState> {
+    const state = await loadProgram(p, Date.now());
+    setProgram(state);
+    return state;
+  }
+
+  function showToday() {
+    setLastTab('today');
+    setScreen('today');
+  }
+
   async function goToTodayOrReadiness(p: UserProfile) {
+    // While Dig Deeper does the lifting, COLOSSUS never builds a session of
+    // its own — an untouched one would be filed as "completed" the next day.
+    const prog = await refreshProgram(p);
+    if (prog.active) {
+      // A COLOSSUS session generated before the switch, never trained: drop it
+      // (it refuses if any set was logged against it).
+      await discardUntouchedSession();
+      const answered = await getProgramReadiness();
+      if (answered && answered.date === ymd(new Date())) {
+        setProgramReadiness(answered.value);
+        showToday();
+      } else {
+        setScreen('readiness');
+      }
+      return;
+    }
     const started = await hasStartedTodaySession();
     if (started) {
       await refreshToday(p);
@@ -166,17 +231,6 @@ export default function App() {
     await goToTodayOrReadiness(updated);
   }
 
-  /**
-   * `loadToday` persists a session record the moment readiness is answered —
-   * well before Start is pressed — so by the time this control is visible,
-   * today's exercises are already committed to storage against the OLD gym.
-   * Simply calling `refreshToday` again would just hand back that same
-   * prescription (`loadToday` sees the existing record and resumes it).
-   * `discardUntouchedSession` clears it first — safe here specifically
-   * because Today only shows this control while `!resumed`, i.e. nothing
-   * has been trained against it yet; it refuses to run (and this becomes a
-   * no-op) if any set has actually been logged.
-   */
   async function handleLogWeighIn(entry: BodyMetricLog) {
     await appendBodyMetric(entry);
     // The profile's bodyweight was only ever set at setup; keep it current so
@@ -188,8 +242,26 @@ export default function App() {
     }
   }
 
+  /**
+   * `loadToday` persists a session record the moment readiness is answered —
+   * well before Start is pressed — so by the time this control is visible,
+   * today's exercises are already committed to storage against the OLD gym.
+   * Simply calling `refreshToday` again would just hand back that same
+   * prescription (`loadToday` sees the existing record and resumes it).
+   * `discardUntouchedSession` clears it first — safe here specifically
+   * because Today only shows this control while `!resumed`, i.e. nothing
+   * has been trained against it yet; it refuses to run (and this becomes a
+   * no-op) if any set has actually been logged.
+   */
   async function handleSwitchGym(gymId: GymId) {
     if (!profile) return;
+    if (program?.active) {
+      // No COLOSSUS session to rebuild — the gym only changes which finishers are offered.
+      const updated: UserProfile = { ...profile, activeGymId: gymId };
+      await saveProfile(updated);
+      setProfile(updated);
+      return;
+    }
     await discardUntouchedSession();
     const updated: UserProfile = { ...profile, activeGymId: gymId };
     await saveProfile(updated);
@@ -246,6 +318,12 @@ export default function App() {
   async function handleReadinessSelected(value: number) {
     if (!profile) return;
     setCoachNote(undefined);
+    if (program?.active) {
+      await saveProgramReadiness(ymd(new Date()), value);
+      setProgramReadiness(value);
+      showToday();
+      return;
+    }
     const state = await refreshToday(profile, value);
     if (!state) return;
 
@@ -263,6 +341,68 @@ export default function App() {
     ).then((result) => {
       if (result.ok) setCoachNote(result.text);
     });
+  }
+
+  async function handleProgramLog(input: WorkoutLogInput) {
+    if (!profile) return;
+    await logWorkout(input, Date.now());
+    clearTimer();
+    setDdLogTarget(undefined);
+    const prog = await refreshProgram(profile);
+    // The last Dig Deeper workout hands the lifting back to COLOSSUS.
+    if (!prog.active) await goToTodayOrReadiness(profile);
+    else showToday();
+  }
+
+  async function handleSettingsSaved(updated: UserProfile) {
+    const wasActive = Boolean(program?.active);
+    setProfile(updated);
+    const prog = await refreshProgram(updated);
+    // Switching between Dig Deeper and COLOSSUS lifting changes what Today is.
+    if (prog.active !== wasActive) {
+      if (!prog.active) await refreshToday(updated);
+      else setLastTab('today');
+    }
+  }
+
+  function openFinisher(pick: FinisherPick, replacesSlot?: DDSlot) {
+    const session =
+      pick.kind === 'stairs'
+        ? stairSession(pick.number, profile?.stairBaseLevel)
+        : pick.kind === 'rope'
+          ? ropeSession(pick.number)
+          : saunaSession(pick.number);
+    setFinisher({ pick, session, replacesSlot });
+    setScreen('finisher');
+  }
+
+  async function handleFinisherDone(result: FinisherResult) {
+    if (!profile || !finisher) return;
+    const now = Date.now();
+    await logFinisher(finisher.pick.kind, finisher.session.number, result, now);
+    if (result.baseLevel !== undefined && result.baseLevel !== profile.stairBaseLevel) {
+      const updated: UserProfile = { ...profile, stairBaseLevel: result.baseLevel };
+      await saveProfile(updated);
+      setProfile(updated);
+    }
+    if (finisher.replacesSlot && result.elapsedSec > 0) {
+      // Stairs in place of the Saturday cardio: the slot is used up, and the
+      // stair log above already carries the fatigue.
+      await logWorkout(
+        {
+          type: 'substitute',
+          date: ymd(new Date(now)),
+          slotId: finisher.replacesSlot.id,
+          scheduledWorkoutId: finisher.replacesSlot.workoutId,
+          durationMin: Math.round(result.elapsedSec / 60),
+          notes: 'Stair climber instead',
+        },
+        now + 1,
+      );
+    }
+    setFinisher(undefined);
+    await refreshProgram(profile);
+    showToday();
   }
 
   function handleStart() {
@@ -317,9 +457,11 @@ export default function App() {
     );
   }
 
-  if (!profile || !today) {
+  const ddActive = Boolean(program?.active);
+  if (!profile || (!today && !ddActive)) {
     return <div className="today today--loading">Loading…</div>;
   }
+  const todayYmd = ymd(new Date());
 
   const goTab = (tab: Tab) => {
     setLastTab(tab);
@@ -347,9 +489,26 @@ export default function App() {
     return withTabs(
       'today',
       <Today
-        prescription={today.prescription}
-        weeksTotal={today.block.weeks}
-        resumed={today.resumed}
+        prescription={ddActive ? undefined : today?.prescription}
+        weeksTotal={today?.block.weeks ?? 6}
+        program={
+          ddActive && program
+            ? {
+                state: program,
+                readiness: programReadiness,
+                onLog: (mode, slot, performed) => {
+                  setDdLogTarget({ mode, slot, performed });
+                  setScreen('ddLog');
+                },
+                onSkip: (slot) =>
+                  void handleProgramLog({ type: 'skipped', date: todayYmd, slotId: slot.id, scheduledWorkoutId: slot.workoutId }),
+                onRestDay: () => void handleProgramLog({ type: 'rest', date: todayYmd }),
+                onFinisher: openFinisher,
+                stairBase: profile.stairBaseLevel,
+              }
+            : undefined
+        }
+        resumed={today?.resumed ?? false}
         coachNote={coachNote}
         gyms={profile.gyms}
         activeGymId={profile.activeGymId}
@@ -373,7 +532,8 @@ export default function App() {
     return withTabs(
       'recover',
       <RecoverHub
-        prescription={today.prescription}
+        prescription={ddActive ? undefined : today?.prescription}
+        programDay={ddActive && program ? programDay(program, programReadiness) : undefined}
         onOpenPillar={openPillar}
         onOpenRecovery={() => setScreen('recovery')}
       />,
@@ -385,6 +545,7 @@ export default function App() {
       'progressHub',
       <ProgressHub
         profile={profile}
+        program={program}
         onOpenRoadmap={() => setScreen('roadmap')}
         onOpenProgress={() => setScreen('progress')}
         onOpenPhysique={() => setScreen('physiqueCompare')}
@@ -470,7 +631,7 @@ export default function App() {
   }
 
   if (screen === 'roadmap') {
-    return <Roadmap profile={profile} onBack={back} />;
+    return <Roadmap profile={profile} program={program} onBack={back} />;
   }
 
   if (screen === 'askCoach') {
@@ -481,11 +642,50 @@ export default function App() {
     return (
       <Settings
         profile={profile}
-        onSaved={(updated) => setProfile(updated)}
+        onSaved={(updated) => void handleSettingsSaved(updated)}
         onBack={back}
       />
     );
   }
+
+  if (screen === 'ddLog' && ddLogTarget && program) {
+    return (
+      <DigDeeperLog
+        slot={ddLogTarget.slot}
+        mode={ddLogTarget.mode}
+        performedWorkoutId={ddLogTarget.performed}
+        logs={program.logs}
+        initialMinutes={timerMinutes(ddLogTarget.slot.id, Date.now())}
+        onSave={handleProgramLog}
+        onCancel={showToday}
+      />
+    );
+  }
+
+  if (screen === 'finisher' && finisher) {
+    const notes =
+      finisher.pick.kind === 'rope'
+        ? ROPE_CUES
+        : finisher.pick.kind === 'sauna'
+          ? SAUNA_GUIDANCE
+          : finisher.session.number === 1
+            ? [
+                'Session 1 finds your base level: start at level 5 and adjust until a steady pace feels 6/10 — breathing hard but able to talk in short sentences.',
+                'At the end you’ll set that level; every later session is built from it.',
+              ]
+            : [`Levels are set from your base level (${profile.stairBaseLevel ?? DEFAULT_STAIR_BASE}). Change it in Settings if the machine feels different.`];
+    return (
+      <IntervalPlayer
+        session={finisher.session}
+        notes={notes}
+        askBaseLevel={finisher.pick.kind === 'stairs' && finisher.session.number === 1 ? profile.stairBaseLevel ?? DEFAULT_STAIR_BASE : undefined}
+        onFinish={(r) => void handleFinisherDone(r)}
+        onCancel={showToday}
+      />
+    );
+  }
+
+  if (!today) return <div className="today today--loading">Loading…</div>;
 
   if (screen === 'arrive') {
     return (

@@ -229,6 +229,22 @@ describe('upgradeGyms', () => {
     expect(edited.gyms.find((g) => g.id === 'apartment')!.kettlebells).toEqual([20, 30]);
   });
 
+  it('adds the FC stair climbers, the North Hills sauna and Dig Deeper, once', () => {
+    const upgraded = upgradeGyms(saved(oldApartment));
+    const nh = upgraded.gyms.find((g) => g.id === 'fc-north-hills')!;
+    expect(nh.equipment).toContain('stairClimber');
+    expect(nh.sauna).toBe(true);
+    expect(upgraded.program).toMatchObject({ kind: 'dig-deeper', startDate: '2026-10-26' });
+    // Removing the stair climber afterwards sticks.
+    const edited = { ...upgraded, gyms: upgraded.gyms.map((g) => (g.id === 'fc-north-hills' ? { ...g, equipment: g.equipment.filter((e) => e !== 'stairClimber') } : g)) };
+    expect(upgradeGyms(edited)).toBe(edited);
+  });
+
+  it('keeps a program already chosen', () => {
+    const mine = { ...saved(oldApartment), program: { kind: 'colossus' as const, startDate: '2026-11-02', trainingDays: [1, 3, 5], includeCardio: false } };
+    expect(upgradeGyms(mine).program!.kind).toBe('colossus');
+  });
+
   it('changes nothing once upgraded, so no needless save', () => {
     const once = upgradeGyms(saved(oldApartment));
     expect(upgradeGyms(once)).toBe(once);
