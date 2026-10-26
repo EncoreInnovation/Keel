@@ -33,6 +33,8 @@ export const STORAGE_KEYS = {
   programLogs: 'program:logs',
   /** Today's readiness answer in program mode, where there's no COLOSSUS session record to hold it. */
   programReadiness: 'program:readiness',
+  /** Private monthly erection/control check-ins — on-device only. */
+  intimacyLogs: 'intimacy:logs',
 } as const;
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

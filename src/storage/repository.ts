@@ -26,6 +26,7 @@ import {
 } from './db';
 import { runExclusive } from './mutex';
 import { ddSideSets, type DDLog } from '../programs/digDeeper';
+import type { IntimacyLog } from '../engine/intimacy';
 import type {
   Block,
   BodyMetricLog,
@@ -387,6 +388,21 @@ export async function getBalanceSets(): Promise<SetLog[]> {
   return [...sets, ...ddSideSets(programLogs)];
 }
 
+/* Private check-ins: their own key, read only by the Progress tab. */
+
+export function getIntimacyLogs(): Promise<IntimacyLog[]> {
+  return readKey<IntimacyLog[]>(STORAGE_KEYS.intimacyLogs).then((v) => v ?? []);
+}
+
+export function appendIntimacyLog(entry: IntimacyLog): Promise<IntimacyLog[]> {
+  return runExclusive('intimacyLogs', async () => {
+    const logs = (await readKey<IntimacyLog[]>(STORAGE_KEYS.intimacyLogs)) ?? [];
+    const next = [...logs.filter((l) => l.id !== entry.id), entry].sort((a, b) => a.at - b.at);
+    await writeKey(STORAGE_KEYS.intimacyLogs, next);
+    return next;
+  });
+}
+
 export function getProgramReadiness(): Promise<{ date: string; value: number } | undefined> {
   return readKey<{ date: string; value: number }>(STORAGE_KEYS.programReadiness);
 }
@@ -443,6 +459,8 @@ export interface KeelExport {
   physiqueLogs?: PhysiqueLog[];
   /** Dig Deeper workout logs. Optional for older exports. */
   programLogs?: DDLog[];
+  /** Private check-ins. In your own backup file only. Optional for older exports. */
+  intimacyLogs?: IntimacyLog[];
 }
 
 export async function exportAll(now: number): Promise<KeelExport> {
@@ -473,6 +491,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
   ]);
   const physiqueLogs = await getPhysiqueLogs();
   const programLogs = await getProgramLogs();
+  const intimacyLogs = await getIntimacyLogs();
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -490,6 +509,7 @@ export async function exportAll(now: number): Promise<KeelExport> {
     postureLogs,
     physiqueLogs,
     programLogs,
+    intimacyLogs,
   };
 }
 
@@ -527,5 +547,6 @@ export async function importAll(data: KeelExport): Promise<void> {
     writeKey(STORAGE_KEYS.postureLogs, data.postureLogs),
     writeKey(STORAGE_KEYS.physiqueLogs, data.physiqueLogs ?? []),
     writeKey(STORAGE_KEYS.programLogs, data.programLogs ?? []),
+    writeKey(STORAGE_KEYS.intimacyLogs, data.intimacyLogs ?? []),
   ]);
 }

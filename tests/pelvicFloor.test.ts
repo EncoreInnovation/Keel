@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PELVIC_SESSIONS_PER_LEVEL, pelvicFloorSession, pelvicLevel } from '../src/pillars/pelvicFloor';
+import { PELVIC_SESSIONS_PER_LEVEL, pelvicFloorSession, pelvicLevel, pelvicPosition } from '../src/pillars/pelvicFloor';
 import { PILLAR_SESSIONS } from '../src/pillars/library';
 
 function holdSeconds(completed: number): number {
@@ -33,6 +33,22 @@ describe('pelvic floor progression', () => {
     expect(names).toContain('Pelvic breath');
     expect(sessionSeconds(0) / 60).toBeLessThan(8);
     expect(sessionSeconds(10_000) / 60).toBeLessThan(10);
+  });
+
+  it('moves from lying to seated to standing to moving as you practise', () => {
+    expect([0, 1, 2, 3].map((l) => pelvicPosition(l * PELVIC_SESSIONS_PER_LEVEL))).toEqual(['Lying', 'Seated', 'Standing', 'Moving']);
+    expect(pelvicFloorSession(2 * PELVIC_SESSIONS_PER_LEVEL).steps[0]!).toMatchObject({ title: 'Find the right muscle — standing' });
+  });
+
+  it('adds a long light hold that grows from 20 to 45 seconds', () => {
+    const longHold = (n: number) => pelvicFloorSession(n).steps.find((s) => s.type === 'move' && s.title.startsWith('Long light hold'));
+    expect(longHold(0)).toMatchObject({ seconds: 20 });
+    expect(longHold(10_000)).toMatchObject({ seconds: 45 });
+  });
+
+  it('trains the pelvic floor to stay soft while the glutes work', () => {
+    const names = pelvicFloorSession(0).steps.map((s) => (s.type === 'breath' ? s.protocol.name : s.title));
+    expect(names).toContain('Glutes on, pelvic floor off');
   });
 
   it('is listed in the pillar library for the Today chip', () => {

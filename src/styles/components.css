@@ -2559,3 +2559,73 @@ button.countdowns__tile {
 .dd-log .weigh-in__row .weigh-in__field {
   max-width: none;
 }
+
+/* ---------------- Private check-in ---------------- */
+
+.intimacy__question {
+  max-width: 22rem;
+  margin: 0;
+  font-size: var(--fs-lg);
+  line-height: var(--lh-body);
+}
+
+.intimacy__nav {
+  justify-content: center;
+}
+
+.intimacy__privacy {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+}
+
+.intimacy__scores {
+  display: flex;
+  gap: var(--s6);
+}
+
+.intimacy__score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.intimacy__score-value {
+  font-size: 3rem;
+  font-weight: 600;
+}
+
+.intimacy__score-label {
+  color: var(--text-dim);
+  font-size: var(--fs-sm);
+}
+
+.cardio-meter {
+  width: 100%;
+  height: 8px;
+  margin-top: var(--s2);
+  border-radius: 99px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.cardio-meter i {
+  display: block;
+  height: 100%;
+  background: var(--data-0);
+}
+
+.hub-card--static {
+  cursor: default;
+}
+
+.hub-card__head--button {
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}

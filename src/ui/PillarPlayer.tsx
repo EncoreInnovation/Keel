@@ -70,10 +70,13 @@ export function PillarPlayer({ session, onComplete }: PillarPlayerProps) {
       <div className="phase-screen__eyebrow">
         {session.name} · {stepIndex + 1} of {session.steps.length}
       </div>
+      {/* Keyed by step: two breath steps in a row would otherwise share one
+          BreathSequence instance, and the second would inherit the first's
+          "already completed" flag and never advance. */}
       {step.type === 'breath' ? (
-        <BreathSequence protocol={step.protocol} cycles={step.cycles} onComplete={advanceStep} />
+        <BreathSequence key={stepIndex} protocol={step.protocol} cycles={step.cycles} onComplete={advanceStep} />
       ) : (
-        <TimedPrompt seconds={step.seconds} title={step.title} lines={[step.cue]} onComplete={advanceStep} />
+        <TimedPrompt key={stepIndex} seconds={step.seconds} title={step.title} lines={[step.cue]} onComplete={advanceStep} />
       )}
     </div>
   );

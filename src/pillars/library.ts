@@ -270,10 +270,163 @@ const GROUND: PillarSession = {
   ],
 };
 
+/**
+ * Hips, pelvis and lower core: strength and mobility first, then the dance
+ * isolation drills (pelvic tilts with a still rib cage, hip circles and
+ * figure-8s, the body wave) that make hip movement look smooth rather than
+ * stiff. The first half is standard low-back care — dead bug, bird dog and
+ * bridges hold the pelvis steady so the lower back doesn't take the motion.
+ */
+const HIP_FLOW: PillarSession = {
+  kind: 'hipflow',
+  name: 'Hip Flow',
+  minutes: 11,
+  purpose: 'Strong, loose, controlled hips and lower core — smooth pelvic movement and a lower back that doesn’t tighten up.',
+  when: '3–4 times a week, after a workout or on a rest day.',
+  steps: [
+    {
+      type: 'move',
+      title: 'Lying pelvic tilts',
+      cue: 'On your back, knees bent. Flatten the low back into the floor, then arch it gently. Only the pelvis moves — slow, with the breath.',
+      seconds: 45,
+    },
+    {
+      type: 'move',
+      title: 'Glute bridge, 3 s squeeze',
+      cue: 'Tuck the tailbone slightly first, then drive up through the heels. Squeeze the glutes hard for 3 s at the top — ribs down, no arching.',
+      seconds: 60,
+    },
+    {
+      type: 'move',
+      title: 'Bridge march',
+      cue: 'Hold the bridge and lift one foot an inch, then the other. Hips stay level — no dropping on the side that lifts.',
+      seconds: 45,
+    },
+    {
+      type: 'move',
+      title: 'Dead bug',
+      cue: 'Low back pressed flat the whole time. Lower opposite arm and leg slowly, exhale as they go out.',
+      seconds: 60,
+    },
+    {
+      type: 'move',
+      title: 'Bird dog',
+      cue: 'On hands and knees, reach opposite arm and leg long. Hips stay square — imagine a glass of water on your low back.',
+      seconds: 60,
+    },
+    {
+      type: 'move',
+      title: 'Cat-cow, one vertebra at a time',
+      cue: 'Start the movement from the tailbone and roll it up through the spine. Slower than you think.',
+      seconds: 45,
+    },
+    { type: 'move', title: '90/90 hip switches', cue: 'Seated, rotate both knees side to side without using your hands if you can.', seconds: 60 },
+    {
+      type: 'move',
+      title: 'Kneeling hip-flexor stretch',
+      cue: 'Half-kneeling, tuck the tailbone and squeeze the back glute — the stretch shows up at the front of that hip. 45 s a side.',
+      seconds: 90,
+    },
+    {
+      type: 'move',
+      title: 'Standing pelvic tilts — isolation',
+      cue: 'Feet hip-width, knees soft, hands on hips. Tilt the pelvis forward and back while the rib cage stays completely still. Small and controlled first.',
+      seconds: 45,
+    },
+    {
+      type: 'move',
+      title: 'Hip circles and figure-8s',
+      cue: 'Draw a slow circle with the hips, then a sideways figure-8. Shoulders stay quiet. Both directions — smooth beats big.',
+      seconds: 60,
+    },
+    {
+      type: 'move',
+      title: 'Body wave',
+      cue: 'Roll the movement down: chest forward, then stomach, then hips — and back up. Slow and segmented first, then let it flow.',
+      seconds: 60,
+    },
+    {
+      type: 'move',
+      title: 'Deep squat hold',
+      cue: 'Hold something for balance, sink low, breathe into the belly and let the pelvic floor drop on each inhale.',
+      seconds: 45,
+    },
+  ],
+};
+
+/**
+ * Practice for lasting longer, done when you're not aroused so the skills are
+ * automatic when you are: slow breathing (a long exhale damps the
+ * sympathetic drive behind the ejaculation reflex), a pelvic floor that stays
+ * soft while everything else works, a strong squeeze-then-release, and the
+ * stop-start technique, which has the most behavioural evidence behind it
+ * (Cooper et al., Eur Urol 2015, systematic review).
+ */
+const CONTROL: PillarSession = {
+  kind: 'control',
+  name: 'Control',
+  minutes: 6,
+  purpose: 'Train the off switch — slow breathing and a relaxed pelvic floor keep the reflex from firing early.',
+  when: '3 times a week, any time you’re relaxed. Private and quiet.',
+  steps: [
+    {
+      type: 'breath',
+      protocol: {
+        name: 'Slow belly breathing',
+        phases: [
+          { kind: 'in', seconds: 4, label: 'Inhale into the belly' },
+          { kind: 'out', seconds: 6, label: 'Long, slow exhale' },
+        ],
+      },
+      cycles: 6,
+    },
+    {
+      type: 'breath',
+      protocol: {
+        name: 'Relax on the exhale',
+        phases: [
+          { kind: 'in', seconds: 4, label: 'Inhale — pelvic floor drops' },
+          { kind: 'out', seconds: 4, label: 'Exhale — stay soft, no squeeze' },
+        ],
+      },
+      cycles: 6,
+    },
+    {
+      type: 'breath',
+      protocol: {
+        name: 'Glutes on, pelvic floor off',
+        phases: [
+          { kind: 'in', seconds: 5, label: 'Squeeze glutes and thighs hard — pelvic floor stays soft' },
+          { kind: 'out', seconds: 5, label: 'Let everything go' },
+        ],
+      },
+      cycles: 6,
+    },
+    {
+      type: 'breath',
+      protocol: {
+        name: 'Strong squeeze, full release',
+        phases: [
+          { kind: 'in', seconds: 5, label: 'Strongest pelvic floor squeeze — the one you’ll use when close' },
+          { kind: 'out', seconds: 5, label: 'Release completely and breathe' },
+        ],
+      },
+      cycles: 5,
+    },
+    {
+      type: 'move',
+      title: 'Stop-start, next time solo',
+      cue: 'Get close to the point of no return, then stop completely. Slow belly breaths with a soft pelvic floor until the urge fades, then start again. Three rounds before finishing, 2–3 times a week for a few weeks — then with a partner. Still a problem after about 12 weeks? A doctor has effective treatments.',
+      seconds: 60,
+    },
+  ],
+};
+
 /** Sessions grouped by when you'd reach for them — the Recover tab's layout. */
 export const PILLAR_GROUPS: { title: string; kinds: PillarSession['kind'][] }[] = [
   { title: 'Daily', kinds: ['pelvic', 'sigh'] },
   { title: 'Before you train', kinds: ['activate', 'unlock'] },
+  { title: 'Hips, core & stamina', kinds: ['hipflow', 'control'] },
   { title: 'Fix your posture', kinds: ['realign'] },
   { title: 'Calm down', kinds: ['reset', 'resonance'] },
   { title: 'Recover deeper', kinds: ['nsdr'] },
@@ -290,6 +443,8 @@ export const PILLAR_SESSIONS: Record<PillarSession['kind'], PillarSession> = {
   focus: FOCUS,
   // Level 0; the live session is built from practice count — see App.
   pelvic: pelvicFloorSession(0),
+  control: CONTROL,
+  hipflow: HIP_FLOW,
   realign: REALIGN,
   unlock: UNLOCK,
   ground: GROUND,

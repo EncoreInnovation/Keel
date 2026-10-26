@@ -17,7 +17,14 @@ export interface RecommendInput {
   /** Posture headline when the latest scan shows a tilt; undefined when level or unscanned. */
   postureTilt?: string;
   realignInLastTwoDays: boolean;
+  /** Whole days since Hip Flow was last done; undefined if never. */
+  hipFlowDaysSince?: number;
+  /** A planned rest day (known in Dig Deeper mode). */
+  restDay?: boolean;
 }
+
+/** Hip Flow is a 3–4×-a-week session; nudge once it's been this long. */
+export const HIP_FLOW_EVERY_DAYS = 3;
 
 export interface Recommendation {
   kind: PillarKind;
@@ -38,6 +45,15 @@ export function recommendSessions(input: RecommendInput): Recommendation[] {
   }
   if (input.hour < 10 && !input.trainedToday) add('activate', 'Early start — wake the body up before you train.');
   if (input.postureTilt && !input.realignInLastTwoDays) add('realign', `Your last scan: ${input.postureTilt}.`);
+  const hipFlowDue = input.hipFlowDaysSince === undefined || input.hipFlowDaysSince >= HIP_FLOW_EVERY_DAYS;
+  if (hipFlowDue && (input.trainedToday || input.restDay)) {
+    add(
+      'hipflow',
+      input.hipFlowDaysSince === undefined
+        ? 'Hips and lower core — a good one after training or on a rest day.'
+        : `Hips and lower core — last done ${input.hipFlowDaysSince} days ago.`,
+    );
+  }
   if (input.hour >= 19) {
     if (input.trainedToday) add('nsdr', 'You trained today — deep rest helps recovery and sleep.');
     else add('resonance', 'Evening — slow breathing to wind down for sleep.');

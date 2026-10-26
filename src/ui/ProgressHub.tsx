@@ -11,6 +11,8 @@ import { alignmentSummary, type AlignmentSummary } from '../posture/describe';
 import {
   getActiveBlock,
   getBalanceSets,
+  getConditioningLogs,
+  getIntimacyLogs,
   getBlockHistory,
   getBodyMetrics,
   getPhysiqueLogs,
@@ -20,6 +22,9 @@ import type { PillarKind, UserProfile } from '../engine/types';
 import { COLLECTIONS, ddLiftTrends, ddRoadmap, ymd } from '../programs/digDeeper';
 import type { ProgramState } from '../state/program';
 import { goalProgress } from '../engine/goals';
+import { cardioMinutesThisWeek, WEEKLY_CARDIO_TARGET_MIN } from '../engine/cardio';
+import { controlScore, erectionScore, intimacyDue, type IntimacyLog } from '../engine/intimacy';
+import { TrendChart } from './charts/TrendChart';
 import { describeGap } from './Asymmetry';
 import { VolumeReadout } from './VolumeReadout';
 
@@ -34,6 +39,8 @@ export interface ProgressHubProps {
   onOpenPosture: () => void;
   onOpenAsymmetry: () => void;
   onOpenPillar: (kind: PillarKind) => void;
+  onOpenConditioning: () => void;
+  onOpenIntimacy: () => void;
 }
 
 interface Status {
@@ -42,6 +49,8 @@ interface Status {
   physique?: string;
   alignment?: AlignmentSummary;
   balance?: string;
+  cardioMinutes?: number;
+  intimacy?: IntimacyLog[];
 }
 
 const DAY = 86_400_000;
@@ -68,13 +77,15 @@ export function ProgressHub(props: ProgressHubProps) {
   useEffect(() => {
     void (async () => {
       const now = Date.now();
-      const [history, active, metrics, physique, posture, sets] = await Promise.all([
+      const [history, active, metrics, physique, posture, sets, conditioning, intimacy] = await Promise.all([
         getBlockHistory(),
         getActiveBlock(),
         getBodyMetrics(),
         getPhysiqueLogs(),
         getPostureLogs(),
         getBalanceSets(),
+        getConditioningLogs(),
+        getIntimacyLogs(),
       ]);
       const weeks = buildRoadmap(history[0]?.startedAt ?? active?.startedAt ?? now);
       const i = currentWeekIndex(weeks, now);
@@ -114,6 +125,8 @@ export function ProgressHub(props: ProgressHubProps) {
         physique: lastPhoto ? `Last photos ${Math.floor((now - lastPhoto.at) / DAY)} days ago` : 'No photos yet',
         alignment: alignmentSummary(posture, now),
         balance: unilateral.length ? describeGap(overallGap(unilateral)) : 'No one-sided lifts logged yet',
+        cardioMinutes: cardioMinutesThisWeek(conditioning, now),
+        intimacy,
       });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -157,6 +170,28 @@ export function ProgressHub(props: ProgressHubProps) {
         </section>
       )}
 
+      {status.cardioMinutes !== undefined && (
+        <button className="hub-card" onClick={props.onOpenConditioning}>
+          <div className="hub-card__head">
+            <span className="hub-card__title">Cardio & blood flow</span>
+            <span className="hub-card__meta">›</span>
+          </div>
+          <div className="hub-card__status">
+            {status.cardioMinutes} of {WEEKLY_CARDIO_TARGET_MIN} min this week
+          </div>
+          <div className="cardio-meter" role="img" aria-label={`${status.cardioMinutes} of ${WEEKLY_CARDIO_TARGET_MIN} minutes`}>
+            <i style={{ width: `${Math.min(100, (status.cardioMinutes / WEEKLY_CARDIO_TARGET_MIN) * 100)}%` }} />
+          </div>
+          <div className="hub-card__body">
+            Blood flow drives erections. In studies, about 160 min a week of moderate-to-hard cardio improved them over 6
+            months. Stairs, rope, walks, runs, Insanity and Dig Deeper cardio all count.
+          </div>
+          <div className="hub-card__when">
+            <strong>Check:</strong> Mid-week. Short? A brisk 20-minute walk closes the gap. Tap to log one.
+          </div>
+        </button>
+      )}
+      <IntimacyCard logs={status.intimacy} onOpen={props.onOpenIntimacy} />
       <HubCard
         title="Posture"
         status={status.alignment ? status.alignment.headline : 'No scan yet — take one to see which side is off'}
@@ -210,5 +245,36 @@ function DigDeeperCard({ program, onOpen }: { program: ProgramState; onOpen: () 
         <strong>Check:</strong> Weekly. The weights should creep up inside each 4-week collection.
       </div>
     </button>
+  );
+}
+
+/** The private check-in: due prompt, last scores, and the trend once there are two. */
+function IntimacyCard({ logs, onOpen }: { logs?: IntimacyLog[]; onOpen: () => void }) {
+  if (!logs) return null;
+  const last = logs.at(-1);
+  const due = intimacyDue(logs, Date.now());
+  const points = logs.flatMap((l) => {
+    const score = erectionScore(l);
+    return score === undefined ? [] : [{ at: l.at, value: score }];
+  });
+  const lastErection = last ? erectionScore(last) : undefined;
+  const lastControl = last ? controlScore(last) : undefined;
+  return (
+    <div className="hub-card hub-card--static">
+      <button className="hub-card__head hub-card__head--button" onClick={onOpen}>
+        <span className="hub-card__title">Private check-in</span>
+        <span className="hub-card__meta">{due ? 'Due · 2 min ›' : 'Take again ›'}</span>
+      </button>
+      <div className="hub-card__status">
+        {last
+          ? `Last ${new Date(last.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}: erections ${lastErection ?? '—'}/20 · control ${lastControl ?? '—'}/5`
+          : 'Not taken yet'}
+      </div>
+      {points.length >= 2 && <TrendChart title="Erection score" points={points} unit="/20" />}
+      <div className="hub-card__body">Five private questions on erections and control — the way to see whether all this training is working.</div>
+      <div className="hub-card__when">
+        <strong>Check:</strong> Monthly. Stored only on this phone.
+      </div>
+    </div>
   );
 }

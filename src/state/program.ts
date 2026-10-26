@@ -37,6 +37,8 @@ export function programDay(state: ProgramState, readiness: number | undefined): 
   const muscles = slot ? DD_BY_ID.get(slot.workoutId)?.muscles ?? {} : {};
   return {
     readiness,
+    // No workout due and nothing logged: a planned rest day.
+    restDay: !slot && state.plan.loggedToday.length === 0 && !state.plan.complete,
     trainedToday: state.plan.loggedToday.some((l) => l.type === 'completed' || l.type === 'substitute'),
     muscles: (Object.entries(muscles) as [Muscle, number][]).filter(([, v]) => v >= 0.5).map(([m]) => m),
   };
@@ -72,6 +74,7 @@ export async function logWorkout(input: WorkoutLogInput, now: number): Promise<D
         impact: 'low',
         source: 'manual',
         muscles: workout.muscles,
+        programWorkoutId: workout.id,
       }
     : undefined;
   await repo.saveProgramLog(entry, fatigue);

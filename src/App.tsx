@@ -41,6 +41,7 @@ import { upgradeGyms } from './config/gyms';
 import { DigDeeperLog } from './ui/DigDeeperLog';
 import { clearTimer, timerMinutes } from './ui/DigDeeperToday';
 import { IntervalPlayer } from './ui/IntervalPlayer';
+import { IntimacyCheckin } from './ui/IntimacyCheckin';
 import { ymd, type DDSlot } from './programs/digDeeper';
 import {
   DEFAULT_STAIR_BASE,
@@ -113,7 +114,8 @@ type Screen =
   | 'physiqueCheckin'
   | 'physiqueCompare'
   | 'ddLog'
-  | 'finisher';
+  | 'finisher'
+  | 'intimacyCheckin';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('loading');
@@ -553,6 +555,8 @@ export default function App() {
         onOpenPosture={() => setScreen('postureHistory')}
         onOpenAsymmetry={() => setScreen('asymmetry')}
         onOpenPillar={openPillar}
+        onOpenConditioning={() => setScreen('conditioning')}
+        onOpenIntimacy={() => setScreen('intimacyCheckin')}
       />,
     );
   }
@@ -632,6 +636,10 @@ export default function App() {
 
   if (screen === 'roadmap') {
     return <Roadmap profile={profile} program={program} onBack={back} />;
+  }
+
+  if (screen === 'intimacyCheckin') {
+    return <IntimacyCheckin onSaved={back} onCancel={back} />;
   }
 
   if (screen === 'askCoach') {

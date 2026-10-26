@@ -34,6 +34,19 @@ describe('recommendSessions', () => {
     expect(kinds({ hour: 21 })).toContain('resonance');
   });
 
+  it('suggests Hip Flow after training or on a rest day once it has been 3+ days', () => {
+    expect(kinds({ trainedToday: true })).toContain('hipflow');
+    expect(kinds({ restDay: true, hipFlowDaysSince: 4 })).toContain('hipflow');
+    expect(kinds({ trainedToday: true, hipFlowDaysSince: 1 })).not.toContain('hipflow');
+    // Not on an ordinary untrained afternoon.
+    expect(kinds({ hipFlowDaysSince: 5 })).not.toContain('hipflow');
+    expect(recommendSessions({ ...base, trainedToday: true, hipFlowDaysSince: 4 })[0]!.reason).toContain('4 days ago');
+  });
+
+  it('never pushes the Control session on its own', () => {
+    expect(kinds({ trainedToday: true, restDay: true, hour: 22 })).not.toContain('control');
+  });
+
   it('always has something, falls back to cyclic sighing, and never exceeds the cap', () => {
     expect(kinds({})).toEqual(['sigh']);
     const busy = recommendSessions({ ...base, hour: 6, pelvicDoneToday: false, readiness: 1, postureTilt: 'x' });

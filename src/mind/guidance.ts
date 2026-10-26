@@ -101,14 +101,14 @@ export const SEXUAL_HEALTH_NOTES: Tip[] = [
   {
     id: 't-cardio',
     title: 'Erections run on blood flow',
-    body: 'Erectile function shares risk factors with heart disease — waist size, blood pressure, blood sugar. Conditioning and fat loss help both.',
-    source: 'Gandaglia et al., Eur Urol 2014',
+    body: 'Erectile function shares risk factors with heart disease — waist size, blood pressure, blood sugar. About 160 minutes a week of moderate-to-hard cardio improved erections in studies; the Progress tab counts yours.',
+    source: 'Gandaglia et al., Eur Urol 2014; Gerbild et al., Sex Med 2018',
   },
   {
     id: 't-pelvic',
     title: 'Train the pelvic floor',
-    body: 'In trials, pelvic floor training restored or improved erections in most men with ED and gave most men with premature ejaculation control. It’s the Pelvic Floor session — 6 minutes, daily.',
-    source: 'Dorey et al., BJU Int 2005; Pastore et al., Ther Adv Urol 2014',
+    body: 'In trials, pelvic floor training restored or improved erections in most men with ED and gave most men with premature ejaculation control. Pelvic Floor daily (it moves from lying to standing as you progress), Control 3× a week for lasting longer, Hip Flow for the hips and lower back.',
+    source: 'Dorey et al., BJU Int 2005; Pastore et al., Ther Adv Urol 2014; Myers & Smith, Physiotherapy 2019',
   },
   {
     id: 't-boosters',
